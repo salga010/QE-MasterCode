@@ -1,0 +1,353 @@
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// This program generates the base sample 
+// This version April 17, 2019
+// Serdar Ozkan and Sergio Salgado
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+clear all
+set more off
+
+// PLEASE MAKE THE APPROPRIATE CHANGES BELOW. 
+// You should change the below directory. 
+*global maindir ="/Users/serdar/Dropbox/GLOBAL-MASTER-CODE/STATA/"
+global maindir ="/Users/sergiosalgado/Dropbox/GLOBAL-MASTER-CODE/STATA"
+
+do "$maindir/do/0_Initialize.do"
+
+global logname=c(current_date)
+global logname="$logname BaseSample"
+capture log close
+capture noisily log using "$maindir${sep}log${sep}$logname.log", replace
+
+cd "$maindir${sep}dta${sep}"
+	
+if($wide==1){
+	use $personid_var $male_var $yob_var $yod_var $educ_var ${labor_var}* using ${datafile}
+	order  ${labor}*, alphabetic
+	keep $personid_var $male_var $yob_var $yod_var $educ_var  ${labor_var}${yrfirst}-${labor}${yrlast}
+	order $personid_var $male_var $yob_var $yod_var $educ_var  ${labor_var}*
+	describe
+}
+else{
+	use $personid_var $male_var $yob_var $yod_var $educ_var $year_var $labor_var ///
+		if ${year_var} >= ${yrfirst} & ${year_var} <= ${yrlast} using ${datafile}  
+	describe
+	tab ${year_var}
+	/*  The default STATA reshape commend is slow! 
+	timer clear 1
+	timer on 1
+	sort $personid_var $year_var
+	reshape wide $labor_var, i($personid_var) j($year_var)
+	timer off 1
+	timer list 1
+	*/
+	// The below part reshapes data in long format to wide. Faster than RESHAPE commend. 
+	sort $personid_var $year_var
+	forvalues yr = $yrfirst/$yrlast{
+		preserve
+		keep if $year_var ==`yr'
+		
+		rename $labor_var $labor_var`yr'
+		
+		keep $personid_var $labor_var`yr' $male_var $yob_var $yod_var $educ_var 		
+			// Need to keep all variable. If only keep for first year, we 
+			// miss the data for observations that enter in the sample after 
+			// the first year. 
+		
+		sort $personid_var
+		save "temp`yr'.dta",replace
+		restore
+	}
+	
+	local first=$yrfirst+1
+	use "temp$yrfirst.dta", clear
+	erase temp${yrfirst}.dta
+	forvalues yr=`first'/$yrlast{
+		merge 1:1 $personid_var using "temp`yr'.dta", nogen update replace
+				// update replace makes sure the variables such as year of birth 
+				// are replaced by noin missing values for observations that enter 
+				// in the sample after the first year. 
+		erase temp`yr'.dta
+		sort $personid_var
+	}
+	
+	order $personid_var $male_var $yob_var $yod_var $educ_var ${labor_var}*
+
+}
+
+rename $personid_var personid
+rename $male_var male
+rename $yob_var yob
+rename $yod_var yod
+rename $educ_var educ
+
+
+// Drop anybody who is too old or too young or too dead. 
+// Criteria 1 (Age) in CS Sample
+drop if yob==.
+drop if $yrfirst-yob+1>$end_age | $yrlast-yob+1<$begin_age 
+drop if yod<=$yrfirst & yod~=.
+describe
+
+global base_price_index = ${base_price}-${yrfirst}+1	// The base year nominal values are converted to real. 
+
+forvalues yr = $yrfirst/$yrlast{
+
+	rename ${labor_var}`yr' labor`yr'
+	
+	label var labor`yr' "Labor earnings in `yr'"
+
+	// Covert to real values
+	// Criteria d (Inflation) in CS Sample
+	
+	local cpi_index = `yr'-${yrfirst}+1
+	local deflate = cpimat[${base_price_index},1]/cpimat[`cpi_index',1]
+	replace labor`yr'=labor`yr'*`deflate'		//Coverting to real values
+	
+	// Winsorization
+	gen temp=labor`yr' if `yr'-yob+1>= $begin_age & `yr'- yob+1<= $end_age & `yr'< yod  // yod=. id very big number  
+	_pctile temp, p($winsor)
+	replace labor`yr'= r(r1) if labor`yr'>=r(r1) & labor`yr'!=. 
+	drop temp
+		
+	// Add a small noise
+	gen temp=${noise}*(uniform()-0.5)
+	replace labor`yr'=labor`yr'+labor`yr'*temp 
+	drop temp
+
+	if(${miss_earn}==0){
+	// Any earnings that are missing inside of $begin_age and $end_age are set to zero.
+	replace labor`yr'= 0 if labor`yr'== . &  ///
+	   `yr'-yob+1 >= $begin_age & `yr'- yob+1<=$end_age & `yr'< yod
+	}
+		
+	// Assing missing if outside of $begin_age and $end_age
+	replace labor`yr'= . if `yr'-yob+1 < $begin_age | `yr'- yob+1>$end_age 
+	replace labor`yr'= . if `yr'>= yod & yod~=.  // (yod=. is very big number)
+	
+}
+
+// Base sample creation completed.
+order personid male yob yod educ labor*
+compress
+save "$maindir${sep}dta${sep}base_sample.dta", replace
+
+
+// Creating residuals of log-earnings and saving the coefficients
+
+cd "$maindir${sep}dta${sep}"
+
+forvalues yr = $yrfirst/$yrlast{	
+	use personid male yob educ labor`yr' using ///
+	"$maindir${sep}dta${sep}base_sample.dta" if labor`yr'~=. , clear   
+
+	// Create year
+	gen year=`yr'
+	
+	// Create age 
+	gen age = `yr'-yob+1
+	drop if age<${begin_age} | age>${end_age}
+	
+	// Create log earn if earnings above the min treshold
+	// Criteria c (Trimming) in CS Sample
+	// Notice we do not drop the observations but log-earnings are generated for those with
+	// income about the min threshold
+	
+	gen logearn`yr' = log(labor`yr') if labor`yr'>=rmininc[`yr'-${yrfirst}+1,1] & labor`yr'!=. 
+	drop if logearn==.
+	
+	// Create dummies for age and education groups
+	tab age, gen(agedum)
+	drop agedum1
+	tab educ, gen(educdum)
+	drop educdum1
+	
+	statsby _b,  by(year) saving(age_educ_yr`yr'_m,replace):  ///
+	regress logearn`yr' educdum* agedum* if male==1
+	
+	predict temp_m if e(sample)==1, resid
+	
+	statsby _b,  by(year) saving(age_educ_yr`yr'_f,replace):  ///
+	regress logearn`yr' educdum* agedum* if male==0
+	
+	predict temp_f if e(sample)==1, resid
+	
+	// Generate the residuals by year and save a database for later append.
+	gen researn`yr'= temp_m
+	replace researn`yr'= temp_f if male==0
+
+	keep personid researn`yr' logearn`yr'
+	sort personid
+	
+	// Save data set for later append
+	label var researn`yr' "Residual log-labor earnings of year `yr'"
+	label var logearn`yr' "Log-labor earnings of year `yr' above min threshold"
+	save "researn`yr'.dta", replace
+}
+
+forvalues yr = $yrfirst/$yrlast{
+	if (`yr' == $yrfirst){
+		use researn`yr'.dta, clear
+		erase researn`yr'.dta
+	}
+	else{
+		merge 1:1 personid using researn`yr'.dta, nogen
+		erase researn`yr'.dta
+	}
+	sort personid
+}
+save "researn.dta", replace 
+// END: Residuals calculation complete
+
+// Appending coefficients of education for gender groups 
+clear
+forvalues yr = $yrfirst/$yrlast{
+	append using age_educ_yr`yr'_m.dta
+	erase age_educ_yr`yr'_m.dta
+	append using age_educ_yr`yr'_f.dta
+	erase age_educ_yr`yr'_f.dta	
+}
+save "age_educ_dums.dta", replace 
+// END: coefficients appending complete
+
+
+// Calculate growth of (residual) earnings (Section 2.e and 2.f)
+clear
+foreach k in 1 5{
+
+	// Given the jump k, calculate the growth rate for each worker in each year
+
+	local lastyr=$yrlast-`k'
+	forvalues yr = $yrfirst/`lastyr'{
+	
+		local yrnext=`yr'+`k'
+
+		use personid researn`yr' researn`yrnext' using researn.dta, clear
+		gen researn`k'F`yr'= researn`yrnext'-researn`yr'
+		
+		label var researn`k'F`yr' "Residual earnings growth between `yrnext' and `yr'"
+
+		keep personid researn`k'F`yr'
+		save researn`k'F`yr'.dta, replace
+	}
+	
+	// Merge data across all years
+	forvalues yr = $yrfirst/`lastyr'{
+	
+		if (`yr' == $yrfirst){
+		use researn`k'F`yr'.dta, clear
+		erase researn`k'F`yr'.dta
+		}
+		else{
+			merge 1:1 personid using researn`k'F`yr'.dta, nogen
+			erase researn`k'F`yr'.dta
+		}
+		sort personid
+	}
+	
+	compress 
+	save "researn`k'F.dta", replace 
+}
+// END calculate growth rates
+
+// Calculate permanent income
+clear
+local firstyr=$yrfirst+2
+forvalues yr = `firstyr'/$yrlast{
+	local yrL1=`yr'-2
+	local yrL2=`yr'-1
+
+	use personid male yob educ labor`yrL2' labor`yrL1' labor`yr' using ///
+	"$maindir${sep}dta${sep}base_sample.dta" if labor`yr'~=. , clear  
+	
+	// Create year
+	gen year=`yr'
+	
+	// Create age 
+	gen age = `yr'-yob+1
+	drop if age<${begin_age} | age>${end_age}
+	
+	// Create average income for those with at least 2 years of income above 
+	// the treshold income between t-1 and t-3
+	gen totearn=0
+	gen numobs=0
+	
+	// SO: drop if is better here. 
+	replace numobs = -5 if labor`yr' < rmininc[`yr'-${yrfirst}+1,1]			// <--- I DO NOT THINK THIS IS NECESSARY
+		// This ensures that perment income is only constructed for those 
+		// with income above the threshold in t-1
+		
+	
+	forvalues yrp=`yrL2'/`yr'{
+		replace totearn=totearn+labor`yrp' if labor`yrp'~=.
+		replace numobs=numobs+1 if labor`yrp'>=rmininc[`yrp'-${yrfirst}+1,1] & labor`yrp'~=.
+			// Notice earnings below the min threshold are still used to get totearn
+	}
+		
+	replace totearn=totearn/numobs if numobs>=2			// Average income
+	drop	if numobs<2									// Drop if less than 2 obs
+	
+	// Create log earn
+	replace totearn = log(totearn) 
+	drop if totearn==.
+	
+	// Gen dummies for regressions
+	tab age, gen(agedum)
+	drop agedum1
+	tab educ, gen(educdum)
+	drop educdum1
+
+	// Regression to get residuals permanent income
+	regress totearn educdum* agedum* if male==1
+	
+	predict temp_m if e(sample)==1, resid
+	
+	qui regress totearn educdum* agedum* if male==0
+	
+	predict temp_f if e(sample)==1, resid
+	
+	gen permearn`yr'= temp_m
+	replace permearn`yr'= temp_f if male==0
+
+	// Save 
+	keep personid permearn`yr'
+	label var permearn`yr' "Residual permanent income between `yr' and `yrL2'"
+
+	compress 
+	sort personid
+	save "permearn`yr'.dta", replace
+	
+}
+clear
+local firstyr=$yrfirst+2
+forvalues yr = `firstyr'/$yrlast{
+
+	if (`yr' == `firstyr'){
+	use permearn`yr'.dta, clear
+	erase permearn`yr'.dta
+	}
+	else{
+		merge 1:1 personid using permearn`yr'.dta, nogen
+		erase permearn`yr'.dta
+	}
+	sort personid
+}
+save "permearn.dta", replace 
+
+// END of calculation of permanent income
+
+// Merge all data sets to a master code
+
+use "$maindir${sep}dta${sep}base_sample.dta", clear 
+merge 1:1 personid using "permearn.dta", nogen 			
+merge 1:1 personid using "researn.dta", nogen 
+merge 1:1 personid using "researn1F.dta", nogen 
+merge 1:1 personid using "researn5F.dta", nogen 
+compress
+order  personid male yob yod educ labor* logearn* permearn* researn* 
+save "$maindir${sep}dta${sep}master_sample.dta", replace 
+
+capture log close
+
+// END OF DO-FILE
+//////////////////////////////////////////////
