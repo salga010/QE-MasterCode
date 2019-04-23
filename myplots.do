@@ -16,7 +16,7 @@ capture program drop  dnplot tsplt tsplt2sc
 */
 program dnplot
 
-graph set window fontface "Times New Roman"
+graph set window fontface "${fontface}"
 
 *Defines variable y-axis
 	local yvar = "`1'"
@@ -82,7 +82,7 @@ end
 
 
 /*
-tsplt: THIS PROGRAM GENERATES TIME SERIES PLOTS FOR UP TO SIX TIME SERIES
+tsplt: THE FOLLOWING PROGRAMS GENERATE TIME SERIES PLOTS FOR UP TO NINE TIME SERIES
 
 This is an example using three time series
 

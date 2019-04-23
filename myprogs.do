@@ -1,10 +1,95 @@
-capture program drop bymyKDN bymyKDNmale bymyCNT bymyPCT bymysum bymysum_detail ///
-					bymysum_meanonly bymyxtile
+capture program drop bymySho bymyTranMat bymyKDN bymyKDNmale bymyCNT bymyPCT bymysum bymysum_detail ///
+					bymysum_meanonly bymyxtile 
 
 /*
 	Programs do file for different statistics 
-	Last update: April,18,2018
+	Last update: April,22,2018
 */
+
+
+// Calculating Shorrocks mobility as in KSS (QJE,2010) using variance
+// modsho defined as  modsho 1-M =  var(average)/average(var)	see KSS page pp.97
+	
+program bymySho
+	
+	local varT1 = "`1'"		// Variable from which individuals are transitioning 
+	local varT2 = "`2'"		// Variable to which individuals are transitioning 
+	
+	local prefix="`3'"
+	
+	*local suffix = "`4'"
+	
+	qui: sum `varT1'
+	local v1 = (r(sd))^2
+	
+	qui: sum `varT2'
+	local v2 = (r(sd))^2
+	preserve
+		gen averesearn = (`varT1' + `varT2')/2
+		qui: sum averesearn
+		local v3 = (r(sd))^2
+		
+		gen modsho = `v3'/(`v1' + `v2')
+		collapse modsho, by(`4')
+	
+		save "`prefix'`varT1'.dta", replace
+	
+	restore 
+
+end 
+
+/*Program to calculate transition matrix
+  Note this program calculates the stats and creates a table in long form 
+  This makes the conditioning on additional obsrvanle easier (like transition 
+  within an age group)
+*/
+program bymyTranMat
+
+	local varT1 = "`1'"		// Variable from which individuals are transitioning 
+	local varT2 = "`2'"		// Variable to which individuals are transitioning 
+	
+	local prefix="`3'"
+	
+	local suffix = "`4'"	// Conditioning variables
+	
+	*preserve 
+	
+	gen progaux = 1			// Auxiliary variable
+	
+	drop if `varT2' ==.		// Drop if response variable is missing 
+	
+	collapse (count) movecount = progaux, by(`varT1' `varT2' `suffix')
+	
+	bys `suffix' `varT1': egen totcount = sum(movecount)
+	bys `suffix' `varT1':  gen share =   100*movecount/totcount
+	
+	sort `suffix' `varT1' `varT2'
+	order `suffix' `varT1' `varT2' movecount totcount share
+	
+	*Reshapes
+	reshape wide movecount totcount share, i(`suffix' `varT1') j(`varT2')
+	
+	*Replaces missing transitions (transitions that are not present in the data) by 0
+	levelsof `varT1', local(counts) clean
+	foreach dd of local counts{
+		replace movecount`dd' = 0 if movecount`dd' == .
+		replace share`dd' = 0 if share`dd' == .
+	}
+	
+	*Drop totals, they are not necessary.
+	drop totcount*
+	
+	*Reshape back to long form 
+	reshape long movecount share, i(`suffix' `varT1') j(`varT2')
+	
+	*Saves 
+	local suffix = subinstr("`suffix'"," ","",.)
+	save "`prefix'`varT2'_`suffix'.dta", replace	
+	
+	
+	*restore 
+
+end 
 
 *Program to calculate the density and pareto tails
 program bymyKDN 

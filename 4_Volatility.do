@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the time series of Volatility and Higher Order Moments
-// This version April 17, 2019
+// This version April 21, 2019
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -123,94 +123,66 @@ foreach yr of numlist $d1yrlist{
 	// for the years in which permanent income and 5 yr changes can be 
 	// calculated (H sample of the guidelines)
 	
-	if inlist(`yrp',${perm3yrlist}){
-		*If 5-year changes are possible
-		if inlist(`yr',${d5yrlist}){
+	if inlist(`yrp',${perm3yrlist}) & inlist(`yr',${d5yrlist}){
+			// Individuals must have perm income, 1yr change and 5 yr change to be in the H sample
+			drop if researn1F == . | researn5F == .	| permearn == . 
+	
 			// Overall ranking 
 			// Ranking created for those individuals that have measure of earnings growth
 			gen permrank = .
-			gen permearntemp = permearn if researn1F != . & researn5F != .			
-			
-			bymyxtile permearntemp permrank "${nquantiles}"	// This puts individuals into nquantiles bins
+			bymyxtile permearn permrank "${nquantiles}"	// This puts individuals into nquantiles bins
 			if ${nquantiles} < 100{
-				egen aux = pctile(permearntemp), p(99)
-				replace permrank = ${nquantiles} + 1 if permearntemp > aux & permearntemp !=. 
+				_pctile permearn, p(99)
+				replace permrank = ${nquantiles} + 1 if permearn > r(r1) & permearn !=. 
 			}
-			drop aux
 			
 			bymysum_detail "researn1F" "L_" "_allrank`yr'" "year permrank"
 			bymyPCT "researn1F" "L_" "_allrank`yr'" "year permrank"
+			
+			bymysum_detail "researn5F" "L_" "_allrank`yr'" "year permrank"
+			bymyPCT "researn5F" "L_" "_allrank`yr'" "year permrank"
+			
 			drop permrank 
 			
 			//Within age group rankings
 			gen permrank = .
-			bys agegp: bymyxtile permearntemp permrank "${nquantiles}"	
+			bys agegp: bymyxtile permearn permrank "${nquantiles}"	
 			if ${nquantiles} < 100{
-				bys agegp: egen aux = pctile(permearntemp), p(99)
-				replace permrank = ${nquantiles} + 1 if permearntemp > aux & permearntemp !=. 
+				bys agegp: egen aux = pctile(permearn), p(99)
+				replace permrank = ${nquantiles} + 1 if permearn > aux & permearn !=. 
 			}
 			drop aux
 			
 			bymysum_detail "researn1F" "L_" "_agerank`yr'" "year agegp permrank"
 			bymyPCT "researn1F" "L_" "_agerank`yr'" "year agegp permrank"
 			
+			bymysum_detail "researn5F" "L_" "_agerank`yr'" "year agegp permrank"
+			bymyPCT "researn5F" "L_" "_agerank`yr'" "year agegp permrank"
 			
 			// Within permanent income top earners groups
-			_pctile permearntemp, p(99 99.9)
+			_pctile permearn, p(99 99.9)
 			local top1 = r(r1)
 			local top01 = r(r2)
 			
 			// Top 1%
-			gen top1 = permearntemp >= `top1' & permearntemp !=. 
+			gen top1 = permearn >= `top1' & permearn !=. 
 			bymysum_detail "researn1F" "L_" "_top1`yr'" "year top1"
 			bymyPCT "researn1F" "L_" "_top1`yr'" "year top1"
 			drop top1
 			
 			// Top 0.1%
-			gen top0_1 = permearntemp >= `top01' & permearntemp !=. 
+			gen top0_1 = permearn >= `top01' & permearn !=. 
 			bymysum_detail "researn1F" "L_" "_top0_1`yr'" "year top0_1"
 			bymyPCT "researn1F" "L_" "_top0_1`yr'" "year top0_1"
 			drop top0_1
 			
 			// Top 1% ex 0.1%
-			gen top1ex0_1 = (permearntemp >= `top1' & permearntemp < `top01')
+			gen top1ex0_1 = (permearn >= `top1' & permearn < `top01')
 			bymysum_detail "researn1F" "L_" "_top1ex0_1`yr'" "year top1ex0_1"
 			bymyPCT "researn1F" "L_" "_top1ex0_1`yr'" "year top1ex0_1"
 			drop top1ex0_1
 			
-			// Drop rank and temp permnanent income and move to 5-year change
-			drop permrank permearntemp
-				
-			// Ranking created for those individuals that have measure of earnings growth
-			gen permrank = .
-			gen permearntemp = permearn if researn1F != . & researn5F != .		
-			bymyxtile permearntemp permrank "${nquantiles}"	
-			if ${nquantiles} < 100{
-				egen aux = pctile(permearntemp), p(99)
-				replace permrank = ${nquantiles} + 1 if permearntemp > aux & permearntemp !=. 
-			}
-			drop aux
-			
-			bymysum_detail "researn5F" "L_" "_allrank`yr'" "year permrank"
-			bymyPCT "researn5F" "L_" "_allrank`yr'" "year permrank"
-			drop permrank 
-			
-			//Within age group rankings
-			gen permrank = .
-			bys agegp: bymyxtile permearntemp permrank "${nquantiles}"
-			if ${nquantiles} < 100{
-				bys agegp: egen aux = pctile(permearntemp), p(99)
-				replace permrank = ${nquantiles} + 1 if permearntemp > aux & permearntemp !=. 
-			}
-			drop aux
-			
-			bymysum_detail "researn5F" "L_" "_agerank`yr'" "year agegp permrank"
-			
-			bymyPCT "researn5F" "L_" "_agerank`yr'" "year agegp permrank"
-			
-			drop permrank permearntemp
-		} // END if 5-years available
-	} // END if Per income is available	
+	} // END if Per income is available	& END if 5-years available
 *
 	
 	

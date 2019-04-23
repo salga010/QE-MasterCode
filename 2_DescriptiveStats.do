@@ -82,7 +82,6 @@ forvalues yr = `fsrtyr'/`lastyr'{
 	
 	// Transform to US dollars
 	local er_index = `yr'-${yrfirst}+1
-	*disp(exrate[`er_index',1])
 	qui: replace labor`yr' = labor`yr'/exrate[`er_index',1]
 	
 	// Calculate cross sectional moments for year `yr'
@@ -147,5 +146,9 @@ outsheet using "$maindir${sep}out${sep}$outfolder/L_`spl'_labor_yrgender_sum_sta
 *Save the age education dummies for residual log earnings
 use "$maindir${sep}dta${sep}age_educ_dums.dta", clear
 outsheet using "$maindir${sep}out${sep}$outfolder/age_educ_dums.csv", replace comma
+
+*Save the age education dummies for residual log earnings
+use "$maindir${sep}dta${sep}age_dums.dta", clear
+outsheet using "$maindir${sep}out${sep}$outfolder/age_dums.csv", replace comma
 
 // END OF THE CODE 

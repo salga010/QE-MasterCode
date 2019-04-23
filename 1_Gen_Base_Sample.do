@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the base sample 
-// This version April 17, 2019
+// This version April 19, 2019
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -20,7 +20,7 @@ capture log close
 capture noisily log using "$maindir${sep}log${sep}$logname.log", replace
 
 cd "$maindir${sep}dta${sep}"
-	
+*	
 if($wide==1){
 	use $personid_var $male_var $yob_var $yod_var $educ_var ${labor_var}* using ${datafile}
 	order  ${labor}*, alphabetic
@@ -161,16 +161,25 @@ forvalues yr = $yrfirst/$yrlast{
 	drop agedum1
 	tab educ, gen(educdum)
 	drop educdum1
-	
-	statsby _b,  by(year) saving(age_educ_yr`yr'_m,replace):  ///
-	regress logearn`yr' educdum* agedum* if male==1
+
+	// Regression for residuals earnigs
+	statsby _b,  by(year) saving(age_yr`yr'_m,replace):  ///
+	regress logearn`yr' agedum* if male==1
 	
 	predict temp_m if e(sample)==1, resid
+	
+	statsby _b,  by(year) saving(age_yr`yr'_f,replace):  ///
+	regress logearn`yr' agedum* if male==0
+	
+	predict temp_f if e(sample)==1, resid
+	
+	// Regressions for profiles
+	statsby _b,  by(year) saving(age_educ_yr`yr'_m,replace):  ///
+	regress logearn`yr' educdum* agedum* if male==1
 	
 	statsby _b,  by(year) saving(age_educ_yr`yr'_f,replace):  ///
 	regress logearn`yr' educdum* agedum* if male==0
 	
-	predict temp_f if e(sample)==1, resid
 	
 	// Generate the residuals by year and save a database for later append.
 	gen researn`yr'= temp_m
@@ -199,7 +208,7 @@ forvalues yr = $yrfirst/$yrlast{
 save "researn.dta", replace 
 // END: Residuals calculation complete
 
-// Appending coefficients of education for gender groups 
+// Appending coefficients of agen and education for gender groups 
 clear
 forvalues yr = $yrfirst/$yrlast{
 	append using age_educ_yr`yr'_m.dta
@@ -208,8 +217,17 @@ forvalues yr = $yrfirst/$yrlast{
 	erase age_educ_yr`yr'_f.dta	
 }
 save "age_educ_dums.dta", replace 
-// END: coefficients appending complete
 
+// Appending coefficients of age for gender groups 
+clear
+forvalues yr = $yrfirst/$yrlast{
+	append using age_yr`yr'_m.dta
+	erase age_yr`yr'_m.dta
+	append using age_yr`yr'_f.dta
+	erase age_yr`yr'_f.dta	
+}
+save "age_dums.dta", replace 
+// END: coefficients appending complete
 
 // Calculate growth of (residual) earnings (Section 2.e and 2.f)
 clear
@@ -254,8 +272,8 @@ foreach k in 1 5{
 clear
 local firstyr=$yrfirst+2
 forvalues yr = `firstyr'/$yrlast{
-	local yrL1=`yr'-2
-	local yrL2=`yr'-1
+	local yrL1=`yr'-1
+	local yrL2=`yr'-2	
 
 	use personid male yob educ labor`yrL2' labor`yrL1' labor`yr' using ///
 	"$maindir${sep}dta${sep}base_sample.dta" if labor`yr'~=. , clear  
@@ -272,15 +290,14 @@ forvalues yr = `firstyr'/$yrlast{
 	gen totearn=0
 	gen numobs=0
 	
-	// SO: drop if is better here. 
-	replace numobs = -5 if labor`yr' < rmininc[`yr'-${yrfirst}+1,1]			// <--- I DO NOT THINK THIS IS NECESSARY
-		// This ensures that perment income is only constructed for those 
-		// with income above the threshold in t-1
+	*replace numobs = -5 if labor`yr' < rmininc[`yr'-${yrfirst}+1,1]
+	// This ensures that permanent income is only constructed for those 
+	// with income above the threshold in t-1
 		
 	
 	forvalues yrp=`yrL2'/`yr'{
 		replace totearn=totearn+labor`yrp' if labor`yrp'~=.
-		replace numobs=numobs+1 if labor`yrp'>=rmininc[`yrp'-${yrfirst}+1,1] & labor`yrp'~=.
+		replace numobs=numobs+1 if labor`yrp'~=.
 			// Notice earnings below the min threshold are still used to get totearn
 	}
 		
@@ -294,16 +311,12 @@ forvalues yr = `firstyr'/$yrlast{
 	// Gen dummies for regressions
 	tab age, gen(agedum)
 	drop agedum1
-	tab educ, gen(educdum)
-	drop educdum1
-
-	// Regression to get residuals permanent income
-	regress totearn educdum* agedum* if male==1
 	
+	// Regression to get residuals permanent income
+	regress totearn agedum* if male==1
 	predict temp_m if e(sample)==1, resid
 	
-	qui regress totearn educdum* agedum* if male==0
-	
+	qui regress totearn agedum* if male==0
 	predict temp_f if e(sample)==1, resid
 	
 	gen permearn`yr'= temp_m
@@ -312,27 +325,81 @@ forvalues yr = `firstyr'/$yrlast{
 	// Save 
 	keep personid permearn`yr'
 	label var permearn`yr' "Residual permanent income between `yr' and `yrL2'"
-
+	
 	compress 
 	sort personid
 	save "permearn`yr'.dta", replace
 	
 }
+***
+*/
+/* Calculate modified permanent income
+   Relative to the previos version, here we consider all individuals 
+   even thouse with low earnimgs. See section "Key Statisitcs 4: Mobilitity"
+*/
 clear
-local firstyr=$yrfirst+2
-forvalues yr = `firstyr'/$yrlast{
+local firstyr=$yrfirst + 1
+local lastyr = $yrlast - 1
+forvalues yr = `firstyr'/`lastyr'{
+	local yrL1=`yr'-1
+	local yrF1=`yr'+1		
+
+	use personid male yob educ labor`yrF1' labor`yrL1' labor`yr' using ///
+	"$maindir${sep}dta${sep}base_sample.dta" if labor`yr'~=. , clear  
+	
+	// Create year
+	gen year=`yr'
+	
+	// Create age 
+	gen age = `yr'-yob+1
+	drop if age<${begin_age} + 1 | age>${end_age} - 1			// This makes the min age 26 and max age 54
+	
+	// Create average income for those with at least 2 years of income 
+	gen totearn=0
+	gen numobs=0
+
+	forvalues yrp=`yrL1'/`yrF1'{
+		replace totearn=totearn+labor`yrp' if labor`yrp'~=.
+		replace numobs=numobs+1 if labor`yrp'~=.
+			// Notice earnings below the min threshold are still used to get totearn
+			// This ensure we do not consider income of individuals when they were 24 yrs old or less
+	}
+	replace totearn=totearn/numobs if numobs==3			// Average income	
+	drop if numobs<3									// Drop if less than 2 obs
+	drop if totearn==.
+	
+	bys male age: egen avg = mean(totearn)
+	
+	gen permearnalt`yr' = totearn/avg
+	
+	// Save 
+	keep personid permearnalt`yr'
+	label var permearnalt`yr' "Altenative residual permanent income between `yr' and `yrL2'"
+	
+
+	compress 
+	sort personid
+	save "permearnalt`yr'.dta", replace
+	
+}
+***
+
+clear
+local firstyr=$yrfirst + 1
+local lastyr = $yrlast - 1
+forvalues yr = `firstyr'/`lastyr'{
 
 	if (`yr' == `firstyr'){
-	use permearn`yr'.dta, clear
-	erase permearn`yr'.dta
+		use permearnalt`yr'.dta, clear
+		erase permearnalt`yr'.dta
 	}
 	else{
-		merge 1:1 personid using permearn`yr'.dta, nogen
-		erase permearn`yr'.dta
+		merge 1:1 personid using permearnalt`yr'.dta, nogen
+		erase permearnalt`yr'.dta
 	}
 	sort personid
 }
-save "permearn.dta", replace 
+save "permearnalt.dta", replace 
 
 // END of calculation of permanent income
 
@@ -340,6 +407,7 @@ save "permearn.dta", replace
 
 use "$maindir${sep}dta${sep}base_sample.dta", clear 
 merge 1:1 personid using "permearn.dta", nogen 			
+merge 1:1 personid using "permearnalt.dta", nogen 			
 merge 1:1 personid using "researn.dta", nogen 
 merge 1:1 personid using "researn1F.dta", nogen 
 merge 1:1 personid using "researn5F.dta", nogen 

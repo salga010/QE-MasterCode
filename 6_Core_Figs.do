@@ -1,9 +1,9 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the core figures
-// Last edition April, 19, 2019
+// Last edition April, 22, 2019
 // Serdar Ozkan and Sergio Salgado
 // 
-// The figures below are meant to be a guideline  and might require some changes 
+// The figures below are meant to be a guideline and might require some changes 
 // to accommodate the particularities of each dataset. If you have any question
 // please contact Ozkan/Salgado in Slack
 //
@@ -15,18 +15,10 @@ set more off
 *global maindir ="/Users/serdar/Dropbox/GLOBAL-MASTER-CODE/STATA/"
 global maindir ="/Users/sergiosalgado/Dropbox/GLOBAL-MASTER-CODE/STATA/"
 
-
-
-// Where the firgures are going to be saved 
-global outfolder=subinstr(c(current_date)," ","",.) 
-global outfolder="figs_${outfolder}"
-capture noisily mkdir "$maindir${sep}figs${sep}$outfolder"
-global folderfile = "figs${sep}$outfolder"	
-
 // Where the data is stored
-global ineqdata = "18 Apr 2019 Inequality"	
-global voladata = "18 Apr 2019 Volatility"	
-global mobidata = "19 Apr 2019 Mobility"	
+global ineqdata = "23 Apr 2019 Inequality"			// Data on Inequality 
+global voladata = "23 Apr 2019 Volatility"			// Data on Volatility
+global mobidata = "23 Apr 2019 Mobility"			// Data on Mobility
 
 // Do not make change from here on. Contact Ozkan/Salgado if changes are needed. 
 	do "$maindir/do/0_Initialize.do"
@@ -41,15 +33,23 @@ global mobidata = "19 Apr 2019 Mobility"
 	global fontface   = "Times New Roman"
 	global marksize = "medium"	
 
+
+// Where the firgures are going to be saved 
+global outfolder=subinstr(c(current_date)," ","",.) 
+global outfolder="figs_${outfolder}"
+capture noisily mkdir "$maindir${sep}figs${sep}$outfolder"
+global folderfile = "figs${sep}$outfolder"	
+	
+	
 // Cd to folder with out 
 	cd "$maindir${sep}" // Cd to the folder containing the files
+	
 
 /*---------------------------------------------------	
     This section generates the figures 1 and 2 
 	and corresponding appendix figures required in poins 1 to 4 in  the
 	Common Core section of the Guidelines
  ---------------------------------------------------*/
-  
 foreach var in logearn researn permearn{
 	foreach subgp in male fem all{
 	
@@ -110,7 +110,6 @@ foreach var in logearn researn permearn{
 		
 		}
 		
-	
 // Figure 1 (Inequality)	
 	tsplt "np5$vari np10$vari  np25$vari np50$vari np75$vari np90$vari np95$vari np99_9$vari np99_99$vari" /// Which variables?
 		   "year" ///
@@ -125,8 +124,8 @@ foreach var in logearn researn permearn{
 // Figure 2 (Inequality)	
 	tsplt2sc "p9010${vari}" "sd${vari}" /// variables plotted
 		   "year" ///
-		   2.2 2.5 0.1  /// 
-		   0.85 0.95 0.05  ///
+		   1.2 2.2 0.2  /// 
+		   0.5 0.8 0.05  ///
 		   `lyear' 2013 5 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
 		   "P9010" "Standard Deviation" /// Labels 
 		   "Year" /// x axis title
@@ -499,21 +498,22 @@ foreach var in researn5F researn1F{
 			"fig10b_${vari}"			// Name of file
 }
 ***		
-
-
 	
-/*----------------------------------------
-	This section generates figure 11
-------------------------------------------*/
 
-foreach yr in 1995 2005{		// Add years here 
+/*----------------------------------------------
+	This section generates figure 11: Mobility
+------------------------------------------------*/
+
+// Figure 11A
+foreach yr in 1995 2005{		// Add years here if you need
 	
 	*Load data of short term mobility
 	insheet using "out${sep}${mobidata}${sep}L_ranktp1_mobstat.csv", clear
 	keep if year == `yr'
 		
 	dnplot "meanranktp1 rankt" "rankt" /// y and x variables 
-			"Rank of {&epsilon}{sub:t} in year t" "Rank of {&epsilon}{sub:t} in year t+1" "medium" "medium" 		/// x and y axcis titles and sizes 
+			"Rank of {&epsilon}{sub:t} in year t" ///
+			"Mean Rank of {&epsilon}{sub:t} in year t+1" "medium" "medium" 		/// x and y axcis titles and sizes 
 			 "Short-Term Mobility" "Year: `yr'" "large" ""  ///	Plot title
 			 "" "" "" "" "" ""						/// Legends
 			 "off"									/// Leave empty for active legend
@@ -525,16 +525,50 @@ foreach yr in 1995 2005{		// Add years here
 	keep if year == `yr'
 	
 	dnplot "meanranktp5 rankt" "rankt" /// y and x variables 
-	"Rank of {&epsilon}{sub:t} in year t" "Rank of {&epsilon}{sub:t} in year t+5" "medium" "medium" 		/// x and y axcis titles and sizes 
+	"Rank of {&epsilon}{sub:t} in year t" ///
+	"Mean Rank of {&epsilon}{sub:t} in year t+5" "medium" "medium" 		/// x and y axcis titles and sizes 
 	 "Long-Term Mobility" "Year: `yr'" "large" ""  ///	Plot title
 	 "" "" "" "" "" ""						/// Legends
 	 "off"									/// Leave empty for active legend
 	"fig11b_`yr'_mobility"			// Name of file		
 	
 }
-	
-***	
 
+// Figure 11B
+foreach yr in 1995 2000{	// Add more years here if you need
+
+	*Load data of short term mobility
+	insheet using "out${sep}${mobidata}${sep}L_permearnalt_mobstat.csv", clear
+	keep if year == `yr'
+		
+	dnplot "meanpermearnaltranktp5 permearnaltrankt" "permearnaltrankt" /// y and x variables 
+			"Rank of P{sub:3t} in year t" ///
+			"Mean Rank of P{sub:3t} in year t+5" "medium" "medium" 		/// x and y axcis titles and sizes 
+			"Permanent Income Mobility" "Year: `yr'" "large" ""  ///	Plot title
+			"" "" "" "" "" ""						/// Legends
+			"off"									/// Leave empty for active legend
+			"fig11b_`yr'_tp5_mobility"			// Name of file
+ 
+	dnplot "meanpermearnaltranktp10 permearnaltrankt" "permearnaltrankt" /// y and x variables 
+			"Rank of P{sub:3t} in year t" ///
+			"Mean Rank of P{sub:3t} in year t+10" "medium" "medium" 		/// x and y axcis titles and sizes 
+			"Permanent Income Mobility" "Year: `yr'" "large" ""  ///	Plot title
+			"" "" "" "" "" ""						/// Legends
+			"off"									/// Leave empty for active legend
+			"fig11b_`yr'_tp10_mobility"			// Name of file
+ 
+	 
+	dnplot "meanpermearnaltranktl3 permearnaltrankt" "permearnaltrankt" /// y and x variables 
+			"Rank of P{sub:3t} in year t" ///
+			"Mean Rank of P{sub:3t} in year T{sup:Max}-3" "medium" "medium" 		/// x and y axcis titles and sizes 
+			"Permanent Income Mobility" "Year: `yr'" "large" ""  ///	Plot title
+			"" "" "" "" "" ""						/// Legends
+			"off"									/// Leave empty for active legend
+			"fig11b_`yr'_tl3_mobility"			// Name of file
+
+}
+****	
+	
 
 
 /*----------------------------------------
