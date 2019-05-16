@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the base sample 
-// This version April 19, 2019
+// This version May 16, 2019
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -331,6 +331,22 @@ forvalues yr = `firstyr'/$yrlast{
 	save "permearn`yr'.dta", replace
 	
 }
+
+clear
+local firstyr=$yrfirst+2
+forvalues yr = `firstyr'/$yrlast{
+
+	if (`yr' == `firstyr'){
+		use permearn`yr'.dta, clear
+		erase permearn`yr'.dta
+	}
+	else{
+		merge 1:1 personid using permearn`yr'.dta, nogen
+		erase permearn`yr'.dta
+	}
+	sort personid
+}
+save "permearn.dta", replace 
 ***
 */
 /* Calculate modified permanent income
@@ -401,7 +417,7 @@ forvalues yr = `firstyr'/`lastyr'{
 }
 save "permearnalt.dta", replace 
 
-// END of calculation of permanent income
+// END of calculation of alternative permanent income
 
 // Merge all data sets to a master code
 
