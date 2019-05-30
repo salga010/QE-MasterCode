@@ -50,7 +50,7 @@ global year_var="year" 		// The variable name for year if the data is in long fo
 
 // Define these variables for your dataset
 global yrfirst = 1993 		// First year in the dataset 
-global yrlast = 2013 		// Last year in the dataset
+global yrlast = 2017 		// Last year in the dataset
 
 global kyear = 5
 	// This controls the years for which the empirical densities will be calculated.

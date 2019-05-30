@@ -297,8 +297,8 @@ forvalues yr = `firstyr'/$yrlast{
 	
 	forvalues yrp=`yrL2'/`yr'{
 		replace totearn=totearn+labor`yrp' if labor`yrp'~=.
-		replace numobs=numobs+1 if labor`yrp'~=.
-			// Notice earnings below the min threshold are still used to get totearn
+		replace numobs=numobs+1 if labor`yrp'>=rmininc[`yrp'-${yrfirst}+1,1] & labor`yrp'~=.		
+		// Notice earnings below the min threshold are still used to get totearn
 	}
 		
 	replace totearn=totearn/numobs if numobs>=2			// Average income
