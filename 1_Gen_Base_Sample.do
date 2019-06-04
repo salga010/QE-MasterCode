@@ -24,7 +24,7 @@ cd "$maindir${sep}dta${sep}"
 if($wide==1){
 	use $personid_var $male_var $yob_var $yod_var $educ_var ${labor_var}* using ${datafile}
 	order  ${labor}*, alphabetic
-	keep $personid_var $male_var $yob_var $yod_var $educ_var  ${labor_var}${yrfirst}-${labor}${yrlast}
+	keep $personid_var $male_var $yob_var $yod_var $educ_var  ${labor_var}${yrfirst}-${labor_var}${yrlast}
 	order $personid_var $male_var $yob_var $yod_var $educ_var  ${labor_var}*
 	describe
 }

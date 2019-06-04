@@ -89,15 +89,15 @@ matrix exrate = /*  Nominal average exchange rate from FRED between ${yrfirst}  
 
 
 
+// The below part uses US minimum wage values to create the minimum income threshold. 
+// If your country does not have a minimum wage, and you want to use the US?specific threshold
+// then do not make any changes below.
 
+// If you country has a minimum wage, then use the commented out part below. 
 
+// Or if you want to use  a percentage criterion, then you need to specify those rmininc values.
 
-
-
-
-
-
-// PLEASE DO NOT CHANGE THIS PART. IF NEEDS TO BE CHANGED, CONTACT Ozkan/Salgado
+// CREATING MINIMUM INCOME THRESHOLD USING US MINIMUM WAGE  
 
 matrix minwgus = /* Nominal minimum wage 1959-2018 in the US
 */ (1.00,1.00,1.00,1.15,1.15,1.25,1.25,1.25,1.25,1.40,1.60,1.60,1.60,1.60,/*
@@ -120,6 +120,52 @@ forvalues pp = 1(1)`tnum'{
 					// real min income threshold in local currency 
 	local i = `i' + 1
 }
+
+// CREATING MINIMUM INCOME THRESHOLD USING US MINIMUM WAGE  
+/*
+matrix minwg_C = /* Nominal minimum wage 1959-2018 in YOUR COUNTRY
+*/ (1.00,1.00,1.00,1.15,1.15,1.25,1.25,1.25,1.25,1.40,1.60,1.60,1.60,1.60,/*
+*/  1.60,1.60,2.00,2.10,2.10,2.30,2.65,2.90,3.10,3.35,3.35,3.35,3.35,3.35,/*
+*/  3.35,3.35,3.35,3.35,3.80,4.25,4.25,4.25,4.25,4.25,4.75,5.15,5.15,5.15,/*
+*/  5.15,5.15,5.15,5.15,5.15,5.15,5.15,5.85,6.55,7.25,7.25,7.25,7.25,7.25,/*
+*/  7.25,7.25,7.25)'
+
+
+local yinic = ${yrfirst} - 1959 + 1
+local yend = ${yrlast} - 1959 + 1
+
+matrix mininc_C = 260*minwg_C[`yinic'..`yend',1]		// Nominal min income in the US
+														// This uses the factor of 260 given in the Guidelines
+matrix rmininc = J(${yrlast}-${yrfirst}+1,1,0)
+local i = 1
+local tnum = ${yrlast}-${yrfirst}+1
+forvalues pp = 1(1)`tnum'{
+	matrix rmininc[`i',1] = 100*mininc_C[`i',1]/cpimat[`i',1]					
+					// real min income threshold in local currency 
+	local i = `i' + 1
+}
+*/
+
+// CREATING MINIMUM INCOME THRESHOLD USING CUSTOM VALUES 
+// (E.G., the bottom 2?3% of the gender?combined earnings distribution, etc.)  
+/*
+matrix rmininc = /* REAL MINIMUM INCOME THRESHOLD ${yrfirst}-${yrlast} in YOUR COUNTRY
+*/ (1.00,1.00,1.00,1.15,1.15,1.25,1.25,1.25,1.25,1.40,1.60,1.60,1.60,/*
+*/  1.60,1.60,2.00,2.10,2.10,2.30,2.65,2.90,3.10,3.35,3.35,3.35)'
+*/
+
+
+
+
+
+
+
+
+
+
+
+// PLEASE DO NOT CHANGE THIS PART. IF NEEDS TO BE CHANGED, CONTACT Ozkan/Salgado
+
 
 *global yrlist = ///
 *	"${yrfirst} 1994 1995 1996 1997 1998 1999 2000 2001 2002 2003 2004 2005 2006 2007 2008 2009 2010 2011 2012 ${yrlast}"
