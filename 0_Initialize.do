@@ -83,7 +83,7 @@ matrix cpimat = cpimat/${cpi2018}
 matrix exrate = /*  Nominal average exchange rate from FRED between ${yrfirst}  and ${yrlast} (LC per dollar)
 */ (7.101,7.055,6.335,6.459,7.086,7.552,7.807,8.813,8.996,7.984, /*
 */	7.080,6.740,6.441,6.409,5.856,5.637,6.291,6.045,5.602,5.818, /*
-*/	5.877)'
+*/	5.877,6.297)'
 
 
 
