@@ -13,7 +13,7 @@ version 13  // This program uses Stata version 13.
 
 global begin_age = 25 		// Starting age
 global end_age = 55			// Ending age
-global base_price = 2010	// The base year nominal values are converted to real. 
+global base_price = 2018	// The base year nominal values are converted to real. 
 global winsor=99.999999		// The values above this percentile are going to be set to this percentile. 
 global noise=0.0			// The values above this percentile are going to be set to this percentile. 
 
@@ -50,7 +50,7 @@ global year_var="year" 		// The variable name for year if the data is in long fo
 
 // Define these variables for your dataset
 global yrfirst = 1993 		// First year in the dataset 
-global yrlast = 2017 		// Last year in the dataset
+global yrlast =  2014 		// Last year in the dataset
 
 global kyear = 5
 	// This controls the years for which the empirical densities will be calculated.
@@ -73,14 +73,12 @@ global hetgroup = `" male age educ "male age" "male educ" "male educ age" "'
 // Price index for converting nominal values to real, e.g., the PCE for the US.  
 // IMPORTANT: Please set the CPI starting from year ${yrfirst} and ending in ${yrlast}.
 
-global cpi2018 = 100.0		// Set the value of the CPI in 2018. 
+global cpi2018 = 110.007		// Set the value of the CPI in 2018. 
 matrix cpimat = /*  CPI between ${yrfirst}  and ${yrlast}
-*/ (73.279,74.803,76.356,77.981,79.327,79.936,81.110,83.131,84.736,85.873, /*
-*/	87.572,89.703,92.261,94.729,97.101,100.065,100.000,101.653,104.149,106.062, /*
-*/	107.333 )'
+*/ (71.436, 73.034, 74.625, 76.04, 77.382, 78.366, 79.425, 80.804, 82.258, 83.639, 84.837, /*
+*/  86.515, 88.373, 90.392, 92.378, 94.225, 95.315,96.608, 98.139, 100, 101.526, 103.168 )'
 
-
-matrix cpimat = 100*cpimat/${cpi2018}
+matrix cpimat = cpimat/${cpi2018}
 
 matrix exrate = /*  Nominal average exchange rate from FRED between ${yrfirst}  and ${yrlast} (LC per dollar)
 */ (7.101,7.055,6.335,6.459,7.086,7.552,7.807,8.813,8.996,7.984, /*
@@ -90,10 +88,10 @@ matrix exrate = /*  Nominal average exchange rate from FRED between ${yrfirst}  
 
 
 // The below part uses US minimum wage values to create the minimum income threshold. 
-// If your country does not have a minimum wage, and you want to use the US?specific threshold
+// If your country does not have a minimum wage, and you want to use the US specific threshold
 // then do not make any changes below.
 
-// If you country has a minimum wage, then use the commented out part below. 
+// If your country has a minimum wage, then use the commented out part below. 
 
 // Or if you want to use  a percentage criterion, then you need to specify those rmininc values.
 
@@ -106,8 +104,7 @@ matrix minwgus = /* Nominal minimum wage 1959-2018 in the US
 */  5.15,5.15,5.15,5.15,5.15,5.15,5.15,5.85,6.55,7.25,7.25,7.25,7.25,7.25,/*
 */  7.25,7.25,7.25)'
 
-
-local yinic = ${yrfirst} - 1959 + 1
+local yinic = ${yrfirst} - 1959 + 1						
 local yend = ${yrlast} - 1959 + 1
 
 matrix minincus = 260*minwgus[`yinic'..`yend',1]		// Nominal min income in the US
@@ -116,12 +113,12 @@ matrix rmininc = J(${yrlast}-${yrfirst}+1,1,0)
 local i = 1
 local tnum = ${yrlast}-${yrfirst}+1
 forvalues pp = 1(1)`tnum'{
-	matrix rmininc[`i',1] = 100*minincus[`i',1]*exrate[`i',1]/cpimat[`i',1]					
+	matrix rmininc[`i',1] = minincus[`i',1]*exrate[`i',1]/cpimat[`i',1]					
 					// real min income threshold in local currency 
 	local i = `i' + 1
 }
 
-// CREATING MINIMUM INCOME THRESHOLD USING US MINIMUM WAGE  
+// CREATING MINIMUM INCOME THRESHOLD USING COUNTRY SPECIFIC MINIMUM WAGE  
 /*
 matrix minwg_C = /* Nominal minimum wage 1959-2018 in YOUR COUNTRY
 */ (1.00,1.00,1.00,1.15,1.15,1.25,1.25,1.25,1.25,1.40,1.60,1.60,1.60,1.60,/*
@@ -130,8 +127,8 @@ matrix minwg_C = /* Nominal minimum wage 1959-2018 in YOUR COUNTRY
 */  5.15,5.15,5.15,5.15,5.15,5.15,5.15,5.85,6.55,7.25,7.25,7.25,7.25,7.25,/*
 */  7.25,7.25,7.25)'
 
-
-local yinic = ${yrfirst} - 1959 + 1
+// Change 1959 to the first year in your minwg_C matrix
+local yinic = ${yrfirst} - 1959 + 1	
 local yend = ${yrlast} - 1959 + 1
 
 matrix mininc_C = 260*minwg_C[`yinic'..`yend',1]		// Nominal min income in the US
@@ -147,7 +144,7 @@ forvalues pp = 1(1)`tnum'{
 */
 
 // CREATING MINIMUM INCOME THRESHOLD USING CUSTOM VALUES 
-// (E.G., the bottom 2?3% of the gender?combined earnings distribution, etc.)  
+// (E.G., the bottom 23% of the gender, combined earnings distribution, etc.)  
 /*
 matrix rmininc = /* REAL MINIMUM INCOME THRESHOLD ${yrfirst}-${yrlast} in YOUR COUNTRY
 */ (1.00,1.00,1.00,1.15,1.15,1.25,1.25,1.25,1.25,1.40,1.60,1.60,1.60,/*
