@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This code specify country-specific variables.  
-// This version April 21, 2019
+// This version June 13, 2019
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -71,7 +71,7 @@ global hetgroup = `" male age educ "male age" "male educ" "male educ age" "'
 	// Define heterogenous groups for which time series stats will be calculated 
 
 // Price index for converting nominal values to real, e.g., the PCE for the US.  
-// IMPORTANT: Please set the CPI starting from year ${yrfirst} and ending in ${yrlast}.
+// IMPORTANT: Please set the LOCAL CPI starting from year ${yrfirst} and ending in ${yrlast}.
 
 global cpi2018 = 110.007		// Set the value of the CPI in 2018. 
 matrix cpimat = /*  CPI between ${yrfirst}  and ${yrlast}
@@ -86,7 +86,27 @@ matrix exrate = /*  Nominal average exchange rate from FRED between ${yrfirst}  
 */	5.877,6.297)'
 
 
+/*DO NOT CHANGE THIS SECTION**********************************************
+THIS SECTION DEFINES THE REAL EXCHANGE CHANGE USING THE LOCAL AND US CPI
+*/
+global cpi2018us = 108.231		// DO NOT CHANGE. This is the US PCE  
+								// Annual average from https://fred.stlouisfed.org/series/PCEPI#0
+matrix cpimatus = /*  PCE between 1970  and 2018
+*/ (20.951, 21.841, 22.586, 23.802, 26.280, 28.470, 30.032, 31.986, 34.211, 37.250,  /*
+*/ 41.262, 44.959, 47.456, 49.475, 51.343, 53.134, 54.290, 55.964, 58.150, 60.690,  /*
+*/ 63.355, 65.473, 67.218, 68.892, 70.330, 71.811, 73.346, 74.623, 75.216, 76.338, /*
+*/ 78.235, 79.738, 80.789, 82.358, 84.411, 86.813, 89.174, 91.438, 94.180, 94.094,  /*
+*/ 95.705, 98.130, 100.000, 101.347, 102.868, 103.126, 104.235, 106.073, 108.231 )'
 
+matrix cpimatus = cpimatus/${cpi2018us}
+
+forvalues yr =  $yrfirst/$yrlast{
+	local ee = `yr' - ${yrfirst} + 1
+	local ii = `yr' - 1970 + 1
+	matrix exrate[`ee',1] = exrate[`ee',1]*(cpimatus[`ii',1]/cpimat[`ee',1])
+			// Coverting nominal exchange rate to real exchange rate
+}
+**********************************************
 // The below part uses US minimum wage values to create the minimum income threshold. 
 // If your country does not have a minimum wage, and you want to use the US specific threshold
 // then do not make any changes below.
@@ -110,12 +130,12 @@ local yend = ${yrlast} - 1959 + 1
 matrix minincus = 260*minwgus[`yinic'..`yend',1]		// Nominal min income in the US
 														// This uses the factor of 260 given in the Guidelines
 matrix rmininc = J(${yrlast}-${yrfirst}+1,1,0)
-local i = 1
 local tnum = ${yrlast}-${yrfirst}+1
-forvalues pp = 1(1)`tnum'{
-	matrix rmininc[`i',1] = minincus[`i',1]*exrate[`i',1]/cpimat[`i',1]					
+
+forvalues i = 1(1)`tnum'{
+	local ii = `i' + ${yrfirst} - 1970
+	matrix rmininc[`i',1] = minincus[`i',1]*exrate[`i',1]/cpimatus[`ii',1]				
 					// real min income threshold in local currency 
-	local i = `i' + 1
 }
 
 // CREATING MINIMUM INCOME THRESHOLD USING COUNTRY SPECIFIC MINIMUM WAGE  
