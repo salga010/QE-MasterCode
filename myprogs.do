@@ -1,9 +1,9 @@
 capture program drop bymySho bymyTranMat bymyKDN bymyKDNmale bymyCNT bymyPCT bymysum bymysum_detail ///
-					bymysum_meanonly bymyxtile 
+					bymysum_meanonly bymyxtile bymyCNTg bymyCNTgPop
 
 /*
 	Programs do file for different statistics 
-	Last update: April,22,2018
+	Last update: June,21,2018
 */
 
 
@@ -166,6 +166,279 @@ program bymyKDNmale
 
 end 
 
+*Program to calculate the change in concentration at the top fo the distribution using 
+*the decomposition of  "Displacement and the Rise in Top Wealth Inequality: by  Matthieu Gomez
+*This implements the version with population change. 
+
+program bymyCNTgPop
+	
+	local varM   = "`1'"			// Current earnings 
+	local prefix = "`2'"			// Name of the file 
+	local yrl = "`3'"				// Current year
+	local p = "`4'"					// Value of tau
+	local qtile = "`5'"				// What top percentile we are calculating (e.g. 99 for the top 1%)	
+	local het = "`6'"				// What sample. Missing if all sample; 0 for women; 1 for men
+	
+	local varMp = "earnp`p'"
+	local yrpl = `yrl'+1
+	
+	
+	preserve
+	
+		*Defines whether we are calculating the concetration decompisition within 
+		*Gender groups. Het must take values 1 (for men) or 0 (for women)
+		if "`het'" != ""{
+			qui: keep if male == `het'
+		}
+		
+		*Normalizing individual income (i.e. `varmM' is the individual share on total income)
+		sum `varM'  if (`varM' >= rmininc[`yrl'-${yrfirst}+1,1]) & `varM' != .,  meanonly
+		qui: gen double aux = 100*`varM'/r(sum)	
+		drop `varM'
+		rename aux `varM'
+		local totM = r(sum)
+
+		sum `varMp' if (`varMp' >= rmininc[`yrpl'-${yrfirst}+1,1]) & `varMp' != .,  meanonly
+		qui: gen double aux = 100*`varMp'/r(sum)	
+		drop `varMp'
+		rename aux `varMp'
+		local totMp = r(sum)
+		
+		*Calculate percentile 
+		_pctile `varM'  if (`varM'  >= 100*rmininc[`yrl'-${yrfirst}+1,1]/`totM')  & `varM' != .  ,p(`qtile')		// Income in t
+		local top =  r(r1)
+		
+		_pctile `varMp' if (`varMp' >= 100*rmininc[`yrpl'-${yrfirst}+1,1]/`totMp') & `varMp' != . ,p(`qtile')		// Income in t+p
+		local topp =  r(r1)
+		
+		*Top shares and identification of those at the top in period t
+		*This is equivalent to S_t in top expression in page 16 of Gomez's paper
+		sum `varM' if `varM' >= `top' & `varM' != . ,  meanonly
+		
+		local St = r(sum)								// This is the share. Recall income is normalized already
+		local T = r(N)									// Number of observations at the top 
+		cap: gen idSt = `varM' >= `top' if `varM' != .  // This identifies individuals at the top in year t
+		
+		*Top shares and identification of those at the top in period t+p
+		sum `varMp' if `varMp' >= `topp' & `varMp' != . ,  meanonly
+		
+		local Stp = r(sum)									// This is the share 
+		local Tp = r(N)										// Number of observations at the top 
+		cap: gen idStp = `varMp' >= `topp' if `varMp' != . 	// This identifies individuals at the top in year t
+		
+		*Define Within share 
+			sum `varM'  if idSt == 1 & `varMp' != . ,meanonly   // Sum i\inT\Xd in eq. 21
+															   // We treat missing observations as death in eq. 21
+			local deno = r(sum)								   // Denominator eq. 21
+			
+			sum `varMp' if idSt == 1 & `varMp' != .,meanonly 	// t+p earnings for those who were at the top in t 
+			local nume = r(sum)
+			local Rwith = `nume'/`deno'-1.0
+				
+		*Define the displacement share (As in equation 22)
+			qui: gen aux = `varMp' - `topp'
+			sum aux if (idStp == 1 & idSt == 0), meanonly	
+			local RdispL = r(sum)/`St'
+			drop aux
+			
+			qui: gen aux = `topp' - `varMp' 
+			sum aux if (idStp == 0 & idSt == 1), meanonly			
+			local RdispR = r(sum)/`St'
+			drop aux
+			
+			local Rdisp = `RdispL' + `RdispR'
+		
+		*Define the Demographic Share. This has four pieces
+			*Sum of Ed--> This in individuals entering the top p percent in 
+			*year t+tau that where ${begin_age} - 1 in year t
+			qui: sum `varMp' if (idStp == 1 & `varM' == .), meanonly
+			local demo25 = r(sum)/`St'
+			local numE25 = r(N)
+			
+			*Sum (1+R)wit, is the last term in the death part
+			qui: sum `varM' if idSt == 1 & `varMp'== ., meanonly
+			local demo55 = r(sum)*(1+`Rwith')/`St'
+			local numX55 = r(N)
+			
+		
+			*(Xd-Ed)*qt+tau
+			local demoDiff =  ((`numX55' - `numE25')*`topp')/`St'
+			
+			*(T'+T)*q/Wt, is the fraction due to pop growth
+			local demoPop = ((`Tp'-`T')*`topp')/`St'
+			
+			*Left section 
+			local Rretir = (`demo25' + `demoDiff' - `demo55')
+			
+			local Rgrowth = `demoPop'		
+		
+		*Define the growth in share 
+		local gSt = `Rwith' + `Rdisp' + `Rretir' +`Rgrowth'
+		
+		/* This displays the results
+		disp `Rwith'
+		disp `Rdisp'
+		disp `Rretir'
+		disp `Rgrowth'
+		disp ""
+		disp `gSt'
+		disp (`Stp' - `St')/`St' 
+		disp ""
+		disp `St'
+		disp `Stp'
+		*/
+		
+		clear 
+		qui: set obs 1 
+		gen year = `yrl'
+		gen yearp = `yrl' + `p'
+		
+		gen St = `St'
+		gen Stp = `Stp'
+		gen gSt = (`Stp' - `St')/`St' 
+		gen Rwithin = `Rwith'
+		gen Rdispla = `Rdisp'
+		gen Rretir =  `Rretir'
+		gen Rgrowth = `Rgrowth'
+		
+		
+		label var St  "Share of Top 1% in year t"
+		label var Stp "Share of Top 1% in year t+`p'"
+		label var gSt "Growth of share of Top 1% between year t and t+`p'"
+		label var Rwithin "Part of growth by within change in income"
+		label var Rdispla "Part of growth by displacement"
+		label var Rretir "Part of growth by retirement"
+		label var Rgrowth "Part of growth by pop growth"
+		
+		*Save
+		
+		
+		*Define the sample. If we take all the sample the code does not enter here
+		if "`het'" != ""{
+			gen male = `het'
+			order year male yearp St Stp Rwithin Rdispla Rretir Rgrowth
+			qui: save `prefix'`varM'_`yrl'_gStPop`p'_male`het'.dta, replace	
+		}
+		else{
+			order year yearp St Stp Rwithin Rdispla Rretir Rgrowth
+			qui: save `prefix'`varM'_`yrl'_gStPop`p'.dta, replace	
+		}
+
+	restore 
+		
+end 
+
+
+
+*Program to calculate the change in concetration at the top of the distribution using 
+*the decomposition of "Displacement and the Rise in Top Wealth Inequality: by  Matthieu Gomez
+*This implements the version w/o population change. 
+program bymyCNTg
+
+	local varM   = "`1'"
+	local prefix = "`2'"
+	local suffix = "`3'"
+	local p = "`4'"
+	local qtile = "`5'"
+	
+	local varMp = "earnp`p'"
+	preserve
+		*Keep non-missing in period t 		
+		qui: drop if `varM'==.				
+		
+		*Keep non-missing in period t+p
+		qui: drop if `varMp'==.				// This ensure the population does not change
+		
+		*Calculate total income 
+		sum `varM',  meanonly
+		local tot = r(sum)
+		local numobs = r(N)
+		
+		*Calculate percentile 
+		_pctile `varM',p(`qtile')		// Income in t
+		local top =  r(r1)
+		
+		_pctile `varMp',p(`qtile')		// Income in t+p
+		local topp =  r(r1)
+		
+		*Top shares and identification of those at the top in period t
+		*This is equivalent to S_t in top expression in page 16 of Gomez's paper
+		sum `varM' if `varM' >= `top' & `varM' != . ,  meanonly
+		
+		local St = r(sum)/`tot'							// This is the share 
+		local Wt = r(sum)								// This is the sum
+		cap: gen idSt = `varM' >= `top' & `varM' != .  // This identifies individuals at the top in year t
+		
+		*Top shares and identification of those at the top in period t+p
+		sum `varMp' if `varMp' >= `topp' & `varMp' != . ,  meanonly
+		
+		local Stp = r(sum)/`tot'							// This is the share 
+		local Wtp = r(sum)									// This is the sum
+		cap: gen idStp = `varMp' >= `topp' & `varMp' != . 	// This identifies individuals at the top in year t
+		
+		*Define Within share 
+		sum `varMp' if idSt == 1 & `varMp' != . , meanonly	// t+p earnings for those who were at the top in t 
+		local aux = r(sum)
+		local Rwith = `aux'/`Wt'-1
+		
+		*Define displacement Share (As in equation 18)
+		sum `varMp' if (idStp == 1 & idSt == 0)		// Individuals that entered at the top
+		local RdispL = r(sum)
+		
+		sum `varMp' if (idStp == 0 & idSt == 1)		// Indicviduals that exited the top 
+		local RdispR = r(sum)
+		
+		local Rdisp = (`RdispL' - `RdispR')/`Wt'
+		
+		*Decomposing the displacement share (As in equation 19)
+		gen aux = `varMp' - `topp'
+		sum aux if (idStp == 1 & idSt == 0)		
+		local RdispL = r(sum)/`Wt'
+		drop aux
+		
+		gen aux = `topp' - `varMp' 
+		sum aux if (idStp == 0 & idSt == 1)		
+		local RdispR = r(sum)/`Wt'
+		drop aux
+		
+		*Define the growth in share 
+		local gSt = `Rwith' + `Rdisp'
+		
+		disp `Rwith'
+		disp `Rdisp'
+		disp `RdispL' + `RdispR'
+		disp `gSt'
+		disp (`Stp' - `St')/`St' 
+		
+		clear 
+		qui: set obs 1 
+		gen year = `suffix'
+		gen yearp = `suffix' + `p'
+		
+		gen St = `St'
+		gen Stp = `Stp'
+		gen Wt = `Wt'
+		gen Wtp = `Wtp'
+		gen gSt = (`Stp' - `St')/`St' 
+		gen Rwithin = `Rwith'
+		gen Rdispla = `Rdisp'
+		gen RdispL = `RdispL'
+		gen RdispR = `RdispR'
+		
+		
+		label var St  "Share of Top 1% in year t"
+		label var Stp "Share of Top 1% in year t+`p'"
+		label var gSt "Growth of share of Top 1% between year t and t+`p'"
+		label var Rwithin "Part of growth by within change in income"
+		label var Rdispla "Part of growth by displacement"
+		
+		*Save
+		order year yearp St Stp Wt Wtp Rwithin Rdispla
+		qui: save `prefix'`varM'_`suffix'_gSt`p'.dta, replace	
+	restore 
+		
+end 
+
 
 *Program to calculate the concetration measures 
 program bymyCNT 
@@ -204,16 +477,16 @@ program bymyCNT
 	sum `varM' if `varM' <= `p20',  meanonly
 	local q1share = 100*r(sum)/`tot'
 	
-	sum `varM' if `varM' > `p20' & `varM' <= `p40',  meanonly
+	sum `varM' if `varM' >= `p20' & `varM' <= `p40',  meanonly
 	local q2share = 100*r(sum)/`tot'
 	
-	sum `varM' if `varM' > `p40' & `varM' <= `p60',  meanonly
+	sum `varM' if `varM' >= `p40' & `varM' <= `p60',  meanonly
 	local q3share = 100*r(sum)/`tot'
 	
-	sum `varM' if `varM' > `p60' & `varM' <= `p80',  meanonly
+	sum `varM' if `varM' >= `p60' & `varM' <= `p80',  meanonly
 	local q4share = 100*r(sum)/`tot'
 	
-	sum `varM' if `varM' > `p80',  meanonly
+	sum `varM' if `varM' >= `p80',  meanonly
 	local q5share = 100*r(sum)/`tot'
 	
 	*Bottom and top 50%
@@ -223,22 +496,22 @@ program bymyCNT
 	
 	*Top shares
 	
-	sum `varM' if `varM' > `p90',  meanonly
+	sum `varM' if `varM' >= `p90',  meanonly
 	local top10share = 100*r(sum)/`tot'	
 	
-	sum `varM' if `varM' > `p95',  meanonly
+	sum `varM' if `varM' >= `p95',  meanonly
 	local top5share = 100*r(sum)/`tot'	
 	
-	sum `varM' if `varM' > `p99',  meanonly
+	sum `varM' if `varM' >= `p99',  meanonly
 	local top1share = 100*r(sum)/`tot'	
 	
-	sum `varM' if `varM' > `p995',  meanonly
+	sum `varM' if `varM' >= `p995',  meanonly
 	local top05share = 100*r(sum)/`tot'	
 	
-	sum `varM' if `varM' > `p999',  meanonly
+	sum `varM' if `varM' >= `p999',  meanonly
 	local top01share = 100*r(sum)/`tot'	
 	
-	sum `varM' if `varM' > `p9999',  meanonly
+	sum `varM' if `varM' >= `p9999',  meanonly
 	local top001share = 100*r(sum)/`tot'
 	
 	*Gini Coefficient

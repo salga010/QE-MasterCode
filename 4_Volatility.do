@@ -26,7 +26,7 @@ cd "$maindir${sep}out${sep}$outfolder"
 do "$maindir${sep}do${sep}myprogs.do"		
 
 // Defines the number of points in the Kernel Density Estimator
-global kpoints =  1000
+global kpoints =  400
 
 // Loop over the years
 timer clear 1

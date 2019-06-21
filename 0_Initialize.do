@@ -50,7 +50,7 @@ global year_var="year" 		// The variable name for year if the data is in long fo
 
 // Define these variables for your dataset
 global yrfirst = 1993 		// First year in the dataset 
-global yrlast =  2014 		// Last year in the dataset
+global yrlast =  2013 		// Last year in the dataset
 
 global kyear = 5
 	// This controls the years for which the empirical densities will be calculated.
@@ -66,7 +66,13 @@ global nquantilesalt = 40
 	
 global nquantilestran = 10 
 	// Number of quantiles used in the age transition matrix
-		
+	
+global qpercent = 99	
+	// Top percentile for which the change in top-share will be calculated. 
+	// In this case 99 implies top 1%. 
+	// Calculations are made using  Matthieu Gomez's paper
+	
+	
 global hetgroup = `" male age educ "male age" "male educ" "male educ age" "' 
 	// Define heterogenous groups for which time series stats will be calculated 
 

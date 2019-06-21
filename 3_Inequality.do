@@ -1,11 +1,13 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the time series of concetration and inequality
-// This version April 17, 2019
+// This version June 20, 2019
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 clear all
 set more off
+set type double
+ 
 // You should change the below directory. 
 
 *global maindir ="/Users/serdar/Dropbox/GLOBAL-MASTER-CODE/STATA/"
@@ -26,23 +28,74 @@ cd "$maindir${sep}out${sep}$outfolder"
 do "$maindir${sep}do${sep}myprogs.do"		
 
 // Defines the number of points in the Kernel Density Estimator
-global kpoints =  1000
+global kpoints =  400
 
 // Loop over the years
 timer clear 1
 timer on 1
 
+*Concetrations measures as in Gomez 2018
+foreach yr of numlist $yrlist{
+	*local yr = 1995
+	if `yr' <= ${yrlast} - 1{
+	
+	disp("Working in year `yr'")
+	local yrp = `yr' + 1
+	
+	// Load data 
+	use  male yob yod educ labor`yr' labor`yrp' using ///
+		"$maindir${sep}dta${sep}master_sample.dta" if (labor`yr'~=. | labor`yrp'~=.) , clear   
+	
+	// Create year
+	gen year=`yr'
+	
+	// Create age and restrict to CS sample
+	gen age = `yr'-yob+1
+	qui: drop if age<${begin_age} - 1 | age>${end_age}			// This keep 24 to 55 yrs old individuals
+	
+	// Rename labor income to earn in t and earn in t+p
+	rename labor`yr' earn
+	rename labor`yrp' earnp1 
+		
+	// Calculate measures of concetration and mobility at the top using 
+	// the decomposition of Matthieu Gomez "Displacement and the Rise in Top Wealth Inequality"
+	// This case is with population change as in equation (22) of the paper
+	
+	bymyCNTgPop "earn" "L_" "`yr'" "1"	"${qpercent}" ""
+	
+	*For men and women
+	forvalues mm = 0/1{
+		bymyCNTgPop "earn" "L_" "`yr'" "1"	"${qpercent}" "`mm'"
+	}
+	
+	}	
+}	// END loop over years 
+*/
+
 foreach yr of numlist $yrlist{
 	disp("Working in year `yr'")
+	*local yr = 1995
+	// Define some variables to calculate
+	local moreearn = ""
+	if `yr' <= ${yrlast} - 1{
+		local yrp = `yr' + 1
+		local moreearn = "labor`yrp'"
+	}
+	if `yr' <= ${yrlast} - 5{
+		local yrp = `yr' + 5
+		local moreearn = "`moreearn' labor`yrp'"
+	}
 	
+	// Load data 
 	if inlist(`yr',${perm3yrlist}){
-		use  male yob educ labor`yr' logearn`yr' researn`yr' permearn`yr' using ///
+		use  male yob educ labor`yr' logearn`yr' researn`yr' permearn`yr' `moreearn' using ///
 		"$maindir${sep}dta${sep}master_sample.dta" if labor`yr'~=. , clear   
 	}
 	else{
-		use  male yob educ labor`yr' logearn`yr' researn`yr' using ///
+		use  male yob educ labor`yr' logearn`yr' researn`yr' `moreearn' using ///
 		"$maindir${sep}dta${sep}master_sample.dta" if labor`yr'~=. , clear   
 	}
+	
 	// Create year
 	gen year=`yr'
 	
@@ -53,7 +106,7 @@ foreach yr of numlist $yrlist{
 	// Drop if log earnings does not exist
 	qui: drop if logearn==.
 	
-	// Gen earnings
+	// Gen earnings adjusted by the real min income
 	gen earn = labor`yr' if labor`yr'>=rmininc[`yr'-${yrfirst}+1,1]
 	
 	// A1. Moments of log earnings
@@ -108,13 +161,82 @@ foreach yr of numlist $yrlist{
 		bymyKDNmale "logearn" "L_" "${kpoints}" "`yr'"
 		
 	}
-
 	
 	// Calculate measures of concentration
-	bymyCNT "earn" "L_" "`yr'" 	
-	
+		bymyCNT "earn" "L_" "`yr'" 
+		
+	// Calculate measure of concetration within heterogeneity groups
+		qui{
+		*Male & Female
+		forvalues mm = 0/1{
+			preserve
+			keep if male == `mm'
+			bymyCNT "earn" "L_male`mm'" "`yr'" 
+			restore 
+		}
+		*Education groups
+		levelsof(educ), local(edu)
+		foreach ee of local edu{
+			preserve
+			keep if educ == `ee'
+			bymyCNT "earn" "L_educ`ee'" "`yr'" 
+			restore
+		}
+		*Age group 
+		gen agegp = . 
+		replace agegp = 1 if age <= 34 & agegp == .
+		replace agegp = 2 if age <= 44 & agegp == .
+		replace agegp = 3 if age <= 55 & agegp == .
+		
+		levelsof(agegp), local(agp)
+		foreach aa of local agp{
+			preserve
+			keep if agegp == `aa'
+			bymyCNT "earn" "L_age`aa'" "`yr'" 
+			restore
+		}
+		
+		*Same for men
+		levelsof(educ) if male == 1, local(edu)
+		foreach ee of local edu{
+			preserve
+			keep if male == 1
+			keep if educ == `ee'
+			bymyCNT "earn" "L_male1educ`ee'" "`yr'" 
+			restore
+		}
+		
+		levelsof(agegp) if male == 1, local(agp)
+		foreach aa of local agp{
+			preserve
+			keep if male == 1
+			keep if agegp == `aa'
+			bymyCNT "earn" "L_male1age`aa'" "`yr'" 
+			restore
+		}
+		*Same for women
+		levelsof(educ) if male == 0, local(edu)
+		foreach ee of local edu{
+			preserve
+			keep if male == 0
+			keep if educ == `ee'
+			bymyCNT "earn" "L_male0educ`ee'" "`yr'" 
+			restore
+		}
+		
+		levelsof(agegp) if male == 0, local(agp)
+		foreach aa of local agp{
+			preserve
+			keep if male == 0
+			keep if agegp == `aa'
+			bymyCNT "earn" "L_male0age`aa'" "`yr'" 
+			restore
+		}
+		}	// END of qui statement
+		
 } // END of loop over years
 
+*
 
 // Collect data across years 
 clear
@@ -259,7 +381,7 @@ foreach yr of numlist $yrlist{
 	}
 	
 } 
-outsheet using "$maindir${sep}out${sep}$outfolder/L_logearn_hist_male.csv", replace comma
+	outsheet using "$maindir${sep}out${sep}$outfolder/L_logearn_hist_male.csv", replace comma
 
 
 // Collect data across years for the concentration measures 
@@ -268,10 +390,111 @@ foreach yr of numlist $yrlist{
 	append using "$maindir${sep}out${sep}$outfolder/L_earn_`yr'_con.dta"
 	erase "$maindir${sep}out${sep}$outfolder/L_earn_`yr'_con.dta"	
 } 
-//save "$maindir${sep}out${sep}$outfolder/L_earn_con.dta", replace
-outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con.csv", replace comma
-// Time series statistics for annual earnings is computed above! 
+	//save "$maindir${sep}out${sep}$outfolder/L_earn_con.dta", replace
+	outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con.csv", replace comma
 
+// Collect data across years for the concentration measures for heterogeneoty groups
+	*Men and Women 
+	clear
+	foreach yr of numlist $yrlist{
+		foreach mm in 0 1{
+		append using "$maindir${sep}out${sep}$outfolder/L_male`mm'earn_`yr'_con.dta"
+		erase "$maindir${sep}out${sep}$outfolder/L_male`mm'earn_`yr'_con.dta"	
+		cap:gen male = `mm' 
+		cap:replace male = `mm'  if male == .
+		}
+	} 
+		//save "$maindir${sep}out${sep}$outfolder/L_earn_con.dta", replace
+		order male
+		outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con_male.csv", replace comma
+
+	*Age	
+	clear
+	foreach yr of numlist $yrlist{
+		foreach mm in 1 2 3{
+		append using "$maindir${sep}out${sep}$outfolder/L_age`mm'earn_`yr'_con.dta"
+		erase "$maindir${sep}out${sep}$outfolder/L_age`mm'earn_`yr'_con.dta"	
+		cap:gen agegp = `mm' 
+		cap:replace agegp = `mm'  if agegp == .
+		}
+	}	
+		//save "$maindir${sep}out${sep}$outfolder/L_earn_con.dta", replace
+		order agegp
+		outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con_age.csv", replace comma
+	*Age and gender
+	clear
+	foreach yr of numlist $yrlist{
+		foreach mm in 1 2 3{
+		foreach aa in 0 1 {
+			append using "$maindir${sep}out${sep}$outfolder/L_male`aa'age`mm'earn_`yr'_con.dta"
+			erase "$maindir${sep}out${sep}$outfolder/L_male`aa'age`mm'earn_`yr'_con.dta"	
+			cap:gen agegp = `mm' 
+			cap:replace agegp = `mm'  if agegp == .
+			cap:gen male = `mm' 
+			cap:replace male = `mm'  if male == .
+		}
+		}
+	}	
+		//save "$maindir${sep}out${sep}$outfolder/L_earn_con.dta", replace
+		order male agegp
+		outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con_male_age.csv", replace comma
+
+	
+	
+	*Educ	
+	clear
+	foreach yr of numlist $yrlist{
+		foreach mm in 1 2 3{
+		append using "$maindir${sep}out${sep}$outfolder/L_educ`mm'earn_`yr'_con.dta"
+		erase "$maindir${sep}out${sep}$outfolder/L_educ`mm'earn_`yr'_con.dta"	
+		cap:gen educ = `mm' 
+		cap:replace educ = `mm'  if educ == .
+		}
+	}	
+		//save "$maindir${sep}out${sep}$outfolder/L_earn_con.dta", replace
+		order educ
+		outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con_educ.csv", replace comma
+		
+	*Education and Gender
+	clear
+	foreach yr of numlist $yrlist{
+		foreach mm in 1 2 3{
+		foreach aa in 0 1 {
+		append using "$maindir${sep}out${sep}$outfolder/L_male`aa'educ`mm'earn_`yr'_con.dta"
+		erase "$maindir${sep}out${sep}$outfolder/L_male`aa'educ`mm'earn_`yr'_con.dta"	
+		cap:gen educ = `mm' 
+		cap:replace educ = `mm'  if educ == .
+		cap:gen male = `mm' 
+		cap:replace male = `mm'  if male == .
+		}
+		}
+	}	
+		//save "$maindir${sep}out${sep}$outfolder/L_earn_con.dta", replace
+		order male educ
+		outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con_male_educ.csv", replace comma
+
+	
+// Collect data across years for the contration growth measures between t and t+1
+clear
+foreach yr of numlist $yrlist{
+	if `yr' <= ${yrlast} - 1{
+		append using "$maindir${sep}out${sep}$outfolder/L_earn_`yr'_gStPop1.dta"
+		erase "$maindir${sep}out${sep}$outfolder/L_earn_`yr'_gStPop1.dta"	
+	}
+} 
+	//save "$maindir${sep}out${sep}$outfolder/L_earn_con.dta", replace
+	outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_gStPop1.csv", replace comma
+clear
+foreach yr of numlist $yrlist{
+	if `yr' <= ${yrlast} - 1{
+		forvalues mm = 0/1{
+		append using "$maindir${sep}out${sep}$outfolder/L_earn_`yr'_gStPop1_male`mm'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/L_earn_`yr'_gStPop1_male`mm'.dta"	
+		}
+	}
+} 
+	//save "$maindir${sep}out${sep}$outfolder/L_earn_con.dta", replace
+	outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_gStPop1_male.csv", replace comma
 
 timer off 1
 timer list 1

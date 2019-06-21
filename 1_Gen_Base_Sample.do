@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the base sample 
-// This version May 16, 2019
+// This version June 20, 2019
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -9,7 +9,7 @@ set more off
 
 // PLEASE MAKE THE APPROPRIATE CHANGES BELOW. 
 // You should change the below directory. 
-*global maindir ="/Users/serdar/Dropbox/GLOBAL-MASTER-CODE/STATA/"
+*global maindir ="/Users/serdar/Dropbox/GLOBAL-MASTER-CODE/STATA"
 global maindir ="/Users/sergiosalgado/Dropbox/GLOBAL-MASTER-CODE/STATA"
 
 do "$maindir/do/0_Initialize.do"
@@ -95,14 +95,13 @@ forvalues yr = $yrfirst/$yrlast{
 
 	rename ${labor_var}`yr' labor`yr'
 	
-	label var labor`yr' "Labor earnings in `yr'"
+	label var labor`yr' "Real labor earnings in `yr'"
 
 	// Covert to real values
 	// Criteria d (Inflation) in CS Sample
 	
 	local cpi_index = `yr'-${yrfirst}+1
-	local deflate = cpimat[${base_price_index},1]/cpimat[`cpi_index',1]
-	replace labor`yr'=labor`yr'*`deflate'		//Coverting to real values
+	replace labor`yr'=labor`yr'/cpimat[`cpi_index',1]		//Coverting to real values
 	
 	// Winsorization
 	gen temp=labor`yr' if `yr'-yob+1>= $begin_age & `yr'- yob+1<= $end_age & `yr'< yod  // yod=. id very big number  
@@ -189,8 +188,8 @@ forvalues yr = $yrfirst/$yrlast{
 	sort personid
 	
 	// Save data set for later append
-	label var researn`yr' "Residual log-labor earnings of year `yr'"
-	label var logearn`yr' "Log-labor earnings of year `yr' above min threshold"
+	label var researn`yr' "Residual of real log-labor earnings of year `yr'"
+	label var logearn`yr' "Real log-labor earnings of year `yr' above min threshold"
 	save "researn`yr'.dta", replace
 }
 
