@@ -444,7 +444,7 @@ foreach yr of numlist $yrlist{
 	*Educ	
 	clear
 	foreach yr of numlist $yrlist{
-		foreach mm in 1 2 3{
+		foreach mm in 1 2 3 4{
 		append using "$maindir${sep}out${sep}$outfolder/L_educ`mm'earn_`yr'_con.dta"
 		erase "$maindir${sep}out${sep}$outfolder/L_educ`mm'earn_`yr'_con.dta"	
 		cap:gen educ = `mm' 
@@ -458,7 +458,7 @@ foreach yr of numlist $yrlist{
 	*Education and Gender
 	clear
 	foreach yr of numlist $yrlist{
-		foreach mm in 1 2 3{
+		foreach mm in 1 2 3 4{
 		foreach aa in 0 1 {
 		append using "$maindir${sep}out${sep}$outfolder/L_male`aa'educ`mm'earn_`yr'_con.dta"
 		erase "$maindir${sep}out${sep}$outfolder/L_male`aa'educ`mm'earn_`yr'_con.dta"	

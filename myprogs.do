@@ -183,7 +183,7 @@ program bymyCNTgPop
 	local yrpl = `yrl'+1
 	
 	
-	preserve
+	*preserve
 	
 		*Defines whether we are calculating the concetration decompisition within 
 		*Gender groups. Het must take values 1 (for men) or 0 (for women)
@@ -194,15 +194,16 @@ program bymyCNTgPop
 		*Normalizing individual income (i.e. `varmM' is the individual share on total income)
 		sum `varM'  if (`varM' >= rmininc[`yrl'-${yrfirst}+1,1]) & `varM' != .,  meanonly
 		qui: gen double aux = 100*`varM'/r(sum)	
+		local totM = r(sum)
 		drop `varM'
 		rename aux `varM'
-		local totM = r(sum)
-
+		
 		sum `varMp' if (`varMp' >= rmininc[`yrpl'-${yrfirst}+1,1]) & `varMp' != .,  meanonly
 		qui: gen double aux = 100*`varMp'/r(sum)	
+		local totMp = r(sum)
 		drop `varMp'
 		rename aux `varMp'
-		local totMp = r(sum)
+		
 		
 		*Calculate percentile 
 		_pctile `varM'  if (`varM'  >= 100*rmininc[`yrl'-${yrfirst}+1,1]/`totM')  & `varM' != .  ,p(`qtile')		// Income in t
