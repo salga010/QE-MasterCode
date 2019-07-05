@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the time series of Mobility
-// This version April 22, 2019
+// This version July 05, 2019
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -197,8 +197,8 @@ foreach yr of numlist $d1yrlist{
 *
 // Calculating Transition Rates
 local firstyr = $yrfirst + 1
-
-foreach subgp in 5 10 15 20 {				// This is the of years that will be used for the jump from t to t+subgp
+local jumplist = "5 10 15 20"
+foreach subgp of local jumplist {				// This is the of years that will be used for the jump from t to t+subgp
 	local yrmax = ${yrlast} - `subgp' - 1	// This should not be negative, make sure that ${yrlast} > `subgp' - 1 for at least 
 											// one year in the sample. The -1 is necessary to ensure we are looking to mid year 
 											// of the calculation of alt permanent income measure
@@ -237,18 +237,34 @@ foreach subgp in 5 10 15 20 {				// This is the of years that will be used for t
 		}
 		
 		// Raking in year t
-		qui: gen permearnaltrankt = .					// Re uses the rank on perm income alt
-		qui: bys agegp: bymyxtile permearnalt`yr' permearnaltrankt "${nquantilestran}"	
-		
-		// Create rank and average in year `subgp' yrs ahead 
-		qui: gen permearnaltranktp = .
-		qui: bys agegp: bymyxtile permearnalt`yrt' permearnaltranktp "${nquantilestran}"
-		
-		// Create the transition shares
-		qui: bymyTranMat "permearnaltrankt" "permearnaltranktp" "T_`subgp'_`yr'_" "year subg agegp"
-			// You might notice some errors of the form __00001J not found
-			// this happen when no individual has transited across two cells. The code 
-			// corrects for those assigning a 0
+			qui: gen permearnaltrankt = .					// Re uses the rank on perm income alt
+			gen temp =  permearnalt`yr' if  permearnalt`yr' >= 0.01*rmininc[`yr'-${yrfirst}+1,1] 
+			
+			qui: bys agegp: bymyxtile temp permearnaltrankt "${nquantilestran}"	
+			
+			replace permearnaltrankt = 0 ///
+				if permearnalt`yr' < 0.01*rmininc[`yr'-${yrfirst}+1,1] & permearnalt`yr' != .
+			rename permearnalt`yr' permearnalt	
+			qui: bymysum "permearnalt" "L_agegp" "`subgp'_`yr'" "year agegp permearnaltrankt"	
+			drop temp
+			
+			// Create rank and average in year `subgp' yrs ahead 
+			qui: gen permearnaltranktp = .
+			gen temp =  permearnalt`yrt' if  permearnalt`yrt' >= 0.01*rmininc[`yrt'-${yrfirst}+1,1] 
+			qui: bys agegp: bymyxtile temp permearnaltranktp "${nquantilestran}"
+			
+			replace permearnaltranktp = 0 ///
+				if permearnalt`yrt' < 0.01*rmininc[`yrt'-${yrfirst}+1,1] & permearnalt`yrt' != .
+			rename permearnalt`yrt' permearnaltp
+			qui: bymysum "permearnaltp" "L_agegp" "`subgp'_`yr'" "year agegp permearnaltranktp"	
+			drop temp 
+			
+			// Create the transition shares
+			qui: bymyTranMat "permearnaltrankt" "permearnaltranktp" "T_`subgp'_`yr'_" "year subg agegp"
+				// You might notice some errors of the form __00001J not found
+				// this happen when no individual has transited across two cells. The code 
+				// corrects for those assigning a 0
+			
 		
 	}	// END of loop over years 
 }	// END loop over groups
@@ -347,7 +363,7 @@ outsheet using "$maindir${sep}out${sep}$outfolder/L_agegppermearnalt_mobstat.csv
 // Collects data on transition matrix
 clear 
 local firstyr = $yrfirst + 1
-foreach subgp in 5 10 15 20 {				
+foreach subgp of local jumplist {				
 	local yrmax = ${yrlast} - `subgp' - 1										
     if `yrmax' < 0 {
 		continue
@@ -360,6 +376,57 @@ foreach subgp in 5 10 15 20 {
 }
 	sort year subg agegp permearnaltrankt movecount* share* 
 	outsheet using "$maindir${sep}out${sep}$outfolder/T_permearnalt_tranmat.csv", replace comma
+
+
+*Statistics
+	clear 
+	local firstyr = $yrfirst + 1
+foreach subgp of local jumplist {
+		local yrmax = ${yrlast} - `subgp' - 1										
+		if `yrmax' < 0 {
+			continue
+			// This ensure the calculation only happens if yrmax > 0
+		}
+		forvalues yr = `firstyr'/`yrmax'	{	
+			append using "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnalt`subgp'_`yr'.dta"
+			erase "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnalt`subgp'_`yr'.dta"
+		}
+		cap: gen subg  = `subgp'
+		cap: replace subg  = `subgp' if subg == . 
+	}
+		sort year subg agegp permearnaltrankt 
+		order year subg agegp permearnaltrankt 
+		save "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnalt.dta", replace
+		
+	clear 
+	local firstyr = $yrfirst + 1
+	foreach subgp of local jumplist {				
+		local yrmax = ${yrlast} - `subgp' - 1										
+		if `yrmax' < 0 {
+			continue
+			// This ensure the calculation only happens if yrmax > 0
+		}
+		forvalues yr = `firstyr'/`yrmax'	{	
+			append using "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnaltp`subgp'_`yr'.dta"
+			erase "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnaltp`subgp'_`yr'.dta"
+		}
+		cap: gen subg  = `subgp'
+		cap: replace subg  = `subgp' if subg == . 
+	}
+		rename permearnaltranktp permearnaltrankt
+		sort year subg agegp permearnaltrankt 
+		order year subg agegp permearnaltrankt 
+		save "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnaltp.dta", replace
+		
+	use "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnalt.dta", clear 
+	merge 1:1 year subg agegp permearnaltrankt ///
+		using "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnaltp.dta", nogenerate
+		sort year subg agegp permearnaltrankt
+		order year subg agegp permearnaltrankt
+	*save "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnalt_summ.dta", replace
+	outsheet using "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnalt_summ.csv", replace comma
+	erase "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnalt.dta" 
+	erase "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnaltp.dta" 
 
 timer off 1
 timer list 1

@@ -384,8 +384,10 @@ forvalues yr = `firstyr'/`lastyr'{
 	drop if totearn==.
 	
 	bys male age: egen avg = mean(totearn)
+	bys male: egen avgall = mean(totearn)
+		
+	gen permearnalt`yr' = avgall*totearn/avg					// This is because we want to control for age effects
 	
-	gen permearnalt`yr' = totearn/avg
 	
 	// Save 
 	keep personid permearnalt`yr'
