@@ -183,7 +183,7 @@ program bymyCNTgPop
 	local yrpl = `yrl'+1
 	
 	
-	*preserve
+	preserve
 	
 		*Defines whether we are calculating the concetration decompisition within 
 		*Gender groups. Het must take values 1 (for men) or 0 (for women)
