@@ -1,9 +1,14 @@
 Log of Changes 
 First version April, 19, 2019
-This  version July, 05, 2019 
+This  version August, 14, 2019 
 Serdar Ozkan (serdar.ozkan@toronto.ca)
-Sergio Salgado (salga010@umn.edu)
+Sergio Salgado (ssalgado@wharton.upenn.edu)
 ----------------
+
+August, 14, 2019
+
+We have modified 1_Gen_Sample.do so now it records the gender for which the profiles are calculated. These changes are made between lines 210 and 236
+
 
 July, 05, 2019 
 
