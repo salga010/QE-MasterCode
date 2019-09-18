@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the base sample 
-// This version June 20, 2019
+// This version August 14, 2019
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -10,7 +10,7 @@ set more off
 // PLEASE MAKE THE APPROPRIATE CHANGES BELOW. 
 // You should change the below directory. 
 *global maindir ="/Users/serdar/Dropbox/GLOBAL-MASTER-CODE/STATA"
-global maindir ="/Users/sergiosalgado/Dropbox/GLOBAL-MASTER-CODE/STATA"
+global maindir ="/Users/sergiosalgado/Dropbox/NORWAY_QE/STATA/"
 
 do "$maindir/do/0_Initialize.do"
 
@@ -211,20 +211,28 @@ save "researn.dta", replace
 clear
 forvalues yr = $yrfirst/$yrlast{
 	append using age_educ_yr`yr'_m.dta
+	cap: gen male = 1 
+	cap: replace male = 1 if male == . 
 	erase age_educ_yr`yr'_m.dta
 	append using age_educ_yr`yr'_f.dta
+	cap: replace male = 0 if male == . 
 	erase age_educ_yr`yr'_f.dta	
 }
+order year male 
 save "age_educ_dums.dta", replace 
 
 // Appending coefficients of age for gender groups 
 clear
 forvalues yr = $yrfirst/$yrlast{
 	append using age_yr`yr'_m.dta
+	cap: gen male = 1 
+	cap: replace male = 1 if male == .
 	erase age_yr`yr'_m.dta
 	append using age_yr`yr'_f.dta
+	cap: replace male = 0 if male == . 
 	erase age_yr`yr'_f.dta	
 }
+order year male 
 save "age_dums.dta", replace 
 // END: coefficients appending complete
 
