@@ -462,8 +462,8 @@ foreach yr of numlist $yrlist{
 	clear
 	foreach yr of numlist $yrlist{
 		foreach mm in 1 2 3{
-		append using "$maindir${sep}out${sep}$outfolder/L_educ`mm'earn_`yr'_con.dta"
-		erase "$maindir${sep}out${sep}$outfolder/L_educ`mm'earn_`yr'_con.dta"	
+		cap: append using "$maindir${sep}out${sep}$outfolder/L_educ`mm'earn_`yr'_con.dta"
+		cap: erase "$maindir${sep}out${sep}$outfolder/L_educ`mm'earn_`yr'_con.dta"	
 		cap:gen educ = `mm' 
 		cap:replace educ = `mm'  if educ == .
 		}
@@ -477,8 +477,8 @@ foreach yr of numlist $yrlist{
 	foreach yr of numlist $yrlist{
 		foreach mm in 1 2 3{
 		foreach aa in 0 1 {
-		append using "$maindir${sep}out${sep}$outfolder/L_male`aa'educ`mm'earn_`yr'_con.dta"
-		erase "$maindir${sep}out${sep}$outfolder/L_male`aa'educ`mm'earn_`yr'_con.dta"	
+		cap: append using "$maindir${sep}out${sep}$outfolder/L_male`aa'educ`mm'earn_`yr'_con.dta"
+		cap: erase "$maindir${sep}out${sep}$outfolder/L_male`aa'educ`mm'earn_`yr'_con.dta"	
 		cap:gen educ = `mm' 
 		cap:replace educ = `mm'  if educ == .
 		cap:gen male = `mm' 
