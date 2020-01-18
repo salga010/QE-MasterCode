@@ -1,9 +1,19 @@
 Log of Changes 
 First version April, 19, 2019
-This  version August, 14, 2019 
+This  version January, 18, 2019 
 Serdar Ozkan (serdar.ozkan@toronto.ca)
 Sergio Salgado (ssalgado@wharton.upenn.edu)
 ----------------
+
+January, 18, 2019
+
+Updated the codes to the version 2.0; This new version of the code contains several major changes relative to the original version of April 2019. Among others 
+
+- Adds a new set of results for the arc-percent change in income
+- Modifies the change income growth measure to allow for declines below the min value in t+k. 
+- Adds new features to the plots such as recession bars and differential color schemes.
+- Adds several new plots: density plots, cohort plots, etc. 
+
 
 August, 14, 2019
 
