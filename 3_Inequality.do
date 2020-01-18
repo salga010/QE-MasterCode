@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the time series of concetration and inequality
-// This version June 20, 2019
+// This version Dec 01, 2019
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -34,47 +34,9 @@ global kpoints =  400
 timer clear 1
 timer on 1
 
-*Concetrations measures as in Gomez 2018
-foreach yr of numlist $yrlist{
-	*local yr = 1995
-	if `yr' <= ${yrlast} - 1{
-	
-	disp("Working in year `yr'")
-	local yrp = `yr' + 1
-	
-	// Load data 
-	use  male yob yod educ labor`yr' labor`yrp' using ///
-		"$maindir${sep}dta${sep}master_sample.dta" if (labor`yr'~=. | labor`yrp'~=.) , clear   
-	
-	// Create year
-	gen year=`yr'
-	
-	// Create age and restrict to CS sample
-	gen age = `yr'-yob+1
-	qui: drop if age<${begin_age} - 1 | age>${end_age}			// This keep 24 to 55 yrs old individuals
-	
-	// Rename labor income to earn in t and earn in t+p
-	rename labor`yr' earn
-	rename labor`yrp' earnp1 
-		
-	// Calculate measures of concetration and mobility at the top using 
-	// the decomposition of Matthieu Gomez "Displacement and the Rise in Top Wealth Inequality"
-	// This case is with population change as in equation (22) of the paper
-	
-	bymyCNTgPop "earn" "L_" "`yr'" "1"	"${qpercent}" ""
-	
-	*For men and women
-	forvalues mm = 0/1{
-		bymyCNTgPop "earn" "L_" "`yr'" "1"	"${qpercent}" "`mm'"
-	}
-	
-	}	
-}	// END loop over years 
-*/
-
 foreach yr of numlist $yrlist{
 	disp("Working in year `yr'")
-	*local yr = 1995
+// 	local yr = 2000			// For checking bugs
 	// Define some variables to calculate
 	local moreearn = ""
 	if `yr' <= ${yrlast} - 1{
@@ -103,11 +65,20 @@ foreach yr of numlist $yrlist{
 	gen age = `yr'-yob+1
 	qui: drop if age<${begin_age} | age>${end_age}
 	
+	// Create the alternative age/cohort for plots
+	qui: sum yob
+	local minyob = r(min) 		
+	gen yob2 = yob + mod(`minyob',${mergecohort}) - mod(yob,${mergecohort})
+	
+	gen agealt = `yr'-yob2+1
+	qui: drop if agealt<${begin_age} | agealt>${end_age}
+	
 	// Drop if log earnings does not exist
 	qui: drop if logearn==.
 	
 	// Gen earnings adjusted by the real min income
 	gen earn = labor`yr' if labor`yr'>=rmininc[`yr'-${yrfirst}+1,1]
+
 	
 	// A1. Moments of log earnings
 	// Calculate cross sectional moments for year `yr'
@@ -117,7 +88,7 @@ foreach yr of numlist $yrlist{
 	bymyPCT "logearn" "L_" "_`yr'" "year"
 	
 	// Calculate cross sectional moments for year `yr' within heterogeneity groups
-	foreach  vv in $hetgroup{ 
+	foreach  vv in $hetgroup "male agealt"{ 
 		local suf=subinstr("`vv'"," ","",.)
 		
 		bymysum "logearn" "L_" "_`suf'`yr'" "year `vv'"
@@ -131,7 +102,7 @@ foreach yr of numlist $yrlist{
 	bymyPCT "researn" "L_" "_`yr'" "year"
 	
 	// Calculate cross sectional moments for year `yr' within heterogeneity groups
-	foreach  vv in $hetgroup{ 
+	foreach  vv in $hetgroup "male agealt"{ 
 		local suf=subinstr("`vv'"," ","",.)
 		
 		bymysum "researn" "L_" "_`suf'`yr'" "year `vv'"
@@ -139,13 +110,14 @@ foreach yr of numlist $yrlist{
 		bymyPCT "researn" "L_" "_`suf'`yr'" "year `vv'"
 	}
 	
+	
 	// B4. Moments of Permanent Income
 	if inlist(`yr',${perm3yrlist}){
 		bymysum "permearn" "L_" "_`yr'" "year"
 	
 		bymyPCT "permearn" "L_" "_`yr'" "year"
 		
-		foreach  vv in $hetgroup{ 
+		foreach  vv in $hetgroup "male agealt"{ 
 			local suf=subinstr("`vv'"," ","",.)
 		
 			bymysum "permearn" "L_" "_`suf'`yr'" "year `vv'"
@@ -154,16 +126,21 @@ foreach yr of numlist $yrlist{
 		}
 	}
 	
+	
 	// Calculate Empirical Density 
 	if mod(`yr',${kyear}) == 0 {
 		bymyKDN "logearn" "L_" "${kpoints}" "`yr'"
 		
-		bymyKDNmale "logearn" "L_" "${kpoints}" "`yr'"
-		
+		bymyKDNmale "logearn" "L_" "${kpoints}" "`yr'"		
 	}
-	
+
 	// Calculate measures of concentration
 		bymyCNT "earn" "L_" "`yr'" 
+		
+	// Calculate the tail coefficients and shares of earnings
+		bymyAAT "earn" "AI_" "`yr'"
+	
+		bymyRAT "earn" "RI_" "`yr'"
 		
 	// Calculate measure of concetration within heterogeneity groups
 		qui{
@@ -233,8 +210,47 @@ foreach yr of numlist $yrlist{
 			restore
 		}
 		}	// END of qui statement
-		
 } // END of loop over years
+
+
+*Concentrations measures as in Gomez 2018
+foreach yr of numlist $yrlist{
+	*local yr = 1995
+	if `yr' <= ${yrlast} - 1{
+	
+	disp("Working in year `yr'")
+	local yrp = `yr' + 1
+	
+	// Load data 
+	use  male yob yod educ labor`yr' labor`yrp' using ///
+		"$maindir${sep}dta${sep}master_sample.dta" if (labor`yr'~=. | labor`yrp'~=.) , clear   
+	
+	// Create year
+	gen year=`yr'
+	
+	// Create age and restrict to CS sample
+	gen age = `yr'-yob+1
+	qui: drop if age<${begin_age} - 1 | age>${end_age}			// This keep 24 to 55 yrs old individuals
+	
+	// Rename labor income to earn in t and earn in t+p
+	rename labor`yr' earn
+	rename labor`yrp' earnp1 
+		
+	// Calculate measures of concentration and mobility at the top using 
+	// the decomposition of Matthieu Gomez "Displacement and the Rise in Top Wealth Inequality"
+	// This case is with population change as in equation (22) of the paper
+	
+	bymyCNTgPop "earn" "L_" "`yr'" "1"	"${qpercent}" ""
+	
+	*For men and women
+	forvalues mm = 0/1{
+		bymyCNTgPop "earn" "L_" "`yr'" "1"	"${qpercent}" "`mm'"
+	}
+	
+	}	
+}	// END loop over years 
+*/
+
 
 *
 
@@ -264,7 +280,7 @@ foreach yr of numlist $yrlist{
 outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace comma
 
 // Collect data across all years and heterogeneity groups. saves one output file per group 
-foreach  vv in $hetgroup{
+foreach  vv in $hetgroup "male agealt"{
 
 	clear 
 	local suf=subinstr("`vv'"," ","",.)
@@ -287,6 +303,7 @@ foreach  vv in $hetgroup{
 	
 	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'_sumstat.csv", replace comma 		
 } 	// END loop over heterogeneity group
+
 
 }	// END loop over variables 
 
@@ -316,7 +333,7 @@ foreach yr of numlist $perm3yrlist{
 outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace comma
 
 // Collect data across all years and heterogeneity groups. saves one output file per group 
-foreach  vv in $hetgroup{
+foreach  vv in $hetgroup "male agealt"{
 
 	clear 
 	local suf=subinstr("`vv'"," ","",.)
@@ -444,7 +461,7 @@ foreach yr of numlist $yrlist{
 	*Educ	
 	clear
 	foreach yr of numlist $yrlist{
-		foreach mm in 1 2 3 4{
+		foreach mm in 1 2 3{
 		append using "$maindir${sep}out${sep}$outfolder/L_educ`mm'earn_`yr'_con.dta"
 		erase "$maindir${sep}out${sep}$outfolder/L_educ`mm'earn_`yr'_con.dta"	
 		cap:gen educ = `mm' 
@@ -458,7 +475,7 @@ foreach yr of numlist $yrlist{
 	*Education and Gender
 	clear
 	foreach yr of numlist $yrlist{
-		foreach mm in 1 2 3 4{
+		foreach mm in 1 2 3{
 		foreach aa in 0 1 {
 		append using "$maindir${sep}out${sep}$outfolder/L_male`aa'educ`mm'earn_`yr'_con.dta"
 		erase "$maindir${sep}out${sep}$outfolder/L_male`aa'educ`mm'earn_`yr'_con.dta"	
@@ -473,6 +490,22 @@ foreach yr of numlist $yrlist{
 		order male educ
 		outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con_male_educ.csv", replace comma
 
+// Collects the data on ratios 
+clear
+foreach yr of numlist $yrlist{
+		append using "$maindir${sep}out${sep}$outfolder/RI_earn_`yr'_idex.dta"
+		erase "$maindir${sep}out${sep}$outfolder/RI_earn_`yr'_idex.dta"	
+} 	
+		outsheet using "$maindir${sep}out${sep}$outfolder/RI_earn_idex.csv", replace comma
+	
+// Collects the data on ratios 
+clear
+foreach yr of numlist $yrlist{
+		append using "$maindir${sep}out${sep}$outfolder/AI_earn_`yr'_idex.dta"
+		erase "$maindir${sep}out${sep}$outfolder/AI_earn_`yr'_idex.dta"	
+} 	
+		outsheet using "$maindir${sep}out${sep}$outfolder/AI_earn_idex.csv", replace comma
+	
 	
 // Collect data across years for the contration growth measures between t and t+1
 clear

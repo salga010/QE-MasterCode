@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the base sample 
-// This version August 14, 2019
+// This version Nov 30, 2019
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -10,7 +10,7 @@ set more off
 // PLEASE MAKE THE APPROPRIATE CHANGES BELOW. 
 // You should change the below directory. 
 *global maindir ="/Users/serdar/Dropbox/GLOBAL-MASTER-CODE/STATA"
-global maindir ="/Users/sergiosalgado/Dropbox/NORWAY_QE/STATA/"
+global maindir ="/Users/ssalgado/Dropbox/GLOBAL-MASTER-CODE/STATA/"
 
 do "$maindir/do/0_Initialize.do"
 
@@ -150,10 +150,12 @@ forvalues yr = $yrfirst/$yrlast{
 	// Create log earn if earnings above the min treshold
 	// Criteria c (Trimming) in CS Sample
 	// Notice we do not drop the observations but log-earnings are generated for those with
-	// income about the min threshold
+	// income below 1/3*min threshold. Variable logearn`yr'c is used for growth rates conditional
+	// on permanent income only
 	
 	gen logearn`yr' = log(labor`yr') if labor`yr'>=rmininc[`yr'-${yrfirst}+1,1] & labor`yr'!=. 
-	drop if logearn==.
+	gen logearnc`yr' = log(labor`yr') if labor`yr'>=(1/3)*rmininc[`yr'-${yrfirst}+1,1] & labor`yr'!=. 
+	
 	
 	// Create dummies for age and education groups
 	tab age, gen(agedum)
@@ -172,6 +174,13 @@ forvalues yr = $yrfirst/$yrlast{
 	
 	predict temp_f if e(sample)==1, resid
 	
+	// Regressions for residuals earnings with income above 1/3*minincome
+	regress logearnc`yr' agedum* if male==1
+	predict temp_m_c if e(sample)==1, resid
+	
+	regress logearnc`yr' agedum* if male==0
+	predict temp_f_c if e(sample)==1, resid
+	
 	// Regressions for profiles
 	statsby _b,  by(year) saving(age_educ_yr`yr'_m,replace):  ///
 	regress logearn`yr' educdum* agedum* if male==1
@@ -183,13 +192,19 @@ forvalues yr = $yrfirst/$yrlast{
 	// Generate the residuals by year and save a database for later append.
 	gen researn`yr'= temp_m
 	replace researn`yr'= temp_f if male==0
+	
+	gen researnc`yr'= temp_m_c
+	replace researnc`yr'= temp_f_c if male==0 
+	
 
-	keep personid researn`yr' logearn`yr'
+	keep personid researn`yr' researnc`yr' logearn`yr' logearnc`yr' labor`yr' male age
 	sort personid
 	
 	// Save data set for later append
 	label var researn`yr' "Residual of real log-labor earnings of year `yr'"
 	label var logearn`yr' "Real log-labor earnings of year `yr' above min threshold"
+	label var researnc`yr' "Residual of real log-labor earnings of year `yr' above 1/3*min threshold"
+	label var logearnc`yr' "Real log-labor earnings of year `yr' above 1/3*min threshold"
 	save "researn`yr'.dta", replace
 }
 
@@ -247,13 +262,20 @@ foreach k in 1 5{
 	
 		local yrnext=`yr'+`k'
 
-		use personid researn`yr' researn`yrnext' using researn.dta, clear
-		gen researn`k'F`yr'= researn`yrnext'-researn`yr'
+		use personid male age researn`yr' researn`yrnext' researnc`yrnext' labor`yrnext' labor`yr' using "researn.dta", clear
 		
-		label var researn`k'F`yr' "Residual earnings growth between `yrnext' and `yr'"
+		bys male age: egen avelabor`yrnext' = mean(labor`yrnext')
+		bys male age: egen avelabor`yr' = mean(labor`yr')
+		
+		gen researn`k'F`yr'= researnc`yrnext'-researn`yr'		// Growth with earninbgs above mininc in t and 1/3*mininc in t+k
+		gen arcearn`k'F`yr'= (labor`yrnext'/avelabor`yrnext' - labor`yr'/avelabor`yr')/(0.5*(labor`yrnext'/avelabor`yrnext' + labor`yr'/avelabor`yr'))
+		
+		label var researn`k'F`yr'  "Residual earnings growth between `yrnext' and `yr'"
+		label var arcearn`k'F`yr'  "Arc-percent earnings growth between `yrnext' and `yr'"
 
-		keep personid researn`k'F`yr'
+		keep personid researn`k'F`yr' arcearn`k'F`yr'
 		save researn`k'F`yr'.dta, replace
+		
 	}
 	
 	// Merge data across all years
@@ -272,6 +294,7 @@ foreach k in 1 5{
 	
 	compress 
 	save "researn`k'F.dta", replace 
+	
 }
 // END calculate growth rates
 

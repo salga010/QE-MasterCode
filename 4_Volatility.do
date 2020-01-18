@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the time series of Volatility and Higher Order Moments
-// This version April 21, 2019
+// This version Jan 12, 2019
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -9,7 +9,7 @@ set more off
 // You should change the below directory. 
 
 *global maindir ="/Users/serdar/Dropbox/GLOBAL-MASTER-CODE/STATA/"
-global maindir ="/Users/sergiosalgado/Dropbox/GLOBAL-MASTER-CODE/STATA/"
+global maindir ="/Users/ssalgado/Dropbox/GLOBAL-MASTER-CODE/STATA/"
 
 // Do not make change from here on. Contact Ozkan/Salgado if changes are needed. 
 do "$maindir/do/0_Initialize.do"
@@ -33,38 +33,35 @@ timer clear 1
 timer on 1
 
 foreach yr of numlist $d1yrlist{
-	disp("Working in year `yr'")
-	*local yr = 2008
+// forvalues yr = 2009/2012{	// For debugs
+// 	local yr = 2009 		// For debugs 
 	
+	disp("Working in year `yr'")
+
 	local yrp = `yr' - 1
 	if inlist(`yrp',${perm3yrlist}){
 		// If permanent income CAN be calculated (H Sample)
 		if inlist(`yr',${d5yrlist}){	// Has 5yr change (LX Sample)
-			use  male yob educ researn1F`yr' researn5F`yr' logearn`yr' permearn`yrp' ///
-				if logearn`yr'~=. using ///
-			"$maindir${sep}dta${sep}master_sample.dta", clear   
+			use  male yob educ researn1F`yr' researn5F`yr' arcearn1F`yr' arcearn5F`yr' permearn`yrp' ///
+			using "$maindir${sep}dta${sep}master_sample.dta", clear   
 		}
 		else{
-			use  male yob educ researn1F`yr' logearn`yr' permearn`yrp' ///
-				if logearn`yr'~=. using ///
-			"$maindir${sep}dta${sep}master_sample.dta", clear   
+			use  male yob educ researn1F`yr'  arcearn1F`yr' permearn`yrp' ///
+			using "$maindir${sep}dta${sep}master_sample.dta", clear   
 		}
 	}
 	else{
 		// If permanent income CANNOT be calculated (LX sample)
 		if inlist(`yr',${d5yrlist}){  // Has 5yr change (LX Sample)
-			use  male yob educ researn1F`yr' researn5F`yr' logearn`yr' if logearn`yr'~=. using ///
+			use  male yob educ researn1F`yr' researn5F`yr' arcearn1F`yr' arcearn5F`yr' using ///
 			"$maindir${sep}dta${sep}master_sample.dta", clear   
 		}
 		else{
-			use  male yob educ researn1F`yr' logearn`yr' if logearn`yr'~=. using ///
+			use  male yob educ researn1F`yr' arcearn1F`yr' using ///
 			"$maindir${sep}dta${sep}master_sample.dta", clear   
 		}
 	}
-	
-	// Drop logearn (not used in this code)
-	drop logearn
-	
+
 	// Create year
 	gen year=`yr'
 	
@@ -86,13 +83,21 @@ foreach yr of numlist $d1yrlist{
 	
 	bymyPCT "researn1F" "L_" "_`yr'" "year"
 	
+	bymysum_detail "arcearn1F" "L_" "_`yr'" "year"
+	
+	bymyPCT "arcearn1F" "L_" "_`yr'" "year"
+	
 	// Calculate cross sectional moments for year `yr' within heterogeneity groups
 	foreach  vv in $hetgroup{ 
 		local suf=subinstr("`vv'"," ","",.)
 		
 		bymysum_detail "researn1F" "L_" "_`suf'`yr'" "year `vv'"
 	
-		bymyPCT "researn1F" "L_" "_`suf'`yr'" "year `vv'"
+		bymyPCT "researn1F" "L_" "_`suf'`yr'" "year `vv'"	
+		
+		bymysum_detail "arcearn1F" "L_" "_`suf'`yr'" "year `vv'"
+	
+		bymyPCT "arcearn1F" "L_" "_`suf'`yr'" "year `vv'"
 	}
 
 	// Moments of 5 year changes
@@ -101,31 +106,67 @@ foreach yr of numlist $d1yrlist{
 	
 		bymyPCT "researn5F" "L_" "_`yr'" "year"
 		
+		bymysum_detail "arcearn5F" "L_" "_`yr'" "year"
+	
+		bymyPCT "arcearn5F" "L_" "_`yr'" "year"
+		
 		foreach  vv in $hetgroup{ 
 			local suf=subinstr("`vv'"," ","",.)
 		
 			bymysum_detail "researn5F" "L_" "_`suf'`yr'" "year `vv'"
 	
-			bymyPCT "researn5F" "L_" "_`suf'`yr'" "year `vv'"
+			bymyPCT "researn5F" "L_" "_`suf'`yr'" "year `vv'"	
+			
+			bymysum_detail "arcearn5F" "L_" "_`suf'`yr'" "year `vv'"
+	
+			bymyPCT "arcearn5F" "L_" "_`suf'`yr'" "year `vv'"
 		}
 	}
 	
-	// Calculate Empirical Density of one year and 5 years changes 
+	// Calculate Empirical Density of one year and five years changes 
 	// Notice we are doing this for years that can be divided by kyear
 	if mod(`yr',${kyear}) == 0 {
-		bymyKDN "researn1F" "L_" "${kpoints}" "`yr'"
+			bymyKDN "researn1F" "L_" "${kpoints}" "`yr'"
+			bymyKDNmale "researn1F" "L_" "${kpoints}" "`yr'"
+			
 		if inlist(`yr',${d5yrlist}){
-		bymyKDN "researn5F" "L_" "${kpoints}" "`yr'"
+			bymyKDN "researn5F" "L_" "${kpoints}" "`yr'"
+			bymyKDNmale "researn5F" "L_" "${kpoints}" "`yr'"
 		}
 	}
-
+	
+	
+	// Calculate "kurtosis" moments for one- and five-years changes
+			kurpercentiles "researn1F" "PK" "`yr'"
+		if inlist(`yr',${d5yrlist}){
+			kurpercentiles "researn5F" "PK" "`yr'"	
+		}
+		
+	// Calculate "kurtosis" noments for one- and five-years withn age groups
+	levelsof agegp, local(agp) clean	
+	foreach aa of local agp{
+	
+		gen researn1F`aa' = researn1F if agegp == `aa'
+		kurpercentiles "researn1F`aa'" "PKage" "`yr'"
+		drop researn1F`aa' 
+				
+		if inlist(`yr',${d5yrlist}){
+			gen researn5F`aa' = researn5F if agegp == `aa' 
+			kurpercentiles "researn5F`aa'" "PKage" "`yr'"	
+			drop researn5F`aa'
+		}
+	}
+	
+	
 	// Moments within percentiles of the permanent income distribution
 	// for the years in which permanent income and 5 yr changes can be 
 	// calculated (H sample of the guidelines)
 	
 	if inlist(`yrp',${perm3yrlist}) & inlist(`yr',${d5yrlist}){
 			// Individuals must have perm income, 1yr change and 5 yr change to be in the H sample
-			drop if researn1F == . | researn5F == .	| permearn == . 
+			// Notice here we will consider growth rate with income above minn tresh in t but above 1/3*min tresh in t+1
+			// See 1_Gen_Base_Sample.do for more details
+			drop if researn1F == . | researn5F == .	| permearn == . | arcearn1F == . | arcearn5F == . 
 	
 			// Overall ranking 
 			// Ranking created for those individuals that have measure of earnings growth
@@ -137,14 +178,31 @@ foreach yr of numlist $d1yrlist{
 			}
 			
 			bymysum_detail "researn1F" "L_" "_allrank`yr'" "year permrank"
-			bymyPCT "researn1F" "L_" "_allrank`yr'" "year permrank"
+			bymyPCT "researn1F" "L_" "_allrank`yr'" "year permrank"	
 			
 			bymysum_detail "researn5F" "L_" "_allrank`yr'" "year permrank"
 			bymyPCT "researn5F" "L_" "_allrank`yr'" "year permrank"
+						
+			bymysum_detail "arcearn1F" "L_" "_allrank`yr'" "year permrank"
+			bymyPCT "arcearn1F" "L_" "_allrank`yr'" "year permrank"
 			
+			bymysum_detail "arcearn5F" "L_" "_allrank`yr'" "year permrank"
+			bymyPCT "arcearn5F" "L_" "_allrank`yr'" "year permrank"
+			
+			
+			// Calculate "kurtosis" moments within permrank
+			levelsof permrank, local(pgp) clean	
+			foreach pp of local pgp{
+				gen researn1Fp`pp' = researn1F if permrank == `pp'
+				gen researn5Fp`pp' = researn5F if permrank == `pp' 
+		
+				kurpercentiles "researn1Fp`pp'" "PK" "`yr'"
+				kurpercentiles "researn5Fp`pp'" "PK" "`yr'"
+				drop researn1Fp`pp' researn5Fp`pp'
+			}
+					
 			drop permrank 
-			
-			//Within age group rankings
+			// Within age group rankings
 			gen permrank = .
 			bys agegp: bymyxtile permearn permrank "${nquantiles}"	
 			if ${nquantiles} < 100{
@@ -159,6 +217,27 @@ foreach yr of numlist $d1yrlist{
 			bymysum_detail "researn5F" "L_" "_agerank`yr'" "year agegp permrank"
 			bymyPCT "researn5F" "L_" "_agerank`yr'" "year agegp permrank"
 			
+			bymysum_detail "arcearn1F" "L_" "_agerank`yr'" "year agegp permrank"
+			bymyPCT "arcearn1F" "L_" "_agerank`yr'" "year agegp permrank"
+			
+			bymysum_detail "arcearn5F" "L_" "_agerank`yr'" "year agegp permrank"
+			bymyPCT "arcearn5F" "L_" "_agerank`yr'" "year agegp permrank"
+			
+			// Calculate "kurtosis" moments within permrank/agegp 
+			levelsof permrank, local(pgp) clean	
+			levelsof agegp, local(agp) clean	
+			foreach pp of local pgp{
+				foreach aa of local agp {
+					gen researn1Fp`pp'_`aa' = researn1F if permrank == `pp' & agegp == `aa'
+					gen researn5Fp`pp'_`aa' = researn5F if permrank == `pp' & agegp == `aa' 
+			
+					kurpercentiles "researn1Fp`pp'_`aa'" "PK" "`yr'"
+					kurpercentiles "researn5Fp`pp'_`aa'" "PK" "`yr'"
+					drop researn1Fp`pp'_`aa' researn5Fp`pp'_`aa'
+				}
+			}	// END loop over pranks
+			
+			
 			// Within permanent income top earners groups
 			_pctile permearn, p(99 99.9)
 			local top1 = r(r1)
@@ -168,44 +247,56 @@ foreach yr of numlist $d1yrlist{
 			gen top1 = permearn >= `top1' & permearn !=. 
 			bymysum_detail "researn1F" "L_" "_top1`yr'" "year top1"
 			bymyPCT "researn1F" "L_" "_top1`yr'" "year top1"
+			
+			bymysum_detail "arcearn1F" "L_" "_top1`yr'" "year top1"
+			bymyPCT "arcearn1F" "L_" "_top1`yr'" "year top1"
 			drop top1
 			
 			// Top 0.1%
 			gen top0_1 = permearn >= `top01' & permearn !=. 
 			bymysum_detail "researn1F" "L_" "_top0_1`yr'" "year top0_1"
 			bymyPCT "researn1F" "L_" "_top0_1`yr'" "year top0_1"
+			
+			bymysum_detail "arcearn1F" "L_" "_top0_1`yr'" "year top0_1"
+			bymyPCT "arcearn1F" "L_" "_top0_1`yr'" "year top0_1"
 			drop top0_1
+			
 			
 			// Top 1% ex 0.1%
 			gen top1ex0_1 = (permearn >= `top1' & permearn < `top01')
 			bymysum_detail "researn1F" "L_" "_top1ex0_1`yr'" "year top1ex0_1"
 			bymyPCT "researn1F" "L_" "_top1ex0_1`yr'" "year top1ex0_1"
+			
+			bymysum_detail "arcearn1F" "L_" "_top1ex0_1`yr'" "year top1ex0_1"
+			bymyPCT "arcearn1F" "L_" "_top1ex0_1`yr'" "year top1ex0_1"
 			drop top1ex0_1
+			
+
 			
 	} // END if Per income is available	& END if 5-years available
 *
-	
-	
 } // END of loop over years
 
 
 // Collect data across years  for the 1-year change measure
 clear
 
-foreach vari in researn1F{
+foreach vari in researn1F arcearn1F{
 
 foreach yr of numlist $d1yrlist{
 	local yrp = `yr' - 1
 
 	*Stats 
-	use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta", clear
-	merge 1:1 year using "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`yr'.dta", ///
-		nogenerate
-	erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta"
-	erase "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`yr'.dta"
-	
-	save "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta", replace
-	
+// 	if inlist("`vari'","researn1F","arcearn1F"){
+		use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta", clear
+		merge 1:1 year using "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`yr'.dta", ///
+			nogenerate
+		erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`yr'.dta"
+		
+		save "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta", replace
+// 	}
+// 	else{
 	if inlist(`yrp',${perm3yrlist}){
 		if inlist(`yr',${d5yrlist}){
 		*Stats per rank
@@ -254,182 +345,193 @@ foreach yr of numlist $d1yrlist{
 		save "$maindir${sep}out${sep}$outfolder/L_`vari'_top1ex0_1`yr'.dta", replace
 		}
 	}
+// 	}	// END of if statement
 	***
-	
 }
-clear 
-foreach yr of numlist $d1yrlist{
-	append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"
-	erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"	
-}
-outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace comma
-clear
-foreach yr of numlist $d5yrlist{
-	local yrp = `yr' - 1
-	if inlist(`yrp',${perm3yrlist}){
-	append using "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank`yr'.dta"
-	erase "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank`yr'.dta"
-	}
-}
-outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank.csv", replace comma
 
-clear
-foreach yr of numlist $d5yrlist{
-	local yrp = `yr' - 1
-	if inlist(`yrp',${perm3yrlist}){
-	append using "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank`yr'.dta"
-	erase "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank`yr'.dta"
+// if inlist("`vari'","researn1F","arcearn1F"){
+	clear 
+	foreach yr of numlist $d1yrlist{
+		append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"	
 	}
-}
-outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank.csv", replace comma
+	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace comma
+// }
+// else{
+	clear
+	foreach yr of numlist $d5yrlist{
+		local yrp = `yr' - 1
+		if inlist(`yrp',${perm3yrlist}){
+		append using "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank`yr'.dta"
+		}
+	}
+	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank.csv", replace comma
 
-clear
-foreach yr of numlist $d5yrlist{
-	local yrp = `yr' - 1
-	if inlist(`yrp',${perm3yrlist}){
-	append using "$maindir${sep}out${sep}$outfolder/L_`vari'_top1`yr'.dta"
-	erase "$maindir${sep}out${sep}$outfolder/L_`vari'_top1`yr'.dta"
+	clear
+	foreach yr of numlist $d5yrlist{
+		local yrp = `yr' - 1
+		if inlist(`yrp',${perm3yrlist}){
+		append using "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank`yr'.dta"
+		}
 	}
-}
-outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_top0_1.csv", replace comma
-clear
-foreach yr of numlist $d5yrlist{
-	local yrp = `yr' - 1
-	if inlist(`yrp',${perm3yrlist}){
-	append using "$maindir${sep}out${sep}$outfolder/L_`vari'_top0_1`yr'.dta"
-	erase "$maindir${sep}out${sep}$outfolder/L_`vari'_top0_1`yr'.dta"
-	}
-}
-outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_top0_1.csv", replace comma
+	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank.csv", replace comma
 
-clear
-foreach yr of numlist $d5yrlist{
-	local yrp = `yr' - 1
-	if inlist(`yrp',${perm3yrlist}){
-	append using "$maindir${sep}out${sep}$outfolder/L_`vari'_top1ex0_1`yr'.dta"
-	erase "$maindir${sep}out${sep}$outfolder/L_`vari'_top1ex0_1`yr'.dta"
+	clear
+	foreach yr of numlist $d5yrlist{
+		local yrp = `yr' - 1
+		if inlist(`yrp',${perm3yrlist}){
+		append using "$maindir${sep}out${sep}$outfolder/L_`vari'_top1`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_top1`yr'.dta"
+		}
 	}
-}
-outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_top1ex0_1.csv", replace comma
+	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_top0_1.csv", replace comma
+	clear
+	foreach yr of numlist $d5yrlist{
+		local yrp = `yr' - 1
+		if inlist(`yrp',${perm3yrlist}){
+		append using "$maindir${sep}out${sep}$outfolder/L_`vari'_top0_1`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_top0_1`yr'.dta"
+		}
+	}
+	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_top0_1.csv", replace comma
 
+	clear
+	foreach yr of numlist $d5yrlist{
+		local yrp = `yr' - 1
+		if inlist(`yrp',${perm3yrlist}){
+		append using "$maindir${sep}out${sep}$outfolder/L_`vari'_top1ex0_1`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_top1ex0_1`yr'.dta"
+		}
+	}
+	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_top1ex0_1.csv", replace comma
+// }	// END if statement
 
 // Collect data across all years and heterogeneity groups. saves one database per group 
-foreach  vv in $hetgroup{
+if inlist("`vari'","researn1F","arcearn1F"){
+	foreach  vv in $hetgroup{
 
-	clear 
-	local suf=subinstr("`vv'"," ","",.)
-	foreach yr of numlist $d1yrlist{
-		
-		use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`suf'`yr'.dta", clear
-		merge 1:1 year `vv' using "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`suf'`yr'.dta", ///
-			nogenerate	
+		clear 
+		local suf=subinstr("`vv'"," ","",.)
+		foreach yr of numlist $d1yrlist{
 			
-		erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`suf'`yr'.dta"
-		erase "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`suf'`yr'.dta"
+			use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`suf'`yr'.dta", clear
+			merge 1:1 year `vv' using "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`suf'`yr'.dta", ///
+				nogenerate	
+				
+			erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`suf'`yr'.dta"
+			erase "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`suf'`yr'.dta"
+			
+			save "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta", replace
+		}	
+		clear 
+		foreach yr of numlist $d1yrlist{
+			append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta"
+			erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta"
+		}
 		
-		save "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta", replace
-	}	
-	clear 
-	foreach yr of numlist $d1yrlist{
-		append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta"
-		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta"
-	}
-	
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'_sumstat.csv", replace comma 		
-} 	// END loop over heterogeneity group
-
+		outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'_sumstat.csv", replace comma 		
+	} 	// END loop over heterogeneity group
+}	// END if statement
 }	// END loop over variables 
 
 
 // Collect moments for the 5-years change measure
-
-foreach vari in researn5F {
+foreach vari in researn5F arcearn5F{
 
 foreach yr of numlist $d5yrlist{
 
 	*Stats
-	use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta", clear
-	merge 1:1 year using "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`yr'.dta", ///
-		nogenerate
-	erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta"
-	erase "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`yr'.dta"
-	
-	save "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta", replace
-	
-	local yrp = `yr' - 1
-	if inlist(`yrp',${perm3yrlist}){
-		*Stats per rank
-		use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_allrank`yr'.dta", clear
-		merge 1:1 year permrank using "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_allrank`yr'.dta", ///
+// 	if inlist("`vari'","researn5F","arcearn5F"){
+		use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta", clear
+		merge 1:1 year using "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`yr'.dta", ///
 			nogenerate
-		erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_allrank`yr'.dta"
-		erase "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_allrank`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`yr'.dta"
 		
-		save "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank`yr'.dta", replace
-		
-		*Stats per rank within age gp
-		use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_agerank`yr'.dta", clear
-		merge 1:1 year agegp permrank using "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_agerank`yr'.dta", ///
-			nogenerate
-		erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_agerank`yr'.dta"
-		erase "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_agerank`yr'.dta"
-		
-		save "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank`yr'.dta", replace
-	}
+		save "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta", replace
+// 	}
+// 	else{
+		local yrp = `yr' - 1
+		if inlist(`yrp',${perm3yrlist}){
+			*Stats per rank
+			use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_allrank`yr'.dta", clear
+			merge 1:1 year permrank using "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_allrank`yr'.dta", ///
+				nogenerate
+			erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_allrank`yr'.dta"
+			erase "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_allrank`yr'.dta"
+			
+			save "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank`yr'.dta", replace
+			
+			*Stats per rank within age gp
+			use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_agerank`yr'.dta", clear
+			merge 1:1 year agegp permrank using "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_agerank`yr'.dta", ///
+				nogenerate
+			erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_agerank`yr'.dta"
+			erase "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_agerank`yr'.dta"
+			
+			save "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank`yr'.dta", replace
+		}
+// 	}	// END of if statement
 }
-clear 
-foreach yr of numlist $d5yrlist{
-	append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"
-	erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"	
-}
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace comma
 
-clear
-foreach yr of numlist $d5yrlist{
-	local yrp = `yr' - 1
-	if inlist(`yrp',${perm3yrlist}){
-	append using "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank`yr'.dta"
-	erase "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank`yr'.dta"
-	}
-}
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank.csv", replace comma
+// 	if inlist("`vari'","researn5F","arcearn5F"){
+		clear 
+		foreach yr of numlist $d5yrlist{
+			append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"
+			erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"	
+		}
+			outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace comma
+// 	}
+// 	else{
+		clear
+		foreach yr of numlist $d5yrlist{
+			local yrp = `yr' - 1
+			if inlist(`yrp',${perm3yrlist}){
+			append using "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank`yr'.dta"
+			erase "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank`yr'.dta"
+			}
+		}
+			outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank.csv", replace comma
 
-clear
-foreach yr of numlist $d5yrlist{
-	local yrp = `yr' - 1
-	if inlist(`yrp',${perm3yrlist}){
-	append using "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank`yr'.dta"
-	erase "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank`yr'.dta"
-	}
-}
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank.csv", replace comma
-
+		clear
+		foreach yr of numlist $d5yrlist{
+			local yrp = `yr' - 1
+			if inlist(`yrp',${perm3yrlist}){
+			append using "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank`yr'.dta"
+			erase "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank`yr'.dta"
+			}
+		}
+		outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank.csv", replace comma
+// 	}	// END if statement
 
 // Collect data across all years and heterogeneity groups. saves one database per group 
-foreach  vv in $hetgroup{
+// 	if inlist("`vari'","researn5F","arcearn5F"){
+		foreach  vv in $hetgroup{
 
-	clear 
-	local suf=subinstr("`vv'"," ","",.)
-	foreach yr of numlist $d5yrlist{
-		
-		use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`suf'`yr'.dta", clear
-		merge 1:1 year `vv' using "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`suf'`yr'.dta", ///
-			nogenerate	
+			clear 
+			local suf=subinstr("`vv'"," ","",.)
+			foreach yr of numlist $d5yrlist{
+				
+				use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`suf'`yr'.dta", clear
+				merge 1:1 year `vv' using "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`suf'`yr'.dta", ///
+					nogenerate	
+					
+				erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`suf'`yr'.dta"
+				erase "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`suf'`yr'.dta"
+				
+				save "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta", replace
+			}	
+			clear 
+			foreach yr of numlist $d5yrlist{
+				append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta"
+				erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta"
+			}
 			
-		erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`suf'`yr'.dta"
-		erase "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`suf'`yr'.dta"
-		
-		save "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta", replace
-	}	
-	clear 
-	foreach yr of numlist $d5yrlist{
-		append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta"
-		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta"
-	}
-	
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'_sumstat.csv", replace comma 		
-} 	// END loop over heterogeneity group
-
+			outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'_sumstat.csv", replace comma 		
+		} 	// END loop over heterogeneity group
+// 	}	// END if statement
 }	// END loop over variables 
 
 set more off
@@ -437,6 +539,7 @@ set more off
 //Collect data for empirical density 
 foreach k in 1 5{
 	local i=1
+	local j=1
 	if `k' == 1{
 		foreach yr in $d1yrlist{
 			if mod(`yr',${kyear}) == 0 {
@@ -452,6 +555,24 @@ foreach k in 1 5{
 			}
 		} 
 		outsheet using "$maindir${sep}out${sep}$outfolder/L_researn`k'F_hist.csv", replace comma
+		
+		
+		foreach yr in $d1yrlist{
+			if mod(`yr',${kyear}) == 0 {
+				if(`j'==1){
+				use "$maindir${sep}out${sep}$outfolder/L_researn`k'F_`yr'_hist_male.dta", clear
+				erase "$maindir${sep}out${sep}$outfolder/L_researn`k'F_`yr'_hist_male.dta"
+				}
+				else{
+				merge 1:1 index male using "$maindir${sep}out${sep}$outfolder/L_researn`k'F_`yr'_hist_male.dta", nogen
+				erase "$maindir${sep}out${sep}$outfolder/L_researn`k'F_`yr'_hist_male.dta"
+				}
+				local j=`j'+1
+			}
+		} 
+		outsheet using "$maindir${sep}out${sep}$outfolder/L_researn`k'F_hist_male.csv", replace comma
+		
+		
 	}
 	else{
 		foreach yr of numlist $d5yrlist{
@@ -468,8 +589,150 @@ foreach k in 1 5{
 			}
 		} 
 		outsheet using "$maindir${sep}out${sep}$outfolder/L_researn`k'F_hist.csv", replace comma
+		
+		
+		foreach yr of numlist $d5yrlist{
+			if mod(`yr',${kyear}) == 0 {
+				if(`j'==1){
+				use "$maindir${sep}out${sep}$outfolder/L_researn`k'F_`yr'_hist_male.dta", clear
+				erase "$maindir${sep}out${sep}$outfolder/L_researn`k'F_`yr'_hist_male.dta"
+				}
+				else{
+				merge 1:1 index male using "$maindir${sep}out${sep}$outfolder/L_researn`k'F_`yr'_hist_male.dta", nogen
+				erase "$maindir${sep}out${sep}$outfolder/L_researn`k'F_`yr'_hist_male.dta"
+				}
+				local j=`j'+1
+			}
+		} 
+		outsheet using "$maindir${sep}out${sep}$outfolder/L_researn`k'F_hist_male.csv", replace comma
 	}
 }
+
+// Collects data from koncentration measure
+	// One year measures
+	clear 
+	foreach yr of numlist $d1yrlist{
+		append using "$maindir${sep}out${sep}$outfolder/PK_researn1F_`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/PK_researn1F_`yr'.dta"
+	}
+		outsheet using "$maindir${sep}out${sep}$outfolder/PK_researn1F.csv", replace comma
+	clear 	
+	foreach yr of numlist $d1yrlist{
+		foreach aa in 1 2 3{
+			append using "$maindir${sep}out${sep}$outfolder/PKage_researn1F`aa'_`yr'.dta"
+			erase "$maindir${sep}out${sep}$outfolder/PKage_researn1F`aa'_`yr'.dta"
+			cap: gen agegp = `aa'
+			cap: replace agegp = `aa' if agegp == .
+		}
+	}	
+		order year agegp
+		sort year agegp
+		outsheet using "$maindir${sep}out${sep}$outfolder/PK_researn1F_age.csv", replace comma
+		
+	clear 	
+	foreach yr of numlist $d1yrlist{
+		local yrp = `yr' - 1
+		if inlist(`yrp',${perm3yrlist}){
+			if inlist(`yr',${d5yrlist}){
+			forvalues pp = 1/41{
+				append using "$maindir${sep}out${sep}$outfolder/PK_researn1Fp`pp'_`yr'.dta"
+				erase "$maindir${sep}out${sep}$outfolder/PK_researn1Fp`pp'_`yr'.dta"
+				cap: gen permrank = `pp'
+				cap: replace permrank = `pp' if permrank == . 
+			}	
+				
+			}	// IF perminc is possible
+		}	// IF 5 years possible
+	}	// END loop over years
+	order year permrank
+	sort year permrank
+	outsheet using "$maindir${sep}out${sep}$outfolder/PK_researn1F_permrank.csv", replace comma
+	
+	clear 	
+	foreach yr of numlist $d1yrlist{
+		local yrp = `yr' - 1
+		if inlist(`yrp',${perm3yrlist}){
+			if inlist(`yr',${d5yrlist}){
+			forvalues pp = 1/41{
+				foreach aa in 1 2 3{
+				append using "$maindir${sep}out${sep}$outfolder/PK_researn1Fp`pp'_`aa'_`yr'.dta"
+				erase "$maindir${sep}out${sep}$outfolder/PK_researn1Fp`pp'_`aa'_`yr'.dta"
+				cap: gen permrank = `pp'
+				cap: replace permrank = `pp' if permrank == . 
+				cap: gen agegp = `aa'
+				cap: replace agegp = `aa' if agegp == .
+				}
+				}
+			}	// IF perminc is possible
+		}	// IF 5 years possible
+	}	// END loop over years
+	order year permrank agegp
+	sort year permrank agegp
+	outsheet using "$maindir${sep}out${sep}$outfolder/PK_researn1F_permrank_age.csv", replace comma
+	
+	
+	// Five year changes	
+	clear 
+	foreach yr of numlist $d5yrlist{
+		append using "$maindir${sep}out${sep}$outfolder/PK_researn5F_`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/PK_researn5F_`yr'.dta"
+	}
+		outsheet using "$maindir${sep}out${sep}$outfolder/PK_researn5F.csv", replace comma
+		
+	clear 	
+	foreach yr of numlist $d5yrlist{
+		foreach aa in 1 2 3{
+			append using "$maindir${sep}out${sep}$outfolder/PKage_researn5F`aa'_`yr'.dta"
+			erase "$maindir${sep}out${sep}$outfolder/PKage_researn5F`aa'_`yr'.dta"
+			cap: gen agegp = `aa'
+			cap: replace agegp = `aa' if agegp == .
+		}
+	}		
+	
+	order year agegp
+	sort year agegp
+	outsheet using "$maindir${sep}out${sep}$outfolder/PK_researn5F_age.csv", replace comma
+	
+	clear 	
+	foreach yr of numlist $d1yrlist{
+		local yrp = `yr' - 1
+		if inlist(`yrp',${perm3yrlist}){
+			if inlist(`yr',${d5yrlist}){
+			forvalues pp = 1/41{
+				cap: append using "$maindir${sep}out${sep}$outfolder/PK_researn5Fp`pp'_`yr'.dta"
+				erase "$maindir${sep}out${sep}$outfolder/PK_researn5Fp`pp'_`yr'.dta"
+				cap: gen permrank = `pp'
+				cap: replace permrank = `pp' if permrank == . 
+			}
+			}	// IF perminc is possible
+		}	// IF 5 years possible
+	}	// END loop over years
+	order year permrank
+	sort year permrank
+	outsheet using "$maindir${sep}out${sep}$outfolder/PK_researn5F_permrank.csv", replace comma
+	
+	clear 	
+	foreach yr of numlist $d1yrlist{
+		local yrp = `yr' - 1
+		if inlist(`yrp',${perm3yrlist}){
+			if inlist(`yr',${d5yrlist}){
+			forvalues pp = 1/41{
+				foreach aa in 1 2 3{
+				append using "$maindir${sep}out${sep}$outfolder/PK_researn5Fp`pp'_`aa'_`yr'.dta"
+				erase "$maindir${sep}out${sep}$outfolder/PK_researn5Fp`pp'_`aa'_`yr'.dta"
+				cap: gen permrank = `pp'
+				cap: replace permrank = `pp' if permrank == . 
+				cap: gen agegp = `aa'
+				cap: replace agegp = `aa' if agegp == .
+				}
+				}
+			}	// IF perminc is possible
+		}	// IF 5 years possible
+	}	// END loop over years
+	order year permrank agegp
+	sort year permrank agegp
+	outsheet using "$maindir${sep}out${sep}$outfolder/PK_researn5F_permrank_age.csv", replace comma
+			
 timer off 1
 timer list 1
 

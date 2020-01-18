@@ -1,11 +1,223 @@
 capture program drop bymySho bymyTranMat bymyKDN bymyKDNmale bymyCNT bymyPCT bymysum bymysum_detail ///
-					bymysum_meanonly bymyxtile bymyCNTg bymyCNTgPop
+					bymysum_meanonly bymyxtile bymyCNTg bymyCNTgPop Hist_CDF bymyRAT bymyAAT
 
 /*
 	Programs do file for different statistics 
-	Last update: June,21,2018
+	Last update: Dec,01,2019
 */
 
+program Hist_CDF
+	preserve
+
+	local x="`1'"
+	local fx="`2'"
+	local numch="`3'"
+	local numch=`numch' + 3	
+		
+	keep `x' `fx' 
+	
+	sort `x'
+	gen num=_n
+	
+	local dx = `x'[2]-`x'[1]
+	gen CDF=sum(`fx'*`dx')
+		
+	
+	forvalues k=4/`numch'{
+		local ch="``k''"
+		qui sum num if `x'<=`ch'
+		local j=r(max)
+		local i=`k'-3
+		global CDFval`i' = CDF[`j'] + (`ch'-`x'[`j'])*(CDF[`j'+1]-CDF[`j'])/`dx'	
+	}	
+	restore
+end
+
+
+program kurpercentiles
+	
+	local vvg = "`1'"
+	local prefix   = "`2'"
+	local suffix = "`3'"
+	 
+	
+	_pctile `vvg', p(50)
+	gen n`vvg' = `vvg' - r(r1)
+	
+	sum `vvg'
+	local N = r(N)
+	local sd = r(sd)
+	
+	*Share between -5 and 5
+	sum n`vvg' if (n`vvg' >= -0.05 & n`vvg' <= 0.05), meanonly
+	local sharep45top55 = r(N)/`N'
+	
+	*Share between 40 to 60
+	sum n`vvg' if (n`vvg' >= -0.10 & n`vvg' <= 0.10), meanonly
+	local sharep40top60 = r(N)/`N'	
+	
+	*Share between 30 and 70
+	sum n`vvg' if (n`vvg' >= -0.20 & n`vvg' <= 0.20), meanonly
+	local sharep30top70 = r(N)/`N'	
+	
+	*Share between 55+sigma
+	sum n`vvg' if (n`vvg' >= 0.05 & n`vvg' <= 0.05 + `sd'), meanonly
+	local sharep55tosd = r(N)/`N'	
+	
+	*Share between sigma and 2sigma
+	sum n`vvg' if (n`vvg' >= `sd' & n`vvg' <=  2*`sd'), meanonly
+	local sharepsdto2sd = r(N)/`N'	
+	
+	*Share between 2*sigma and 3sigma
+	sum n`vvg' if (n`vvg' >= 2*`sd' & n`vvg' <=  3*`sd'), meanonly
+	local sharep2sdto3sd = r(N)/`N'	
+	
+	*Share between 3sigma+
+	sum n`vvg' if (n`vvg' >= 3*`sd'), meanonly
+	local share3sdp = r(N)/`N'	
+	
+	*Share between 45-sigma
+	sum n`vvg' if (n`vvg' <= -0.05 & n`vvg' >= -0.05 - `sd'), meanonly
+	local sharepsdto45 = r(N)/`N'	
+	
+	*Share between -2sigma and -sigma 
+	sum n`vvg' if (n`vvg' <= -`sd' & n`vvg' >= -2*`sd'), meanonly
+	local sharep2sdtosd = r(N)/`N'	
+	
+	*Share between -3sigma and -2sigma 
+	sum n`vvg' if (n`vvg' <= -2*`sd' & n`vvg' >=  -3*`sd'), meanonly
+	local sharep3sdto2sd = r(N)/`N'	
+	
+	*Share between 3sigma+
+	sum n`vvg' if (n`vvg' <= -3*`sd'), meanonly
+	local share3sdm = r(N)/`N'	
+	
+	preserve
+	clear 
+	set obs 1
+	gen year = `suffix'
+	
+	gen Nobs = `N'
+	gen sd = `sd'
+
+	gen sharep_m5top5 = 100*`sharep45top55'
+	gen sharep_m10top10 = 100*`sharep40top60'
+	gen sharep_m20top20 = 100*`sharep30top70'
+	gen sharep_m5tosd = 100*`sharep55tosd'
+	gen sharep_sdto2sd = 100*`sharepsdto2sd'
+	gen sharep_2sdto3sd = 100*`sharep2sdto3sd'
+	gen share_3sdp = 100*`share3sdp'
+	gen sharep_msdtom5 = 100*`sharepsdto45'
+	gen sharep_m2sdtomsd = 100*`sharep2sdtosd'
+	gen sharep_m3sdtom2sd = 100*`sharep3sdto2sd'
+	gen sharem_3sdm = 100*`share3sdm'
+	
+	save "`prefix'_`vvg'_`suffix'.dta", replace	
+	restore 
+
+end
+
+
+program koncentration
+	
+	local vvg = "`1'"
+	local prefix   = "`2'"
+	local suffix = "`3'"
+	 
+	
+	_pctile `vvg', p(50)
+	gen n`vvg' = `vvg' - r(r1)
+	
+	sum nresearn1F
+	local N = r(N)
+	local sd = r(sd)
+	
+	_pctile n`vvg', p(30 40 45 50 55 60 70)		// These are to calculate -20,-10,-5,0,5,10,20
+	
+	local p30 = r(r1)
+	local p40 = r(r2)
+	local p45 = r(r3)
+	local p50 = r(r4)
+	local p55 = r(r5)
+	local p60 = r(r6)
+	local p70 = r(r7)
+	
+
+	*Share between 45 and 55
+	sum n`vvg' if (n`vvg' >= `p45' & n`vvg' <= `p55'), meanonly
+	local sharep45top55 = r(N)/`N'
+	
+	*Share between 40 to 60
+	sum n`vvg' if (n`vvg' >= `p40' & n`vvg' <= `p60'), meanonly
+	local sharep40top60 = r(N)/`N'	
+	
+	*Share between 30 and 70
+	sum n`vvg' if (n`vvg' >= `p30' & n`vvg' <= `p70'), meanonly
+	local sharep30top70 = r(N)/`N'	
+	
+	*Share between 55+sigma
+	sum n`vvg' if (n`vvg' >= `p55' & n`vvg' <= `p55' + `sd'), meanonly
+	local sharep55tosd = r(N)/`N'	
+	
+	*Share between sigma and 2sigma
+	sum n`vvg' if (n`vvg' >= `p50' + `sd' & n`vvg' <=  `p50' + 2*`sd'), meanonly
+	local sharepsdto2sd = r(N)/`N'	
+	
+	*Share between 2*sigma and 3sigma
+	sum n`vvg' if (n`vvg' >= `p50' + 2*`sd' & n`vvg' <=  `p50' + 3*`sd'), meanonly
+	local sharep2sdto3sd = r(N)/`N'	
+	
+	*Share between 3sigma+
+	sum n`vvg' if (n`vvg' >= `p50' + 3*`sd'), meanonly
+	local share3sdp = r(N)/`N'	
+	
+	*Share between 45-sigma
+	sum n`vvg' if (n`vvg' <= `p45' & n`vvg' >= `p45' - `sd'), meanonly
+	local sharepsdto45 = r(N)/`N'	
+	
+	*Share between -2sigma and -sigma 
+	sum n`vvg' if (n`vvg' <= `p50' - `sd' & n`vvg' >=  `p50' - 2*`sd'), meanonly
+	local sharep2sdtosd = r(N)/`N'	
+	
+	*Share between -3sigma and -2sigma 
+	sum n`vvg' if (n`vvg' <= `p50' - 2*`sd' & n`vvg' >=  `p50' - 3*`sd'), meanonly
+	local sharep3sdto2sd = r(N)/`N'	
+	
+	*Share between 3sigma+
+	sum n`vvg' if (n`vvg' <= `p50' - 3*`sd'), meanonly
+	local share3sdm = r(N)/`N'	
+	
+	preserve
+	clear 
+	set obs 1
+	gen year = `suffix'
+	
+	gen Nobs = `N'
+	gen sd = `sd'
+	gen p30 = `p30'
+	gen p40 = `p40'
+	gen p45 = `p45'
+	gen p50 = `p50'
+	gen p55 = `p55'
+	gen p60 = `p60'
+	gen p70 = `p70'
+	
+	gen sharep45top55 = 100*`sharep45top55'
+	gen sharep40top60 = 100*`sharep40top60'
+	gen sharep30top70 = 100*`sharep30top70'
+	gen sharep55tosd = 100*`sharep55tosd'
+	gen sharepsdto2sd = 100*`sharepsdto2sd'
+	gen sharep2sdto3sd = 100*`sharep2sdto3sd'
+	gen share3sdp = 100*`share3sdp'
+	gen sharepsdto45 = 100*`sharepsdto45'
+	gen sharep2sdtosd = 100*`sharep2sdtosd'
+	gen sharep3sdto2sd = 100*`sharep3sdto2sd'
+	gen share3sdm = 100*`share3sdm'
+	
+	save "`prefix'_`vvg'_`suffix'.dta", replace	
+	restore 
+
+end
 
 // Calculating Shorrocks mobility as in KSS (QJE,2010) using variance
 // modsho defined as  modsho 1-M =  var(average)/average(var)	see KSS page pp.97
@@ -56,7 +268,7 @@ program bymyTranMat
 	
 	gen progaux = 1			// Auxiliary variable
 	
-	drop if `varT2' ==.		// Drop if response variable is missing 
+	qui: drop if `varT2' ==.		// Drop if response variable is missing 
 	
 	collapse (count) movecount = progaux, by(`varT1' `varT2' `suffix')
 	
@@ -72,8 +284,8 @@ program bymyTranMat
 	*Replaces missing transitions (transitions that are not present in the data) by 0
 	levelsof `varT1', local(counts) clean
 	foreach dd of local counts{
-		replace movecount`dd' = 0 if movecount`dd' == .
-		replace share`dd' = 0 if share`dd' == .
+		cap noisily: replace movecount`dd' = 0 if movecount`dd' == .
+		cap noisily: replace share`dd' = 0 if share`dd' == .
 	}
 	
 	*Drop totals, they are not necessary.
@@ -125,7 +337,7 @@ program bymyKDNmale
 	local suffix = "`4'"
 	
 	preserve 
-	keep if male == 1
+	qui: keep if male == 1
 	*Create the k-density 
 	kdensity `varM', generate(val_`varM'`suffix' den_`varM'`suffix') nograph n(`npoint')
 	keep val_`varM'`suffix' den_`varM'`suffix'  male
@@ -140,7 +352,8 @@ program bymyKDNmale
 	restore 
 	
 	preserve 
-	keep if male == 0
+	qui: keep if male == 0
+	
 	*Create the k-density 
 	kdensity `varM', generate(val_`varM'`suffix' den_`varM'`suffix') nograph n(`npoint')
 	keep val_`varM'`suffix' den_`varM'`suffix' male
@@ -158,7 +371,7 @@ program bymyKDNmale
 	*Append
 	use `prefix'`varM'_`suffix'_hist1.dta, clear
 	append using `prefix'`varM'_`suffix'_hist0.dta
-	save `prefix'`varM'_`suffix'_hist_male.dta, replace
+	qui: save `prefix'`varM'_`suffix'_hist_male.dta, replace
 	
 	erase  `prefix'`varM'_`suffix'_hist1.dta
 	erase  `prefix'`varM'_`suffix'_hist0.dta
@@ -194,16 +407,15 @@ program bymyCNTgPop
 		*Normalizing individual income (i.e. `varmM' is the individual share on total income)
 		sum `varM'  if (`varM' >= rmininc[`yrl'-${yrfirst}+1,1]) & `varM' != .,  meanonly
 		qui: gen double aux = 100*`varM'/r(sum)	
-		local totM = r(sum)
 		drop `varM'
 		rename aux `varM'
-		
+		local totM = r(sum)
+
 		sum `varMp' if (`varMp' >= rmininc[`yrpl'-${yrfirst}+1,1]) & `varMp' != .,  meanonly
 		qui: gen double aux = 100*`varMp'/r(sum)	
-		local totMp = r(sum)
 		drop `varMp'
 		rename aux `varMp'
-		
+		local totMp = r(sum)
 		
 		*Calculate percentile 
 		_pctile `varM'  if (`varM'  >= 100*rmininc[`yrl'-${yrfirst}+1,1]/`totM')  & `varM' != .  ,p(`qtile')		// Income in t
@@ -440,6 +652,86 @@ program bymyCNTg
 		
 end 
 
+*Program to calculate the tail ratios. This calculates relative ratios using percentiles
+program bymyRAT
+
+	local varM   = "`1'"
+	local prefix = "`2'"
+	local suffix = "`3'"
+	
+	preserve
+		qui: drop if `varM'==.
+		
+		_pctile `varM', p(95 99.999)
+		local numeexp = floor(log(r(r2)/r(r1))/(log(1+0.05)))
+		local p95 = r(r1)
+		
+		forvalues ii = 0(1)`numeexp'{
+			local tlevel =  `p95'*(1+0.05)^`ii'
+			
+			sum `varM' if `varM' >= `tlevel', meanonly
+			local tlevel`ii' = `tlevel'
+			local melevel`ii' = r(mean)
+			local ralevel`ii' = r(mean)/`tlevel'
+			local oblevel`ii' = r(N)
+		}
+		
+		clear 
+		qui: set obs 1 
+		gen year = `suffix'
+		forvalues ii = 0(1)`numeexp'{
+			gen tlevel`ii' = `tlevel`ii''
+			gen melevel`ii' = `melevel`ii''
+			gen ralevel`ii' = `ralevel`ii''
+			gen oblevel`ii' = `oblevel`ii''
+		}
+		
+		qui: save `prefix'`varM'_`suffix'_idex.dta, replace		
+	restore
+
+end 
+
+
+*Program to calculate the tail ratios. This calculates absolute ratios using fixed values
+
+program bymyAAT
+
+	local varM   = "`1'"
+	local prefix = "`2'"
+	local suffix = "`3'"
+	
+	preserve
+		qui: drop if `varM'==.
+		
+		local ii = 1 
+		forvalues tlevel = 25000(25000)1000000{
+		
+			sum `varM' if `varM' >= `tlevel', meanonly
+			local tlevel`ii' = `tlevel'
+			local melevel`ii' = r(mean)
+			local ralevel`ii' = r(mean)/`tlevel'
+			local oblevel`ii' = r(N)
+			
+			local ii = `ii' + 1
+		}
+		
+		clear 
+		qui: set obs 1 
+		gen year = `suffix'
+		local ii = 1
+		forvalues tlevel = 25000(25000)1000000{
+			gen tlevel`ii' = `tlevel`ii''
+			gen melevel`ii' = `melevel`ii''
+			gen ralevel`ii' = `ralevel`ii''
+			gen oblevel`ii' = `oblevel`ii''
+			local ii = `ii' + 1
+		}
+		
+		qui: save `prefix'`varM'_`suffix'_idex.dta, replace		
+	restore
+
+end 
+
 
 *Program to calculate the concetration measures 
 program bymyCNT 
@@ -491,29 +783,39 @@ program bymyCNT
 	local q5share = 100*r(sum)/`tot'
 	
 	*Bottom and top 50%
-	
 	sum `varM' if `varM' <= `p50',  meanonly
 	local bot50share = 100*r(sum)/`tot'
 	
-	*Top shares
-	
+	*Top shares & mean-to-threshold
 	sum `varM' if `varM' >= `p90',  meanonly
 	local top10share = 100*r(sum)/`tot'	
+	local top10metop90 = r(mean)/`p90'
+	local top10pop = r(N)
 	
 	sum `varM' if `varM' >= `p95',  meanonly
 	local top5share = 100*r(sum)/`tot'	
+	local top5metop95 = r(mean)/`p95'
+	local top5pop = r(N)
 	
 	sum `varM' if `varM' >= `p99',  meanonly
 	local top1share = 100*r(sum)/`tot'	
+	local top1metop99 = r(mean)/`p99'
+	local top1pop = r(N)
 	
 	sum `varM' if `varM' >= `p995',  meanonly
 	local top05share = 100*r(sum)/`tot'	
+	local top05metop995 = r(mean)/`p995'
+	local top05pop = r(N)	
 	
 	sum `varM' if `varM' >= `p999',  meanonly
 	local top01share = 100*r(sum)/`tot'	
+	local top01metop999 = r(mean)/`p999'
+	local top01pop = r(N)	
 	
 	sum `varM' if `varM' >= `p9999',  meanonly
 	local top001share = 100*r(sum)/`tot'
+	local top001metop9999 = r(mean)/`p9999'
+	local top001pop = r(N)		
 	
 	*Gini Coefficient
 	gen temp = _n*`varM'
@@ -553,14 +855,28 @@ program bymyCNT
 		gen top1share = `top1share'
 		gen top05share = `top05share'
 		gen top01share = `top01share'
-		gen top001share = `top001share'
+		gen top001share = `top001share'		
+		
+		gen top10metop90 =  `top10metop90'
+		gen top5metop95 =   `top5metop95'
+		gen top1metop99 =   `top1metop99'
+		gen top05metop995 =  `top05metop995'
+		gen top01metop999 =  `top01metop999'
+		gen top001metop9999 = `top001metop9999'
+		
+		gen top10pop = `top10pop'
+		gen top5pop = `top5pop'
+		gen top1pop = `top1pop'
+		gen top05pop = `top05pop'
+		gen top01pop = `top01pop'
+		gen top001pop = `top001pop'
 		
 		gen gini = `gini'
 		
 		*Save
 		order year p* q* bot* top* 
 		qui: save `prefix'`varM'_`suffix'_con.dta, replace	
-	
+		
 	restore 
 end 
 // END of program for concentration

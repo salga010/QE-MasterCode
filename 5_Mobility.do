@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the time series of Mobility
-// This version July 05, 2019
+// This version January 06, 2019
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -9,7 +9,7 @@ set more off
 // You should change the below directory. 
 
 *global maindir ="/Users/serdar/Dropbox/GLOBAL-MASTER-CODE/STATA/"
-global maindir ="/Users/sergiosalgado/Dropbox/GLOBAL-MASTER-CODE/STATA/"
+global maindir ="/Users/ssalgado/Dropbox/GLOBAL-MASTER-CODE/STATA/"
 
 // Do not make changes from here on. Contact Ozkan/Salgado if changes are needed. 
 do "$maindir/do/0_Initialize.do"
@@ -29,9 +29,9 @@ do "$maindir${sep}do${sep}myprogs.do"
 timer clear 1
 timer on 1
 foreach yr of numlist $d1yrlist{
-
-	disp("Working in year `yr'")
 	*local yr = 2003
+	disp("Working in year `yr'")
+
 	local yrp1 = `yr'+1
 	local yrp5 = `yr'+5
 	
@@ -68,6 +68,15 @@ foreach yr of numlist $d1yrlist{
 	gen age = `yr'-yob+1
 	qui: drop if age<${begin_age} | age>${end_age}
 	
+			
+	// Create age groups 
+	qui {
+		gen agegp = . 
+		replace agegp = 1 if age<= 34 & agegp == .
+		replace agegp = 2 if age<= 44 & agegp == .
+		replace agegp = 3 if age > 44 & agegp == .
+	}
+	
 	// Create the percentiles in year t	
 	qui: gen rankt = .
 	qui: bymyxtile researn`yr' rankt "100"
@@ -79,17 +88,25 @@ foreach yr of numlist $d1yrlist{
 	// Calculate average percentile in t+1 conditional on percentile in p
 	qui: bymysum_meanonly "ranktp1" "L_" "_`yr'" "year rankt"
 	
-	// Calculating Shorrocks mobility as in KSS (QJE,2010) using variance
-	// modsho defined as  modsho 1-M =  var(average)/average(var)	see KSS page pp.97
-	*qui: bymySho researn`yr' researn`yrp1' "Sho_" "year"
-	
-	
 	// Create the percentiles in t+5
 	if inlist(`yr',${d5yrlist}){
 		qui: gen ranktp5 = .
 		qui: bymyxtile researn`yrp5' ranktp5 "100"
 		qui: bymysum_meanonly "ranktp5" "L_" "_`yr'" "year rankt"
 	}
+	
+	// Percentiles conditional on age 
+		replace rankt = .
+		replace ranktp1 = .
+		qui: bys agegp: bymyxtile researn`yr' rankt "100"
+		qui: bys agegp: bymyxtile researn`yrp1' ranktp1 "100"
+		qui: bymysum_meanonly "ranktp1" "L_agegp_" "_`yr'" "year agegp rankt"
+		
+		if inlist(`yr',${d5yrlist}){
+			qui: replace ranktp5 = .
+			qui: bys agegp:  bymyxtile researn`yrp5' ranktp5 "100"
+			qui:  bymysum_meanonly "ranktp5" "L_agegp_" "_`yr'" "year agegp rankt"
+		}
 	
 	// Calculate the ranking on the alter permanent income. This depends on what data is available 
 	// at any given time. 
@@ -100,15 +117,7 @@ foreach yr of numlist $d1yrlist{
 		local yrt5 = `yr'+5			// Five yrs ahead
 		local yrt10 = `yr'+10		// Ten years ahead
 		local yrl3 = ${yrlast}-3	// Last year - 3 
-			
-		// Create age groups 
-			qui {
-			gen agegp = . 
-			replace agegp = 1 if age<= 34 & agegp == .
-			replace agegp = 2 if age<= 44 & agegp == .
-			replace agegp = 3 if age > 44 & agegp == .
-			}
-		
+
 		// Creates Rankings
 	
 		    *Calculate next period rank unconditional 
@@ -197,8 +206,8 @@ foreach yr of numlist $d1yrlist{
 *
 // Calculating Transition Rates
 local firstyr = $yrfirst + 1
-local jumplist = "5 10 15 20"
-foreach subgp of local jumplist {				// This is the of years that will be used for the jump from t to t+subgp
+
+foreach subgp in 5 10 15 20 {				// This is the of years that will be used for the jump from t to t+subgp
 	local yrmax = ${yrlast} - `subgp' - 1	// This should not be negative, make sure that ${yrlast} > `subgp' - 1 for at least 
 											// one year in the sample. The -1 is necessary to ensure we are looking to mid year 
 											// of the calculation of alt permanent income measure
@@ -237,34 +246,18 @@ foreach subgp of local jumplist {				// This is the of years that will be used f
 		}
 		
 		// Raking in year t
-			qui: gen permearnaltrankt = .					// Re uses the rank on perm income alt
-			gen temp =  permearnalt`yr' if  permearnalt`yr' >= 0.01*rmininc[`yr'-${yrfirst}+1,1] 
-			
-			qui: bys agegp: bymyxtile temp permearnaltrankt "${nquantilestran}"	
-			
-			replace permearnaltrankt = 0 ///
-				if permearnalt`yr' < 0.01*rmininc[`yr'-${yrfirst}+1,1] & permearnalt`yr' != .
-			rename permearnalt`yr' permearnalt	
-			qui: bymysum "permearnalt" "L_agegp" "`subgp'_`yr'" "year agegp permearnaltrankt"	
-			drop temp
-			
-			// Create rank and average in year `subgp' yrs ahead 
-			qui: gen permearnaltranktp = .
-			gen temp =  permearnalt`yrt' if  permearnalt`yrt' >= 0.01*rmininc[`yrt'-${yrfirst}+1,1] 
-			qui: bys agegp: bymyxtile temp permearnaltranktp "${nquantilestran}"
-			
-			replace permearnaltranktp = 0 ///
-				if permearnalt`yrt' < 0.01*rmininc[`yrt'-${yrfirst}+1,1] & permearnalt`yrt' != .
-			rename permearnalt`yrt' permearnaltp
-			qui: bymysum "permearnaltp" "L_agegp" "`subgp'_`yr'" "year agegp permearnaltranktp"	
-			drop temp 
-			
-			// Create the transition shares
-			qui: bymyTranMat "permearnaltrankt" "permearnaltranktp" "T_`subgp'_`yr'_" "year subg agegp"
-				// You might notice some errors of the form __00001J not found
-				// this happen when no individual has transited across two cells. The code 
-				// corrects for those assigning a 0
-			
+		qui: gen permearnaltrankt = .					// Re uses the rank on perm income alt
+		qui: bys agegp: bymyxtile permearnalt`yr' permearnaltrankt "${nquantilestran}"	
+		
+		// Create rank and average in year `subgp' yrs ahead 
+		qui: gen permearnaltranktp = .
+		qui: bys agegp: bymyxtile permearnalt`yrt' permearnaltranktp "${nquantilestran}"
+		
+		// Create the transition shares
+		qui: bymyTranMat "permearnaltrankt" "permearnaltranktp" "T_`subgp'_`yr'_" "year subg agegp"
+			// You might notice some errors of the form __00001J not found
+			// this happen when no individual has transited across two cells. The code 
+			// corrects for those assigning a 0
 		
 	}	// END of loop over years 
 }	// END loop over groups
@@ -275,24 +268,41 @@ clear
 
 *Collect 1-year ahead rank
 foreach vari in ranktp1{
-clear 
-foreach yr of numlist $d1yrlist{
-	
-	append using "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta"
-	erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta"	
-}
+	clear 
+	foreach yr of numlist $d1yrlist{
+		
+		append using "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta"	
+	}
 
-outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_mobstat.csv", replace comma
+	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_mobstat.csv", replace comma
+	
+	
+	clear 
+	foreach yr of numlist $d1yrlist{
+		
+		append using "$maindir${sep}out${sep}$outfolder/S_L_agegp_`vari'_`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/S_L_agegp_`vari'_`yr'.dta"	
+	}
+
+	outsheet using "$maindir${sep}out${sep}$outfolder/L_agegp_`vari'_mobstat.csv", replace comma
 }
 
 *Collect 5-year ahead rank
 foreach vari in ranktp5 {
-clear 
-foreach yr of numlist $d5yrlist{
-	append using "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta"
-	erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta"	
-}
-outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_mobstat.csv", replace comma
+	clear 
+	foreach yr of numlist $d5yrlist{
+		append using "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta"	
+	}
+	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_mobstat.csv", replace comma
+	
+	clear 
+	foreach yr of numlist $d5yrlist{
+		append using "$maindir${sep}out${sep}$outfolder/S_L_agegp_`vari'_`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/S_L_agegp_`vari'_`yr'.dta"	
+	}
+	outsheet using "$maindir${sep}out${sep}$outfolder/L_agegp_`vari'_mobstat.csv", replace comma
 }
 
 /*Collects data on Correlation Index
@@ -363,7 +373,7 @@ outsheet using "$maindir${sep}out${sep}$outfolder/L_agegppermearnalt_mobstat.csv
 // Collects data on transition matrix
 clear 
 local firstyr = $yrfirst + 1
-foreach subgp of local jumplist {				
+foreach subgp in 5 10 15 20 {				
 	local yrmax = ${yrlast} - `subgp' - 1										
     if `yrmax' < 0 {
 		continue
@@ -376,57 +386,6 @@ foreach subgp of local jumplist {
 }
 	sort year subg agegp permearnaltrankt movecount* share* 
 	outsheet using "$maindir${sep}out${sep}$outfolder/T_permearnalt_tranmat.csv", replace comma
-
-
-*Statistics
-	clear 
-	local firstyr = $yrfirst + 1
-foreach subgp of local jumplist {
-		local yrmax = ${yrlast} - `subgp' - 1										
-		if `yrmax' < 0 {
-			continue
-			// This ensure the calculation only happens if yrmax > 0
-		}
-		forvalues yr = `firstyr'/`yrmax'	{	
-			append using "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnalt`subgp'_`yr'.dta"
-			erase "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnalt`subgp'_`yr'.dta"
-		}
-		cap: gen subg  = `subgp'
-		cap: replace subg  = `subgp' if subg == . 
-	}
-		sort year subg agegp permearnaltrankt 
-		order year subg agegp permearnaltrankt 
-		save "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnalt.dta", replace
-		
-	clear 
-	local firstyr = $yrfirst + 1
-	foreach subgp of local jumplist {				
-		local yrmax = ${yrlast} - `subgp' - 1										
-		if `yrmax' < 0 {
-			continue
-			// This ensure the calculation only happens if yrmax > 0
-		}
-		forvalues yr = `firstyr'/`yrmax'	{	
-			append using "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnaltp`subgp'_`yr'.dta"
-			erase "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnaltp`subgp'_`yr'.dta"
-		}
-		cap: gen subg  = `subgp'
-		cap: replace subg  = `subgp' if subg == . 
-	}
-		rename permearnaltranktp permearnaltrankt
-		sort year subg agegp permearnaltrankt 
-		order year subg agegp permearnaltrankt 
-		save "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnaltp.dta", replace
-		
-	use "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnalt.dta", clear 
-	merge 1:1 year subg agegp permearnaltrankt ///
-		using "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnaltp.dta", nogenerate
-		sort year subg agegp permearnaltrankt
-		order year subg agegp permearnaltrankt
-	*save "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnalt_summ.dta", replace
-	outsheet using "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnalt_summ.csv", replace comma
-	erase "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnalt.dta" 
-	erase "$maindir${sep}out${sep}$outfolder/S_L_agegppermearnaltp.dta" 
 
 timer off 1
 timer list 1

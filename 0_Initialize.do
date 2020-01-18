@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This code specify country-specific variables.  
-// This version June 13, 2019
+// This version December 10, 2019
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -15,7 +15,7 @@ global begin_age = 25 		// Starting age
 global end_age = 55			// Ending age
 global base_price = 2018	// The base year nominal values are converted to real. 
 global winsor=99.999999		// The values above this percentile are going to be set to this percentile. 
-global noise=0.0			// The values above this percentile are going to be set to this percentile. 
+global noise=0.0			// Noise added to income. See line 112 in 1_Gen_Base_Sample.do
 
 
 // PLEASE MAKE THE APPROPRIATE CHANGES BELOW. 
@@ -72,8 +72,10 @@ global qpercent = 99
 	// In this case 99 implies top 1%. 
 	// Calculations are made using  Matthieu Gomez's paper
 	
+global mergecohort = 2
+	// Number of cohorts to be merged to prevent too few observations in year/age cells 
 	
-global hetgroup = `" male age educ "male age" "male educ" "male educ age" "' 
+global hetgroup = `"male age educ "male age" "male educ" "male educ age" "' 
 	// Define heterogenous groups for which time series stats will be calculated 
 
 // Price index for converting nominal values to real, e.g., the PCE for the US.  
@@ -86,10 +88,18 @@ matrix cpimat = /*  CPI between ${yrfirst}  and ${yrlast}
 
 matrix cpimat = cpimat/${cpi2018}
 
+
 matrix exrate = /*  Nominal average exchange rate from FRED between ${yrfirst}  and ${yrlast} (LC per dollar)
 */ (7.101,7.055,6.335,6.459,7.086,7.552,7.807,8.813,8.996,7.984, /*
 */	7.080,6.740,6.441,6.409,5.856,5.637,6.291,6.045,5.602,5.818, /*
 */	5.877,6.297)'
+
+
+// Define years for recession bars/ These will be used to generate a variable called rece used in the plots
+global receyears = "1993,1993,1995,2002,2003,2004,2009,2010,2015"
+
+// Define the year that will be use for normalization. 
+global normyear = ${yrfirst}
 
 
 /*DO NOT CHANGE THIS SECTION**********************************************

@@ -9,7 +9,7 @@ set more off
 // You should change the below directory. 
 
 *global maindir ="/Users/serdar/Dropbox/GLOBAL-MASTER-CODE/STATA/"
-global maindir ="/Users/sergiosalgado/Dropbox/GLOBAL-MASTER-CODE/STATA/"
+global maindir ="/Users/ssalgado/Dropbox/GLOBAL-MASTER-CODE/STATA/"
 
 // Do not make change from here on. Contact Ozkan/Salgado if changes are needed. 
 do "$maindir/do/0_Initialize.do"
