@@ -447,8 +447,8 @@ foreach yr of numlist $yrlist{
 			erase "$maindir${sep}out${sep}$outfolder/L_male`aa'age`mm'earn_`yr'_con.dta"	
 			cap:gen agegp = `mm' 
 			cap:replace agegp = `mm'  if agegp == .
-			cap:gen male = `mm' 
-			cap:replace male = `mm'  if male == .
+			cap:gen male = `aa' 
+			cap:replace male = `aa'  if male == .
 		}
 		}
 	}	
@@ -481,8 +481,8 @@ foreach yr of numlist $yrlist{
 		cap: erase "$maindir${sep}out${sep}$outfolder/L_male`aa'educ`mm'earn_`yr'_con.dta"	
 		cap:gen educ = `mm' 
 		cap:replace educ = `mm'  if educ == .
-		cap:gen male = `mm' 
-		cap:replace male = `mm'  if male == .
+		cap:gen male = `aa' 
+		cap:replace male = `aa'  if male == .
 		}
 		}
 	}	

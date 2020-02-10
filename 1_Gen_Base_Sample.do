@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the base sample 
-// This version Nov 30, 2019
+// This version Feb 08, 2020
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -155,7 +155,7 @@ forvalues yr = $yrfirst/$yrlast{
 	
 	gen logearn`yr' = log(labor`yr') if labor`yr'>=rmininc[`yr'-${yrfirst}+1,1] & labor`yr'!=. 
 	gen logearnc`yr' = log(labor`yr') if labor`yr'>=(1/3)*rmininc[`yr'-${yrfirst}+1,1] & labor`yr'!=. 
-	
+	drop if logearnc`yr' == . & logearn`yr' == .
 	
 	// Create dummies for age and education groups
 	tab age, gen(agedum)
@@ -262,12 +262,12 @@ foreach k in 1 5{
 	
 		local yrnext=`yr'+`k'
 
-		use personid male age researn`yr' researn`yrnext' researnc`yrnext' labor`yrnext' labor`yr' using "researn.dta", clear
+		use personid male age researn`yr' researnc`yrnext' labor`yrnext' labor`yr' using "researn.dta", clear
 		
 		bys male age: egen avelabor`yrnext' = mean(labor`yrnext')
 		bys male age: egen avelabor`yr' = mean(labor`yr')
 		
-		gen researn`k'F`yr'= researnc`yrnext'-researn`yr'		// Growth with earninbgs above mininc in t and 1/3*mininc in t+k
+		gen researn`k'F`yr'= researnc`yrnext'-researn`yr'		// Growth with earnings above mininc in t and 1/3*mininc in t+k
 		gen arcearn`k'F`yr'= (labor`yrnext'/avelabor`yrnext' - labor`yr'/avelabor`yr')/(0.5*(labor`yrnext'/avelabor`yrnext' + labor`yr'/avelabor`yr'))
 		
 		label var researn`k'F`yr'  "Residual earnings growth between `yrnext' and `yr'"

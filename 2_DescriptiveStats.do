@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the descriptive statistics 
-// This version April 17, 2019
+// This version Feb 08, 2020
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -68,6 +68,11 @@ forvalues yr = `fsrtyr'/`lastyr'{
 	// Create age (This applies to all samples)
 	gen age = `yr'-yob+1
 	qui: drop if age<${begin_age} | age>${end_age}
+	
+	// Select CS sample (Individual has earnings above min treshold)
+	if "`spl'" == "CS"{
+		qui: keep if labor`yr'>=rmininc[`yr'-${yrfirst}+1,1] & labor`yr'!=. 
+	}
 	
 	// Select LX sample (Individual has 1 and 5 yr residual earnings change)
 	if "`spl'" == "LX"{
