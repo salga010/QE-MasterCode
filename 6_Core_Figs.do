@@ -90,6 +90,8 @@ global mobidata = "18 Jan 2020/18 Jan 2020 Mobility"			// Data on Mobility
 if "${figineq}" == "yes"{ 	
 
 
+
+
 // PLOTS OF TAIL COEFFICIENTS FOR RELATIVE VALUES
 	global folderfile = "figs${sep}${outfolder}${sep}Inequality${sep}tail"
 	*Load and reshape data 			
@@ -122,7 +124,7 @@ if "${figineq}" == "yes"{
 		keep if lt1995 != . & ra1995 !=.
 		dnplot "ra1995" "l10t1995" /// y and x variables 
 				"Labor Income Threshold in 1000s of Real LC" "Ratio Ave-Earnigs to Threshold" "medium" "medium" 	///
-				 "Saez Figure for Realtive Income Levels in 1995" "" "large" ""  ///	Plot title
+				 "Saez Figure for Relative Income Levels in 1995" "" "large" ""  ///	Plot title
 				 "" "" "" "" "" ""						/// Legends
 				 ""	"11" "2"				/// Leave empty for active legend; 2 for position
 				"figSaez_REearn1995"		// Name of file
@@ -130,9 +132,9 @@ if "${figineq}" == "yes"{
 	
 	preserve 
 		keep if ra2000 != . & lt2000 !=.
-		dnplot "ra2000 ra1995" "l10t2000" /// y and x variables 
+		dnplot "ra1995 ra2000 ra2005 ra2010" "l10t2000" /// y and x variables 
 				"Labor Income Threshold in 1000s of Real LC" "Ratio Ave-Earnigs to Threshold" "medium" "medium" 	///
-				 "Saez Figure for Realtive Income Levels in 2000" "" "large" ""  ///	Plot title
+				 "Saez Figure for Relative Income Levels" "" "large" ""  ///	Plot title
 				 "1995" "2000" "2005" "2010" "" ""						/// Legends
 				 ""	"11" "2"				/// Leave empty for active legend; 2 for position
 				"figSaez_REearn2000"		// Name of file
@@ -156,6 +158,12 @@ if "${figineq}" == "yes"{
 // PLOTS OF TAIL COEFFICIENTS FOR ABSOLUTE VALUES
 	global folderfile = "figs${sep}${outfolder}${sep}Inequality${sep}tail"
 	
+	*Load number of observations
+	insheet using "out${sep}${ineqdata}${sep}L_logearn_sumstat.csv", clear comma 
+	keep year nlogearn 
+	rename nlogearn tob
+	save "out${sep}${ineqdata}${sep}aux.dta", replace
+	
 	*Load and reshape data 
 	insheet using "out${sep}${ineqdata}${sep}AI_earn_idex.csv", clear comma 
 	
@@ -167,16 +175,21 @@ if "${figineq}" == "yes"{
 	order numlevel level year 
 	sort year numlevel
 	
-	*Re scale and share of pop
-	by year: egen tob = sum(ob)
-	by year: gen  shob = 100*ob/tob
+	*Merge tob 
+	merge m:1 year using "out${sep}${ineqdata}${sep}aux.dta", keep(1 3) nogenerate
+	erase "out${sep}${ineqdata}${sep}aux.dta"
 	
+	*Re scale and share of pop
+	sort year numlevel
+	by year: gen  shob = 100*ob/tob
 	gen t1000s = t/1000
+	gen lt1000s = log(t/1000)
+	gen lshob = log(shob)
 	
 	*Re-reshape 
-	reshape wide t me ra ob tob shob, i(numlevel) j(year)
+	reshape wide t me ra ob tob shob lshob, i(numlevel) j(year)
 	
-	
+	keep if t1000s > 500
 	*Ploting
 	dnplot "ra1995 ra2000 ra2005 ra2010" "t1000s" /// y and x variables 
 			"Labor Income Threshold in 1000s of Real LC" "Ratio Ave-Earnigs to Threshold" "medium" "medium" 	///
@@ -186,11 +199,18 @@ if "${figineq}" == "yes"{
 			"figSaez_earn"		// Name of file
 
 	dnplot "shob1995 shob2000 shob2005 shob2010" "t1000s" /// y and x variables 
-			"Labor Income Threshold in 1000s of Real LC" "Share of Polulation above w (1-G(w))" "medium" "medium" 	///
+			"Labor Income Threshold in 1000s of Real LC" "Share of Polulation above (1-G(w))" "medium" "medium" 	///
 			 "Saez Figure for Income Levels" "" "large" ""  ///	Plot title
 			 "1995" "2000" "2005" "2010" "" ""						/// Legends
 			 ""	"2" "1"				/// Leave empty for active legend; 2 for position
 			"figSaez_shares_earn"		// Name of file
+
+	dnplot "lshob1995 lshob2000 lshob2005 lshob2010" "lt1000s" /// y and x variables 
+			"Labor Income Threshold in 1000s of Real LC" "Share of Polulation above (1-G(w))" "medium" "medium" 	///
+			 "Saez Figure for Income Levels" "" "large" ""  ///	Plot title
+			 "1995" "2000" "2005" "2010" "" ""						/// Legends
+			 ""	"2" "1"				/// Leave empty for active legend; 2 for position
+			"figSaez_lshares_learn"		// Name of file
 
 
 // PLOTS RESEARN
