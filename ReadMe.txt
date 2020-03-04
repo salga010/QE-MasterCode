@@ -5,6 +5,16 @@ Serdar Ozkan (serdar.ozkan@toronto.ca)
 Sergio Salgado (ssalgado@wharton.upenn.edu)
 ----------------
 
+March 03, 2020
+
+Updated 1_Gen_Sample.do, 6_Core_Figs.do, and (very minor) changes in myplots.do and 3_Inequality.do. Below the important changes
+
+- On 1_Gen line 158 that was incorrectly dropping observations with little earnings dropping all observations with 0 earnings. Dropped that line. We also added a condition on arc-percent that only kicks in if labor earnings in t and in t+k are below the min income. 
+
+- On 6_Core, adjusted some of the figures to put the figures of 5-year changes centered in the moving window. That is, if the moment is calculated as t+5, the plot is centered in t+2. Also, added a new version of figure 5a to have two axis. 
+
+
+
 January, 18, 2019
 
 Updated the codes to the version 2.0; This new version of the code contains several major changes relative to the original version of April 2019. Among others 

@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the core figures
-// Last edition January, 18, 2020
+// Last edition March, 03, 2020
 // Serdar Ozkan and Sergio Salgado
 // 
 // The figures below are meant to be a guideline and might require some changes 
@@ -12,26 +12,25 @@
 clear all
 set more off
 
-// global maindir ="/Users/serdar/Dropbox/QE_PROJECT/GLOBAL-MASTER-CODE/STATA"
-global maindir ="/Users/ssalgado/Dropbox/GLOBAL-MASTER-CODE/STATA"
+global maindir =".../GLOBAL-MASTER-CODE/STATA"
 
 // Where the data is stored
-global ineqdata = "18 Jan 2020/16 Jan 2020 Inequality"			// Data on Inequality 
-global voladata = "18 Jan 2020/17 Jan 2020 Volatility"			// Data on Volatility
-global mobidata = "18 Jan 2020/18 Jan 2020 Mobility"			// Data on Mobility
+global ineqdata = ".."			// Data on Inequality 
+global voladata = "..."			// Data on Volatility
+global mobidata = ".."			// Data on Mobility
 
 // Do not make change from here on. Contact Ozkan/Salgado if changes are needed. 
 	do "$maindir/do/0_Initialize.do"
 	do "$maindir${sep}do${sep}myplots.do"		
 	
 // Define some common charactristics of the plots 
-	global xtitlesize =   "large" 
-	global ytitlesize =   "large" 
-	global titlesize  =   "vlarge" 
+	global xtitlesize =   "medium" 
+	global ytitlesize =   "medium" 
+	global titlesize  =   "large" 
 	global subtitlesize = "medium" 
 	global formatfile  =  "pdf"
 	global fontface   =   "Times New Roman"
-	global marksize =     "medlarge"	
+	global marksize =     "medium"	
 
 
 // Where the firgures are going to be saved 
@@ -74,13 +73,15 @@ global mobidata = "18 Jan 2020/18 Jan 2020 Mobility"			// Data on Mobility
 	
 
 // Which section are we ploting 
-	global figineq = "yes"			// Inequality  Figs 1 and 2 
-	global figtail = "yes"			// Tail 	   Figs 3a
-	global figcon =  "yes"			// Concetration Figb 3a
+	global figineq = "no"			// Inequality  Figs 1 and 2 
+	global figtail = "no"			// Tail 	   Figs 3a
+	global figcon =  "no"			// Concetration Figb 3a
 	global figvol =  "yes"			// Volatility Figb 4 to 7
-	global figquan = "yes"			// quantiles Figb 8
-	global figmob = "yes"			// Mobility Fig 11
-	global figcoh = "yes"			// Cohorts Fig 12
+	global figquan = "no"			// quantiles Figb 8
+	global figmob = "no"			// Mobility Fig 11
+	global figcoh = "no"			// Cohorts Fig 12
+	
+	global yrlast = 2017
 		
 /*---------------------------------------------------	
     This section generates the figures 1 and 2 
@@ -90,10 +91,9 @@ global mobidata = "18 Jan 2020/18 Jan 2020 Mobility"			// Data on Mobility
 if "${figineq}" == "yes"{ 	
 
 
-
-
-// PLOTS OF TAIL COEFFICIENTS FOR RELATIVE VALUES
+	// PLOTS OF TAIL COEFFICIENTS FOR RELATIVE VALUES
 	global folderfile = "figs${sep}${outfolder}${sep}Inequality${sep}tail"
+	
 	*Load and reshape data 			
 	insheet using "out${sep}${ineqdata}${sep}RI_earn_idex.csv", clear comma 
 
@@ -124,7 +124,7 @@ if "${figineq}" == "yes"{
 		keep if lt1995 != . & ra1995 !=.
 		dnplot "ra1995" "l10t1995" /// y and x variables 
 				"Labor Income Threshold in 1000s of Real LC" "Ratio Ave-Earnigs to Threshold" "medium" "medium" 	///
-				 "Saez Figure for Relative Income Levels in 1995" "" "large" ""  ///	Plot title
+				 "Saez Figure for Realtive Income Levels in 1995" "" "large" ""  ///	Plot title
 				 "" "" "" "" "" ""						/// Legends
 				 ""	"11" "2"				/// Leave empty for active legend; 2 for position
 				"figSaez_REearn1995"		// Name of file
@@ -132,9 +132,9 @@ if "${figineq}" == "yes"{
 	
 	preserve 
 		keep if ra2000 != . & lt2000 !=.
-		dnplot "ra1995 ra2000 ra2005 ra2010" "l10t2000" /// y and x variables 
+		dnplot "ra2000 ra1995" "l10t2000" /// y and x variables 
 				"Labor Income Threshold in 1000s of Real LC" "Ratio Ave-Earnigs to Threshold" "medium" "medium" 	///
-				 "Saez Figure for Relative Income Levels" "" "large" ""  ///	Plot title
+				 "Saez Figure for Realtive Income Levels in 2000" "" "large" ""  ///	Plot title
 				 "1995" "2000" "2005" "2010" "" ""						/// Legends
 				 ""	"11" "2"				/// Leave empty for active legend; 2 for position
 				"figSaez_REearn2000"		// Name of file
@@ -158,12 +158,6 @@ if "${figineq}" == "yes"{
 // PLOTS OF TAIL COEFFICIENTS FOR ABSOLUTE VALUES
 	global folderfile = "figs${sep}${outfolder}${sep}Inequality${sep}tail"
 	
-	*Load number of observations
-	insheet using "out${sep}${ineqdata}${sep}L_logearn_sumstat.csv", clear comma 
-	keep year nlogearn 
-	rename nlogearn tob
-	save "out${sep}${ineqdata}${sep}aux.dta", replace
-	
 	*Load and reshape data 
 	insheet using "out${sep}${ineqdata}${sep}AI_earn_idex.csv", clear comma 
 	
@@ -175,21 +169,16 @@ if "${figineq}" == "yes"{
 	order numlevel level year 
 	sort year numlevel
 	
-	*Merge tob 
-	merge m:1 year using "out${sep}${ineqdata}${sep}aux.dta", keep(1 3) nogenerate
-	erase "out${sep}${ineqdata}${sep}aux.dta"
-	
 	*Re scale and share of pop
-	sort year numlevel
+	by year: egen tob = sum(ob)
 	by year: gen  shob = 100*ob/tob
+	
 	gen t1000s = t/1000
-	gen lt1000s = log(t/1000)
-	gen lshob = log(shob)
 	
 	*Re-reshape 
-	reshape wide t me ra ob tob shob lshob, i(numlevel) j(year)
+	reshape wide t me ra ob tob shob, i(numlevel) j(year)
 	
-	keep if t1000s > 500
+	
 	*Ploting
 	dnplot "ra1995 ra2000 ra2005 ra2010" "t1000s" /// y and x variables 
 			"Labor Income Threshold in 1000s of Real LC" "Ratio Ave-Earnigs to Threshold" "medium" "medium" 	///
@@ -199,20 +188,13 @@ if "${figineq}" == "yes"{
 			"figSaez_earn"		// Name of file
 
 	dnplot "shob1995 shob2000 shob2005 shob2010" "t1000s" /// y and x variables 
-			"Labor Income Threshold in 1000s of Real LC" "Share of Polulation above (1-G(w))" "medium" "medium" 	///
+			"Labor Income Threshold in 1000s of Real LC" "Share of Polulation above w (1-G(w))" "medium" "medium" 	///
 			 "Saez Figure for Income Levels" "" "large" ""  ///	Plot title
 			 "1995" "2000" "2005" "2010" "" ""						/// Legends
 			 ""	"2" "1"				/// Leave empty for active legend; 2 for position
 			"figSaez_shares_earn"		// Name of file
 
-	dnplot "lshob1995 lshob2000 lshob2005 lshob2010" "lt1000s" /// y and x variables 
-			"Labor Income Threshold in 1000s of Real LC" "Share of Polulation above (1-G(w))" "medium" "medium" 	///
-			 "Saez Figure for Income Levels" "" "large" ""  ///	Plot title
-			 "1995" "2000" "2005" "2010" "" ""						/// Legends
-			 ""	"2" "1"				/// Leave empty for active legend; 2 for position
-			"figSaez_lshares_learn"		// Name of file
-
-
+	
 // PLOTS RESEARN
 	*Define the saving folder 
 	global folderfile = "figs${sep}${outfolder}${sep}Inequality${sep}researn"	
@@ -227,15 +209,18 @@ if "${figineq}" == "yes"{
 	*You can add more groups to this section 
 	if "`subgp'" == "all"{
 		insheet using "out${sep}${ineqdata}${sep}L_`var'_sumstat.csv", clear
+		local labname = "All"
 	}
 	if "`subgp'" == "male"{
 		insheet using "out${sep}${ineqdata}${sep}L_`var'_male_sumstat.csv", clear
 		keep if male == 1	// Keep the group we want to plot 
+		local labname = "Men"
 	}
 		
 	if "`subgp'" == "fem"{
 		insheet using "out${sep}${ineqdata}${sep}L_`var'_male_sumstat.csv", clear
 		keep if male == 0	// Keep the group we want to plot 
+		local labname = "Women"
 	}
 	
 	*What is the label for title 
@@ -264,13 +249,14 @@ if "${figineq}" == "yes"{
 	}
 	
 	*Normalize Percentiles 
+	gen var${vari} = sd${vari}^2
 	gen p9010${vari} = p90${vari} - p10${vari}
 	gen p9050${vari} = p90${vari} - p50${vari}
 	gen p5010${vari} = p50${vari} - p10${vari}
 	gen ksk${vari} = (p9050${vari} - p9010${vari})/p9010${vari}
 
 	*Rescale by first year 
-	foreach vv in sd$vari p1$vari p2_5$vari p5$vari p10$vari p12_5$vari p25$vari ///
+	foreach vv in sd$vari var$vari p1$vari p2_5$vari p5$vari p10$vari p12_5$vari p25$vari ///
 		p37_5$vari p50$vari p62_5$vari p75$vari p87_5$vari p90$vari p95$vari ///
 		p97_5$vari p99$vari p99_9$vari p99_99$vari p9010$vari p9050${vari} p5010${vari} ksk${vari}{
 		sum  `vv' if year == ${normyear}, meanonly
@@ -279,14 +265,14 @@ if "${figineq}" == "yes"{
 	gen rece = inlist(year,${receyears})
 
 // Figure 1 (normalized percentiles)
-	tspltAREALim "np5$vari np10$vari  np25$vari np50$vari np75$vari np90$vari np95$vari np99_9$vari np99_99$vari" /// Which variables?
+	tspltAREALim "np5$vari np10$vari  np25$vari np50$vari np75$vari np90$vari np95$vari np99$vari np99_9$vari" /// Which variables?
 	   "year" ///
 	   `lyear' `ryear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
-	   "p5" "p10" "p25" "p50" "p75" "p90" "p95" "p99.9" "p99.99" /// Labels 
+	   "p5" "p10" "p25" "p50" "p75" "p90" "p95" "p99" "p99.9" /// Labels 
 	   "2" "11" ///
 	   "" /// x axis title
-	    "Percentiles of `labtitle' (`lyear'=0)" /// y axis title 
-	   "Percentiles of `labtitle' for Sample: `subgp'" ///  Plot title
+	    "Percentiles Relative to `lyear'" /// y axis title 
+	   "Percentiles of `labtitle' for Sample: `labname'" ///  Plot title
 	   "" ///
 	   "fig1_`subgp'_${vari}"	/// Figure name
 	   "-0.2" "1" "0.2"				/// ylimits
@@ -300,7 +286,7 @@ if "${figineq}" == "yes"{
 	   "3" "11" ///
 	   "" /// x axis title
 	    "Percentiles of `labtitle' (`lyear'=0)" /// y axis titl
-	   "Percentiles of `labtitle' for Sample: `subgp'" ///  Plot title
+	   "Percentiles of `labtitle' for Sample: `labname'" ///  Plot title
 	   "" ///
 	   "fig1short_`subgp'_${vari}"	/// Figure name
 	   "-.2" "0.2" "0.1"				/// ylimits
@@ -308,25 +294,25 @@ if "${figineq}" == "yes"{
 	    "green black maroon red navy blue forest_green purple gray orange"			// Colors
 		
 // Figure 2 (Inequality)
-	tsplt2sc "p9010${vari}" "sd${vari}" /// variables plotted
+	tsplt2sc "p9010${vari}" "var${vari}" /// variables plotted
 		   "year" ///
 		   `lyear' `ryear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
-		   "P9010" "Standard Deviation" /// Labels 
+		   "P90-P10" "Variance" /// Labels 
 		   "" /// x axis title
-		   "P9010 of log y{sub:it}" /// y axis title (left)
-		   "Standard Deviation of `labtitle'" /// y axis title  (right)
-		   "Measures of Dispersion of `labtitle' for Sample: `subgp'" ///  Plot title
+		   "P90-P10 of `labtitle'" /// y axis title (left)
+		   "Variance of `labtitle'" /// y axis title  (right)
+		   "Measures of Dispersion of `labtitle' for Sample: `labname'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig2a_`subgp'_${vari}"	// Figure name
 	
 	tspltAREALim2 "p9050${vari} p5010${vari}" ///  variables plotted
 		   "year" ///
 		   `lyear' `ryear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
-		   "P90-P10" "P50-P10" "" "" "" "" "" "" "" /// Labels 
+		   "P90-P50" "P50-P10" "" "" "" "" "" "" "" /// Labels 
 		   "1" "11" ///
 		   "" /// x axis title
-		   "Percentiles of `labtitle'" /// y axis title 
-		   "Measures of Dispersion of `labtitle' for Sample: `subgp'" ///  Plot title
+		   "Dispersion of `labtitle'" /// y axis title 
+		   "Measures of Dispersion of `labtitle' for Sample: `labname'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig2b_`subgp'_${vari}"	/// Figure name
 		    "0.4" "1.2" "0.2"			/// ylimits
@@ -334,14 +320,14 @@ if "${figineq}" == "yes"{
 		   "blue red"			// Colors
 		   
 // Figure 2 Rescale
-	tspltAREALim2 "np9010${vari} nsd${vari}" ///  variables plotted
+	tspltAREALim2 "np9010${vari} nvar${vari}" ///  variables plotted
 		   "year" ///
 		   `lyear' `ryear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
-		   "P90-P10" "Standard Deviation" "" "" "" "" "" "" "" /// Labels 
+		   "P90-P10" "Variance" "" "" "" "" "" "" "" /// Labels 
 		    "1" "11" ///
 		   "" /// x axis title
-		   "Measures of Dispersion of `labtitle' (`lyear'=0)" /// y axis title 
-		   "Measures of Dispersion of `labtitle' for Sample: `subgp'" ///  Plot title
+		   "Dispersion of `labtitle' Relative to `lyear'" /// y axis title 
+		   "Measures of Dispersion of `labtitle' for Sample: `labname'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig2aN_`subgp'_${vari}"	/// Figure name
 		    "-0.05" "0.20" "0.05"			/// ylimits
@@ -355,17 +341,18 @@ if "${figineq}" == "yes"{
 		   "P90-P50" "P50-P10" "" "" "" "" "" "" "" /// Labels 
 		    "1" "11" ///
 		   "" /// x axis title
-		   "Percentiles of `labtitle' (`lyear'=0)" /// y axis title 
-		   "Measures of Dispersion of `labtitle' for Sample: `subgp'" ///  Plot title
+		   "Dispersion of `labtitle' Relative to `lyear'" /// y axis title 
+		   "Measures of Dispersion of `labtitle' for Sample: `labname'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig2bN_`subgp'_${vari}"	/// Figure name
 		     "-0.05" "0.1" "0.05"			/// ylimits
 			"" 						/// If legend is active or nor	
 		   "blue red"			// Colors
+		   asd
 	   }	// END of loop over subgroups
 	   
 }		// END of researn
-
+*/
 
 // PLOTS OF LOG EARN: The limints need to change for each variable; Better seperate them
 	*Define the saving folder 
@@ -382,15 +369,18 @@ if "${figineq}" == "yes"{
 	*You can add more groups to this section 
 	if "`subgp'" == "all"{
 		insheet using "out${sep}${ineqdata}${sep}L_`var'_sumstat.csv", clear
+		local labname = "All"
 	}
 	if "`subgp'" == "male"{
 		insheet using "out${sep}${ineqdata}${sep}L_`var'_male_sumstat.csv", clear
 		keep if male == 1	// Keep the group we want to plot 
+		local labname = "Men"
 	}
 		
 	if "`subgp'" == "fem"{
 		insheet using "out${sep}${ineqdata}${sep}L_`var'_male_sumstat.csv", clear
 		keep if male == 0	// Keep the group we want to plot 
+		local labname = "Women"
 	}
 	
 	*What is the label for title 
@@ -419,13 +409,14 @@ if "${figineq}" == "yes"{
 	}
 	
 	*Normalize Percentiles 
+	gen var${vari} = sd${vari}^2
 	gen p9010${vari} = p90${vari} - p10${vari}
 	gen p9050${vari} = p90${vari} - p50${vari}
 	gen p5010${vari} = p50${vari} - p10${vari}
 	gen ksk${vari} = (p9050${vari} - p9010${vari})/p9010${vari}
 
 	*Rescale by first year 
-	foreach vv in sd$vari p1$vari p2_5$vari p5$vari p10$vari p12_5$vari p25$vari ///
+	foreach vv in sd$vari  var$vari p1$vari p2_5$vari p5$vari p10$vari p12_5$vari p25$vari ///
 		p37_5$vari p50$vari p62_5$vari p75$vari p87_5$vari p90$vari p95$vari ///
 		p97_5$vari p99$vari p99_9$vari p99_99$vari p9010$vari p9050${vari} p5010${vari} ksk${vari}{
 		sum  `vv' if year == `lyear', meanonly
@@ -436,17 +427,17 @@ if "${figineq}" == "yes"{
 	gen rece = inlist(year,${receyears})
 
 // Figure 1 (normalized percentiles)
-	tspltAREALim "np5$vari np10$vari  np25$vari np50$vari np75$vari np90$vari np95$vari np99_9$vari np99_99$vari" /// Which variables?
+	tspltAREALim "np5$vari np10$vari  np25$vari np50$vari np75$vari np90$vari np95$vari np99$vari np99_9$vari" /// Which variables?
 	   "year" ///
 	   `lyear' `ryear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
-	   "p5" "p10" "p25" "p50" "p75" "p90" "p95" "p99.9" "p99.99" /// Labels 
+	   "p5" "p10" "p25" "p50" "p75" "p90" "p95" "p99" "p99.9" /// Labels 
 	   "1" "11" ///
 	   "" /// x axis title
-	    "Percentiles of `labtitle' (`lyear'=0)" /// y axis title 
-	   "Percentiles of `labtitle' for Sample: `subgp'" ///  Plot title
+	   "Percentiles Relative to `lyear'" /// y axis title 
+	   "Percentiles of `labtitle' for Sample: `labname'" ///  Plot title
 	   "" ///
 	   "fig1_`subgp'_${vari}"	/// Figure name
-	   "0" "1.2" "0.2"				/// ylimits
+	   "0" "1" "0.2"				/// ylimits
 	   "" 						/// If legend is active or nor	
 	    "green black maroon red navy blue forest_green purple gray orange"			// Colors
 		
@@ -456,23 +447,23 @@ if "${figineq}" == "yes"{
 	   "p5" "p10" "p25" "p50" "p75" "p90" "p95" "" "" /// Labels 
 	   "1" "11" ///
 	   "" /// x axis title
-	    "Percentiles of `labtitle' (`lyear'=0)" /// y axis title 
-	   "Percentiles of `labtitle' for Sample: `subgp'" ///  Plot title
+	   "Percentiles Relative to `lyear'" /// y axis title 
+	   "Percentiles of `labtitle' for Sample: `labname'" ///  Plot title
 	   "" ///
-	   "fig1_`subgp'_${vari}"	/// Figure name
+	   "fig1short_`subgp'_${vari}"	/// Figure name
 	   "0" "0.6" "0.2"				/// ylimits
 	   "" 						/// If legend is active or nor	
 	    "green black maroon red navy blue forest_green purple gray orange"			// Colors
 	
 // Figure 2 (Inequality)
-	tsplt2sc "p9010${vari}" "sd${vari}" /// variables plotted
+	tsplt2sc "p9010${vari}" "var${vari}" /// variables plotted
 		   "year" ///
 		   `lyear' `ryear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
-		   "P9010" "Standard Deviation" /// Labels 
+		   "P9010" "Variance" /// Labels 
 		   "" /// x axis title
-		   "P9010 of log y{sub:it}" /// y axis title (left)
-		   "Standard Deviation of `labtitle'" /// y axis title  (right)
-		   "Measures of Dispersion of `labtitle' for Sample: `subgp'" ///  Plot title
+		   "P90-P10 of `labtitle'" /// y axis title (left)
+		   "Variance of `labtitle'" /// y axis title  (right)
+		   "Measures of Dispersion of `labtitle' for Sample: `labname'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig2a_`subgp'_${vari}"	// Figure name
 	
@@ -482,8 +473,8 @@ if "${figineq}" == "yes"{
 		   "P90-P10" "P50-P10" "" "" "" "" "" "" "" /// Labels 
 		   "1" "11" ///
 		   "" /// x axis title
-		   "Percentiles of `labtitle'" /// y axis title 
-		   "Measures of Dispersion of `labtitle' for Sample: `subgp'" ///  Plot title
+		   "Dispersion of `labtitle'" /// y axis title 
+		   "Measures of Dispersion of `labtitle' for Sample: `labname'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig2b_`subgp'_${vari}"	/// Figure name
 		    "0.5" "1.5" "0.25"			/// ylimits
@@ -491,14 +482,14 @@ if "${figineq}" == "yes"{
 		   "blue red"			// Colors
 		   
 // Figure 2 Rescale
-	tspltAREALim2 "np9010${vari} nsd${vari}" ///  variables plotted
+	tspltAREALim2 "np9010${vari} nvar${vari}" ///  variables plotted
 		   "year" ///
 		   `lyear' `ryear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
-		   "P90-P10" "Standard Deviation" "" "" "" "" "" "" "" /// Labels 
+		   "P90-P10" "Variance" "" "" "" "" "" "" "" /// Labels 
 		    "1" "11" ///
 		   "" /// x axis title
-		   "Measures of Dispersion of `labtitle' (`lyear'=0)" /// y axis title 
-		   "Measures of Dispersion of `labtitle' for Sample: `subgp'" ///  Plot title
+		   "Dispersion of `labtitle' Relative to `lyear'" /// y axis title 
+		   "Measures of Dispersion of `labtitle' for Sample: `labname'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig2aN_`subgp'_${vari}"	/// Figure name
 		    "-0.05" "0.20" "0.05"			/// ylimits
@@ -512,13 +503,15 @@ if "${figineq}" == "yes"{
 		   "P90-P50" "P50-P10" "" "" "" "" "" "" "" /// Labels 
 		    "1" "11" ///
 		   "" /// x axis title
-		   "Percentiles of `labtitle' (`lyear'=0)" /// y axis title 
-		   "Measures of Dispersion of `labtitle' for Sample: `subgp'" ///  Plot title
+		   "Dispersion of `labtitle' Relative to `lyear'" /// y axis title 
+		   "Measures of Dispersion of `labtitle' for Sample: `labname'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig2bN_`subgp'_${vari}"	/// Figure name
 		     "-0.05" "0.1" "0.05"			/// ylimits
 			"" 						/// If legend is active or nor	
 		   "blue red"			// Colors
+		   
+		   asd
 	   }	// END of loop over subgroups
 }		// END loop over variables
 
@@ -537,15 +530,18 @@ if "${figineq}" == "yes"{
 	*You can add more groups to this section 
 	if "`subgp'" == "all"{
 		insheet using "out${sep}${ineqdata}${sep}L_`var'_sumstat.csv", clear
+		local labname = "All"
 	}
 	if "`subgp'" == "male"{
 		insheet using "out${sep}${ineqdata}${sep}L_`var'_male_sumstat.csv", clear
 		keep if male == 1	// Keep the group we want to plot 
+		local labname = "Men"
 	}
 		
 	if "`subgp'" == "fem"{
 		insheet using "out${sep}${ineqdata}${sep}L_`var'_male_sumstat.csv", clear
 		keep if male == 0	// Keep the group we want to plot 
+		local labname = "Women"
 	}
 	
 	*What is the label for title 
@@ -575,13 +571,14 @@ if "${figineq}" == "yes"{
 	
 	
 	*Normalize Percentiles 
+	gen var${vari} = sd${vari}^2
 	gen p9010${vari} = p90${vari} - p10${vari}
 	gen p9050${vari} = p90${vari} - p50${vari}
 	gen p5010${vari} = p50${vari} - p10${vari}
 	gen ksk${vari} = (p9050${vari} - p9010${vari})/p9010${vari}
 
 	*Rescale by first year 
-	foreach vv in sd$vari p1$vari p2_5$vari p5$vari p10$vari p12_5$vari p25$vari ///
+	foreach vv in sd$vari var$vari p1$vari p2_5$vari p5$vari p10$vari p12_5$vari p25$vari ///
 		p37_5$vari p50$vari p62_5$vari p75$vari p87_5$vari p90$vari p95$vari ///
 		p97_5$vari p99$vari p99_9$vari p99_99$vari p9010$vari p9050${vari} p5010${vari} ksk${vari}{
 		sum  `vv' if year == `lyear', meanonly
@@ -593,14 +590,14 @@ if "${figineq}" == "yes"{
 	gen rece = inlist(year,${receyears})
 
 // Figure 1 (normalized percentiles)
-	tspltAREALim "np5$vari np10$vari  np25$vari np50$vari np75$vari np90$vari np95$vari np99_9$vari np99_99$vari" /// Which variables?
+	tspltAREALim "np5$vari np10$vari  np25$vari np50$vari np75$vari np90$vari np95$vari np99$vari np99_9$vari" /// Which variables?
 	   "year" ///
 	   `lyear' `ryear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
-	   "p5" "p10" "p25" "p50" "p75" "p90" "p95" "p99.9" "p99.99" /// Labels 
+	   "p5" "p10" "p25" "p50" "p75" "p90" "p95" "p99" "p99.9" /// Labels 
 	   "2" "11" ///
 	   "" /// x axis title
 	    "Percentiles of `labtitle' (`lyear'=0)" /// y axis title 
-	   "Percentiles of `labtitle' for Sample: `subgp'" ///  Plot title
+	   "Percentiles of `labtitle' for Sample: `labname'" ///  Plot title
 	   "" ///
 	   "fig1_`subgp'_${vari}"	/// Figure name
 	   "-0.2" "0.8" "0.2"				/// ylimits
@@ -614,7 +611,7 @@ if "${figineq}" == "yes"{
 	   "3" "11" ///
 	   "" /// x axis title
 	    "Percentiles of `labtitle' (`lyear'=0)" /// y axis titl
-	   "Percentiles of `labtitle' for Sample: `subgp'" ///  Plot title
+	   "Percentiles of `labtitle' for Sample: `labname'" ///  Plot title
 	   "" ///
 	   "fig1short_`subgp'_${vari}"	/// Figure name
 	   "-.1" "0.1" "0.05"				/// ylimits
@@ -622,14 +619,14 @@ if "${figineq}" == "yes"{
 	    "green black maroon red navy blue forest_green purple gray orange"			// Colors
 		
 // Figure 2 (Inequality)
-	tsplt2sc "p9010${vari}" "sd${vari}" /// variables plotted
+	tsplt2sc "p9010${vari}" "var${vari}" /// variables plotted
 		   "year" ///
 		   `lyear' `ryear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
-		   "P9010" "Standard Deviation" /// Labels 
+		   "P9010" "Variance" /// Labels 
 		   "" /// x axis title
-		   "P9010 of log y{sub:it}" /// y axis title (left)
-		   "Standard Deviation of `labtitle'" /// y axis title  (right)
-		   "Measures of Dispersion of `labtitle' for Sample: `subgp'" ///  Plot title
+		   "P90-P10 of `labtitle'" /// y axis title (left)
+		   "Variance of `labtitle'" /// y axis title  (right)
+		   "Measures of Dispersion of `labtitle' for Sample: `labname'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig2a_`subgp'_${vari}"	// Figure name
 	
@@ -640,7 +637,7 @@ if "${figineq}" == "yes"{
 		   "1" "11" ///
 		   "" /// x axis title
 		   "Percentiles of `labtitle'" /// y axis title 
-		   "Measures of Dispersion of `labtitle' for Sample: `subgp'" ///  Plot title
+		   "Measures of Dispersion of `labtitle' for Sample: `labname'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig2b_`subgp'_${vari}"	/// Figure name
 		    "0.4" "1" "0.2"			/// ylimits
@@ -648,14 +645,14 @@ if "${figineq}" == "yes"{
 		   "blue red"			// Colors
 		   
 // Figure 2 Rescale
-	tspltAREALim2 "np9010${vari} nsd${vari}" ///  variables plotted
+	tspltAREALim2 "np9010${vari} nvar${vari}" ///  variables plotted
 		   "year" ///
 		   `lyear' `ryear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
-		   "P90-P10" "Standard Deviation" "" "" "" "" "" "" "" /// Labels 
+		   "P90-P10" "Variance" "" "" "" "" "" "" "" /// Labels 
 		    "1" "11" ///
 		   "" /// x axis title
-		   "Measures of Dispersion of `labtitle' (`lyear'=0)" /// y axis title 
-		   "Measures of Dispersion of `labtitle' for Sample: `subgp'" ///  Plot title
+		   "Dispersion of `labtitle' Relative to `lyear'" /// y axis title 
+		   "Measures of Dispersion of `labtitle' for Sample: `labname'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig2aN_`subgp'_${vari}"	/// Figure name
 		    "-0.05" "0.10" "0.05"			/// ylimits
@@ -669,8 +666,8 @@ if "${figineq}" == "yes"{
 		   "P90-P50" "P50-P10" "" "" "" "" "" "" "" /// Labels 
 		    "1" "11" ///
 		   "" /// x axis title
-		   "Percentiles of `labtitle' (`lyear'=0)" /// y axis title 
-		   "Measures of Dispersion of `labtitle' for Sample: `subgp'" ///  Plot title
+		   "Dispersion of `labtitle' Relative to `lyear'" /// y axis title 
+		   "Measures of Dispersion of `labtitle' for Sample: `labname'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig2bN_`subgp'_${vari}"	/// Figure name
 		     "-0.05" "0.1" "0.05"			/// ylimits
@@ -690,10 +687,10 @@ if "${figineq}" == "yes"{
 	Common Core section of the Guidelines male fem 
  ---------------------------------------------------*/
 if "${figtail}" == "yes"{
-foreach subgp in all male fem{
+foreach subgp in male fem all{
 	
 	local minival = 16		// sets the upper limit of the plots. 
-							// Large numver for all the data
+							// Large number for all the data
 	
 	*Where the files are saved 
 	global folderfile = "figs${sep}${outfolder}${sep}Inequality${sep}tail"
@@ -718,20 +715,27 @@ foreach subgp in all male fem{
 		
 		sum p99logearn if year == `yy'
 		local p99_`yy' = r(mean)
+		
+		sum p99_99logearn if year == `yy'
+		local minival_`yy' = r(mean)
+		
 	}
 	
 	*Plot the log-densities
 	if "`subgp'" == "all"{
 		insheet using "out${sep}${ineqdata}${sep}L_logearn_hist.csv", clear
+		local labname = "All"
 	}
 	if "`subgp'" == "male"{
 		insheet using "out${sep}${ineqdata}${sep}L_logearn_hist_male.csv", clear
 		keep if male == 1	// Keep the group we want to plot 
+		local labname = "Men"
 	}
 		
 	if "`subgp'" == "fem"{
 		insheet using "out${sep}${ineqdata}${sep}L_logearn_hist_male.csv", clear
 		keep if male == 0	// Keep the group we want to plot 
+		local labname = "Women"
 	}
 	
 
@@ -741,8 +745,8 @@ foreach subgp in all male fem{
 	
 	*First cutoff: 5% 
 	* Notice the slope is calculated with all data by the plot cuts the very top. 
-	reg lden_logearn`yy' val_logearn`yy' if val_logearn`yy' >=  `p95_`yy''
-	*reg lden_logearn`yy' val_logearn`yy' if val_logearn`yy' >=  `p95_`yy'' & val_logearn`yy' <= `minival'
+	*reg lden_logearn`yy' val_logearn`yy' if val_logearn`yy' >=  `p95_`yy''
+	reg lden_logearn`yy' val_logearn`yy' if val_logearn`yy' >=  `p95_`yy'' & val_logearn`yy' <= `minival_`yy''
 	predict lden_logearn`yy'_hat1 if e(sample) == 1, xb 
 	global slope : di %4.2f _b[val_logearn`yy']
 	
@@ -751,12 +755,12 @@ foreach subgp in all male fem{
 	
 	preserve 
 	keep if val_logearn`yy' >=  `p95_`yy''
-	keep if val_logearn`yy' <= `minival'	// This is 300k in dollars. 
+	keep if val_logearn`yy' <= `minival_`yy''	// This is 300k in dollars. 
 											// Check this with Serdar we might need to add some noise here
 	
 	dnplot "lden_logearn`yy' lden_logearn`yy'_hat1" "val_logearn`yy'" /// y and x variables 
 			"log y{sub:it}" "log-Density" "medium" "medium" 		/// x and y axcis titles and sizes 
-			 "Log Density of log y{sub:it} at top 5% in `yy'" "Sample: `subgp' - Slope: ${slope}" "large" ""  ///	Plot title
+			 "Log Density of log y{sub:it} at top 5% in `yy'" "Sample: `labname' - Slope: ${slope}" "large" ""  ///	Plot title
 			 "" "" "" "" "" ""						/// Legends
 			 "off" "11"	"2"									/// Leave empty for active legend
 			"fig3a_pareto95_`subgp'_lden_logearn`yy'"			// Name of file
@@ -765,22 +769,21 @@ foreach subgp in all male fem{
 	
 	
 	*Second cutoff: 1% 
-	reg lden_logearn`yy' val_logearn`yy' if val_logearn`yy' >=  `p99_`yy'' 
-	*reg lden_logearn`yy' val_logearn`yy' if val_logearn`yy' >=  `p99_`yy'' & val_logearn`yy' <= `minival'
+	*reg lden_logearn`yy' val_logearn`yy' if val_logearn`yy' >=  `p99_`yy'' 
+	reg lden_logearn`yy' val_logearn`yy' if val_logearn`yy' >=  `p99_`yy'' & val_logearn`yy'  <= `minival_`yy''
 	predict lden_logearn`yy'_hat2 if e(sample) == 1, xb 
 	global slope : di %4.2f _b[val_logearn`yy']
 	
 	
 	preserve 
 	keep if val_logearn`yy' >=  `p99_`yy''
-	keep if val_logearn`yy' <= `minival'			// This is 300k in dollars. Check this with Serdar 
+	keep if val_logearn`yy' <= `minival_`yy''		// This is 300k in dollars. Check this with Serdar 
 	dnplot "lden_logearn`yy' lden_logearn`yy'_hat2" "val_logearn`yy'" /// y and x variables 
 			"log y{sub:it}" "log-Density" "medium" "medium" 		/// x and y axcis titles and sizes 
-			 "Log Density of log y{sub:it} at top 1% in `yy'" "Sample: `subgp' - Slope: ${slope}" "large" ""  ///	Plot title
+			 "Log Density of log y{sub:it} at top 1% in `yy'" "Sample: `labname' - Slope: ${slope}" "large" ""  ///	Plot title
 			 "" "" "" "" "" ""						/// Legends
 			 "off" "11"	"2"							/// Leave empty for active legend
-			"fig3a_pareto99_`subgp'_lden_logearn`yy'"			// Name of file
-			
+			"fig3a_pareto99_`subgp'_lden_logearn`yy'"			// Name of file	
 	restore 
 	
 	}	// END loop over years
@@ -935,70 +938,100 @@ if "${figvol}" == "yes"{
 *Densities 
 	
 // 	local yy = 1995	
-// 	local vari = "researn5F"
-	foreach yy in 1995 2000 2005{
-	foreach vari in researn5F researn1F {
+// // 	local vari = "researn5F"
+// 	foreach sam in men women all {
+// 	foreach yy in 1995 2000 2005{
+// 	foreach vari in researn1F researn5F  {
 	
-		*Labels 
-		if "`vari'" == "researn1F"{
-			local labtitle = "{&Delta}{sup:1}{&epsilon}{sub:it}"
-		}
-		if "`vari'" == "researn5F"{
-			local labtitle = "{&Delta}{sup:5}{&epsilon}{sub:it}"
-		}
+// 		*Labels 
+// 		if "`vari'" == "researn1F"{
+// 			local labtitle = "{&Delta}{sup:1}{&epsilon}{sub:it}"
+// 		}
+// 		if "`vari'" == "researn5F"{
+// 			local labtitle = "{&Delta}{sup:5}{&epsilon}{sub:it}"
+// 		}
 	
-		*Data
-		insheet using "out${sep}${voladata}${sep}L_`vari'_sumstat.csv", case clear
-		sum sd`vari' if year == `yy'
-		global sd = r(mean) 
-		global sdplot: di %4.2f  ${sd}
+// 		*Data
+// 		if "`sam'" == "all"{
+// 			insheet using "out${sep}${voladata}${sep}L_`vari'_sumstat.csv", case clear
+			
+// 			sum sd`vari' if year == `yy'
+// 			global sd = r(mean) 
+// 			global sdplot: di %4.2f  ${sd}
+			
+// 			insheet using "out${sep}${voladata}${sep}L_`vari'_hist.csv", case clear
+// 			local labtitle2 = "(All Sample)"
+// 		}
+// 		else if "`sam'" == "men"{
+// 			insheet using "out${sep}${voladata}${sep}L_`vari'_male_sumstat.csv", case clear
+			
+// 			sum sd`vari' if year == `yy' & male == 1
+// 			global sd = r(mean) 
+// 			global sdplot: di %4.2f  ${sd}
+			
+			
+// 			insheet using "out${sep}${voladata}${sep}L_`vari'_hist_male.csv", case clear
+// 			keep if male == 1
+// 			local labtitle2 = "(Men Only)"
+// 		}
+// 		else if "`sam'" == "women"{
+// 			insheet using "out${sep}${voladata}${sep}L_`vari'_male_sumstat.csv", case clear
+			
+// 			sum sd`vari' if year == `yy' & male == 0
+// 			global sd = r(mean) 
+// 			global sdplot: di %4.2f  ${sd}
+			
+// 			insheet using "out${sep}${voladata}${sep}L_`vari'_hist_male.csv", case clear
+// 			keep if male == 0
+// 			local labtitle2 = "(Women Only)"
+// 		}
 		
-		insheet using "out${sep}${voladata}${sep}L_`vari'_hist.csv", case clear
-
-		*Log densities 
-		gen lden_`vari'`yy' = log(den_`vari'`yy')
-		gen lnden_`vari'`yy' = log(normalden(val_`vari'`yy',0,${sd}))
 		
-		*Slopes
-		reg lden_`vari'`yy' val_`vari'`yy' if val_`vari'`yy' < -1
-		global blefttail: di %4.2f _b[val_`vari'`yy']
-		predict lefttail if e(sample), xb 
+// 		*Log densities 
+// 		gen lden_`vari'`yy' = log(den_`vari'`yy')
+// 		gen lnden_`vari'`yy' = log(normalden(val_`vari'`yy',0,${sd}))
 		
-		reg lden_`vari'`yy' val_`vari'`yy' if val_`vari'`yy' > 1
-		global brighttail: di %4.2f _b[val_`vari'`yy']
-		predict righttail if e(sample), xb 
+// 		*Slopes
+// 		reg lden_`vari'`yy' val_`vari'`yy' if val_`vari'`yy' < -1 & val_`vari'`yy' > -4
+// 		global blefttail: di %4.2f _b[val_`vari'`yy']
+// 		predict lefttail if e(sample), xb 
 		
-		*Trimming for plots
-		replace lnden_`vari'`yy' = . if val_`vari'`yy' < -2
-		replace lnden_`vari'`yy' = . if val_`vari'`yy' > 2
+// 		reg lden_`vari'`yy' val_`vari'`yy' if val_`vari'`yy' > 1 & val_`vari'`yy' < 4
+// 		global brighttail: di %4.2f _b[val_`vari'`yy']
+// 		predict righttail if e(sample), xb 
 		
-		replace lden_`vari'`yy' = . if val_`vari'`yy' < -4
-		replace lden_`vari'`yy' = . if val_`vari'`yy' > 4
+// 		*Trimming for plots
+// 		replace lnden_`vari'`yy' = . if val_`vari'`yy' < -2
+// 		replace lnden_`vari'`yy' = . if val_`vari'`yy' > 2
 		
-		replace lefttail = . if val_`vari'`yy' < -4
-		replace lden_`vari'`yy' = . if val_`vari'`yy' > 4
+// 		replace lden_`vari'`yy' = . if val_`vari'`yy' < -4
+// 		replace lden_`vari'`yy' = . if val_`vari'`yy' > 4
 		
-		replace righttail = . if val_`vari'`yy' > 4
-		replace lden_`vari'`yy' = . if val_`vari'`yy' > 4
+// 		replace lefttail = . if val_`vari'`yy' < -4
+// 		replace lden_`vari'`yy' = . if val_`vari'`yy' > 4
+		
+// 		replace righttail = . if val_`vari'`yy' > 4
+// 		replace lden_`vari'`yy' = . if val_`vari'`yy' > 4
 		
 		
-		logdnplot "lden_`vari'`yy' lnden_`vari'`yy' lefttail righttail" "val_`vari'`yy'" /// y and x variables 
-				"`labtitle'" "Log-Density" "medium" "medium" 		/// x and y axcis titles and sizes 
-				 "Log Density of `labtitle' in `yy'" "" "large" ""  ///	Plot title
-				 "Data" "N(0,${sdplot}{sup:2})" "Left Slope: ${blefttail}" "Right Slope: ${brighttail}" "" ""						/// Legends
-				 "on" "11"	"1"							/// Leave empty for active legend
-				 "-4" "4" "1" "-10" "2" "2"				/// Set limits of x and y axis 
-				 "lden_`vari'`yy'"					/// Set what variable defines the y-axis
-				"fig13_lden_`vari'_`yy'"			// Name of file
+// 		logdnplot "lden_`vari'`yy' lnden_`vari'`yy' lefttail righttail" "val_`vari'`yy'" /// y and x variables 
+// 				"`labtitle'" "Log-Density" "medium" "medium" 		/// x and y axcis titles and sizes 
+// 				 "Log Density of `labtitle' in `yy' `labtitle2'" "" "large" ""  ///	Plot title
+// 				 "Data" "N(0,${sdplot}{sup:2})" "Left Slope: ${blefttail}" "Right Slope: ${brighttail}" "" ""						/// Legends
+// 				 "on" "11"	"1"							/// Leave empty for active legend
+// 				 "-4" "4" "1" "-10" "2" "2"				/// Set limits of x and y axis 
+// 				 "lden_`vari'`yy'"					/// Set what variable defines the y-axis
+// 				"fig13_lden_`vari'_`sam'_`yy'"			// Name of file
 				
-				
 	
-	}	// END loop over variables	
-	}	// END loop over years 
+// 	}	// END loop over variables	
+// 	}	// END loop over years 
+// 	}	// END loop over samples
 	
 *Time series 
-foreach var in researn1F researn5F arcearn1F arcearn5F {				
-	foreach subgp in all fem male {
+*Time series 
+foreach var in researn1F researn5F  arcearn1F arcearn5F {				
+	foreach subgp in all male fem{
 	
 	*Which variable will be ploted
 	global vari = "`var'"						 
@@ -1007,16 +1040,18 @@ foreach var in researn1F researn5F arcearn1F arcearn5F {
 	*You can add more groups to this section 
 	if "`subgp'" == "all"{
 		insheet using "out${sep}${voladata}${sep}L_`var'_sumstat.csv", case clear
-		
+		local labtitle2 = "All"
 	}
 	if "`subgp'" == "male"{
 		insheet using "out${sep}${voladata}${sep}L_`var'_male_sumstat.csv", case clear
 		keep if male == 1	// Keep the group we want to plot 
+		local labtitle2 = "Men"
 	}
 		
 	if "`subgp'" == "fem"{
 		insheet using "out${sep}${voladata}${sep}L_`var'_male_sumstat.csv", case clear
 		keep if male == 0	// Keep the group we want to plot 
+		local labtitle2 = "Women"
 	}
 	
 	*What are the recession years
@@ -1044,15 +1079,20 @@ foreach var in researn1F researn5F arcearn1F arcearn5F {
 	
 	*What are the x-axis limits
 	if "${vari}" == "researn1F"  | "${vari}" == "arcearn1F"  {
-		local lyear = ${yrlast}-1
+		local lyear = ${yrlast}-1		
 		local ljum = 0
+		local fyear = ${yrfirst} + `ljum'
+		local nyear = ${normyear}
 	}
 	if "${vari}" == "researn5F" | "${vari}" == "arcearn5F"{
 		local lyear = ${yrlast} - 5
 		local ljum = 2		// So plot is centered in year 3
+		local fyear = ${yrfirst} + `ljum'
+		local nyear = ${normyear}
 	}
 
 	*Normalize Percentiles 
+	gen var${vari} = sd${vari}^2
 	gen p9010${vari} = p90${vari} - p10${vari}
 	gen p9050${vari} = p90${vari} - p50${vari}
 	gen p5010${vari} = p50${vari} - p10${vari}
@@ -1063,60 +1103,61 @@ foreach var in researn1F researn5F arcearn1F arcearn5F {
 	
 	
 	*Rescale by first year 
-	foreach vv in sd$vari p1$vari p2_5$vari p5$vari p10$vari p12_5$vari p25$vari ///
+	foreach vv in sd$vari var${vari} p1$vari p2_5$vari p5$vari p10$vari p12_5$vari p25$vari ///
 		p37_5$vari p50$vari p62_5$vari p75$vari p87_5$vari p90$vari p95$vari ///
 		p97_5$vari p99$vari p99_9$vari p99_99$vari ///
 		p9010${vari} p9050${vari} p5010${vari} p7525${vari} ksk${vari} {
-		sum  `vv' if year == ${normyear}, meanonly
+		sum  `vv' if year == `nyear', meanonly
 		qui: gen n`vv' = `vv' - r(mean)
 		
 	}
+	
 	tsset year
 // Figure 4	
-	tspltEX "F`ljum'.p5$vari F`ljum'.p10$vari F`ljum'.p25$vari F`ljum'.p50$vari F`ljum'.p75$vari F`ljum'.p90$vari F`ljum'.p95$vari F`ljum'.p99_9$vari F`ljum'.p99_99$vari" /// Which variables?
+	tspltEX "L`ljum'.p5$vari L`ljum'.p10$vari L`ljum'.p25$vari L`ljum'.p50$vari L`ljum'.p75$vari L`ljum'.p90$vari L`ljum'.p95$vari L`ljum'.p99$vari L`ljum'.p99_9$vari" /// Which variables?
 		   "year" ///
-		   ${yrfirst} `lyear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
-		   "p5" "p10" "p25" "p50" "p75" "p90" "p95" "p99.9" "p99.99" /// Labels 
+		   `fyear' `lyear' 2 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
+		   "p5" "p10" "p25" "p50" "p75" "p90" "p95" "p99" "p99.9" /// Labels 
 		   "" /// x axis title
 		   "Percentiles of `labtitle'" /// y axis title 
-		   "Percentiles of `labtitle'" ///  Plot title
+		   "Percentiles of `labtitle' for Sample: `labtitle2'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig4a_`subgp'_${vari}"	/// Figure name
 		   "green black maroon red navy blue forest_green purple gray orange"
 		    
-	tspltAREALim "F`ljum'.np5$vari F`ljum'.np10$vari F`ljum'.np25$vari F`ljum'.np50$vari F`ljum'.np75$vari F`ljum'.np90$vari F`ljum'.np95$vari F`ljum'.np99_9$vari F`ljum'.np99_99$vari" /// Which variables?
+	tspltAREALim "L`ljum'.np5$vari L`ljum'.np10$vari L`ljum'.np25$vari L`ljum'.np50$vari L`ljum'.np75$vari L`ljum'.np90$vari L`ljum'.np95$vari L`ljum'.np99$vari L`ljum'.np99_9$vari" /// Which variables?
 	   "year" ///
-	    ${yrfirst} `lyear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
-	   "p5" "p10" "p25" "p50" "p75" "p90" "p95" "p99.9" "p99.99" /// Labels 
+		   `fyear' `lyear' 2 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
+	   "p5" "p10" "p25" "p50" "p75" "p90" "p95" "p99" "p99.9" /// Labels 
 	   "3" "11" ///
 	   "" /// x axis title
-	    "Percentiles of `labtitle' (${yrfirst}=0)" /// y axis title 
-	   "Percentiles of `labtitle' for Sample: `subgp'" ///  Plot title
+	    "Percentiles of `labtitle' relative to ${yrfirst}" /// y axis title 
+	   "Percentiles of `labtitle' for Sample: `labtitle2'" ///  Plot title
 	   "" ///
 	   "fig4a_`subgp'_n${vari}"	/// Figure name
 	   "-0.3" "0.3" "0.2"				/// ylimits
 	   "" 						/// If legend is active or nor	
 	    "green black maroon red navy blue forest_green purple gray orange"			// Colors	   
 		    
-	tspltEX "F`ljum'.p5$vari F`ljum'.p10$vari F`ljum'.p25$vari F`ljum'.p50$vari F`ljum'.p75$vari F`ljum'.p90$vari F`ljum'.p95$vari" /// Which variables?
+	tspltEX "L`ljum'.p5$vari L`ljum'.p10$vari L`ljum'.p25$vari L`ljum'.p50$vari L`ljum'.p75$vari L`ljum'.p90$vari L`ljum'.p95$vari" /// Which variables?
 		   "year" ///
-		   ${yrfirst} `lyear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
+		   `fyear' `lyear' 2 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
 		   "p5" "p10" "p25" "p50" "p75" "p90" "p95" "" "" /// Labels 
 		   "" /// x axis title
 		   "Percentiles of `labtitle'" /// y axis title 
-		   "Percentiles of `labtitle'" ///  Plot title
+		   "Percentiles of `labtitle' for Sample: `labtitle2'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig4ashort_`subgp'_${vari}"	/// Figure name
 		   "green black maroon red navy blue forest_green purple gray orange" 
 		 
-	tspltAREALim "F`ljum'.np5$vari F`ljum'.np10$vari F`ljum'.np25$vari F`ljum'.np50$vari F`ljum'.np75$vari F`ljum'.np90$vari F`ljum'.np95$vari" /// Which variables?
+	tspltAREALim "L`ljum'.np5$vari L`ljum'.np10$vari L`ljum'.np25$vari L`ljum'.np50$vari L`ljum'.np75$vari L`ljum'.np90$vari L`ljum'.np95$vari" /// Which variables?
 	   "year" ///
-	    ${yrfirst} `lyear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
+		`fyear' `lyear' 2 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
 	   "p5" "p10" "p25" "p50" "p75" "p90" "p95" "" ""  /// Labels 
 	   "3" "11" ///
 	   "" /// x axis title
-	    "Percentiles of `labtitle' (${yrfirst}=0)" /// y axis title 
-	   "Percentiles of `labtitle' for Sample: `subgp'" ///  Plot title
+	   "Percentiles of `labtitle' Relative to ${yrfirst}" /// y axis title 
+	   "Percentiles of `labtitle' for Sample: `labtitle2'" ///  Plot title
 	   "" ///
 	   "fig4ashort_`subgp'_n${vari}"	/// Figure name
 	   "-0.3" "0.3" "0.2"				/// ylimits
@@ -1124,39 +1165,40 @@ foreach var in researn1F researn5F arcearn1F arcearn5F {
 	    "green black maroon red navy blue forest_green purple gray orange"			// Colors	   
 		   
 // Figure 5	   
-	tspltAREALim2 "F`ljum'.p9010${vari}" ///  variables plotted
+	tspltAREALim2 "L`ljum'.p9010${vari}" ///  variables plotted
 		   "year" ///
-		    ${yrfirst} `lyear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
+		   `fyear' `lyear' 2 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
 		   "P90-P10" "" "" "" "" "" "" "" "" /// Labels 
 		    "1" "11" ///
 		   "" /// x axis title
 		   "P90-P10 of `labtitle'" /// y axis title 
-		   "Measures of Dispersion of `labtitle' for Sample: `subgp'" ///  Plot title
+		   "Measures of Dispersion of `labtitle' for Sample: `labtitle2'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig5a_`subgp'_${vari}"	/// Figure name
 		    "" "" ""			/// ylimits
-			"" 						/// If legend is active or nor	
+			"off" 						/// If legend is active or nor	
 		   "blue red"			// Colors
-	
-	tspltEX "F`ljum'.p9050${vari} F`ljum'.p5010${vari}" ///  variables plotted
-		   "year" ///
-		   1993 `lyear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
-		   "p90-p50" "p50-p10" "" "" "" "" "" "" "" /// Labels 
-		   "" /// x axis title
-		   "Dispersion of `labtitle'" /// y axis title 
-		   "Measures of Dispersion of `labtitle'" ///  Plot title
-		   ""  /// 	 Plot subtitle  (left blank in this example)
-		   "fig5b_`subgp'_${vari}"	/// Figure name
-		   "red blue"
 		   
-	tspltAREALim2 "F`ljum'.p9050${vari} F`ljum'.p5010${vari}" ///  variables plotted
+	tsplt2sc "L`ljum'.p9010${vari}" "L`ljum'.var${vari}" /// variables plotted
 		   "year" ///
-		    ${yrfirst} `lyear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
+		   `fyear' `lyear' 2 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
+		   "P90-P10" "Variance" /// Labels 
+		   "" /// x axis title
+		   "P90-P10 of `labtitle'" /// y axis title (left)
+		   "Variance of `labtitle'" /// y axis title  (right)
+		   "Measures of Dispersion of `labtitle' for Sample: `labtitle2'" ///  Plot title
+		   ""  /// 	 Plot subtitle  (left blank in this example)
+		   "fig5a_`subgp'_${vari}COMPARE"	// Figure name
+		   
+	
+	tspltAREALim2 "L`ljum'.p9050${vari} L`ljum'.p5010${vari}" ///  variables plotted
+		   "year" ///
+		   `fyear' `lyear' 2 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
 		   "p90-P50" "P50-P10" "" "" "" "" "" "" "" /// Labels 
 		    "1" "11" ///
 		   "" /// x axis title
 		   "Dispersion of `labtitle'" /// y axis title 
-		   "Measures of Dispersion of `labtitle' for Sample: `subgp'" ///  Plot title
+		   "Measures of Dispersion of `labtitle' for Sample: `labtitle2'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig5b_`subgp'_${vari}"	/// Figure name
 		    "" "" ""			/// ylimits
@@ -1164,89 +1206,91 @@ foreach var in researn1F researn5F arcearn1F arcearn5F {
 		   "blue red"			// Colors	   
 		   
 // Figure 6
-	tspltAREALim2 "F`ljum'.ksk${vari}" ///  variables plotted
+	tspltAREALim2 "L`ljum'.ksk${vari}" ///  variables plotted
 		   "year" ///
-		   ${yrfirst} `lyear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
+		   `fyear' `lyear' 2 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
 		   "Kelley Skewness" "" "" "" "" "" "" "" "" /// Labels 
 		   "1" "11" ///
 		   "" /// x axis title
-		   "Kelley Skewness of `labtitle' (%)" /// y axis title 
-		   "Skewness of `labtitle'" ///  Plot title
+		   "Kelley Skewness of `labtitle'" /// y axis title 
+		   "Skewness of `labtitle' for Sample: `labtitle2'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig6ksk_`subgp'_${vari}"	/// Figure name
 		   "" "" ""			/// ylimits
 			"" 						/// If legend is active or nor	
 		   "blue red"			// Colors	
 		   
-	tspltAREALim2 "F`ljum'.skew${vari}" ///  variables plotted
+	tspltAREALim2 "L`ljum'.skew${vari}" ///  variables plotted
 		   "year" ///
-		   ${yrfirst} `lyear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
+		   `fyear' `lyear' 2 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
 		   "Coef. of Skewness" "" "" "" "" "" "" "" "" /// Labels 
 		   "1" "11" ///
 		   "" /// x axis title
 		   "Skewness of `labtitle'" /// y axis title 
-		   "Skewness of `labtitle'" ///  Plot title
+		   "Skewness of `labtitle' for Sample: `labtitle2'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig6skew_`subgp'_${vari}"	/// Figure name
 		   "" "" ""			/// ylimits
 		   "" 						/// If legend is active or nor	
 		   "blue red"			// Colors	
 		   
-	tsplt2sc "F`ljum'.ksk${vari}" "F`ljum'.skew${vari}" /// variables plotted
+	tsplt2sc "L`ljum'.ksk${vari}" "L`ljum'.skew${vari}" /// variables plotted
 		   "year" ///
-		   ${yrfirst} `lyear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
+		   `fyear' `lyear' 2 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
 		   "Kelley Skewness" "Coef. of Skewness" /// Labels 
 		   "" /// x axis title
 		   "Kelley Skewness of `labtitle'" /// y axis title (left)
-		   "Coeff. of Skewness of `labtitle'" /// y axis title  (right)
-		   "Measures of Skewness of `labtitle'" ///  Plot title
+		   "Coef. of Skewness of `labtitle'" /// y axis title  (right)
+		   "Measures of Skewness of `labtitle' for Sample: `labtitle2'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig6_`subgp'_${vari}"	// Figure name  
 		   
 // Figure 7 
-	tspltAREALim2 "F`ljum'.cku${vari}" ///  variables plotted
+	tspltAREALim2 "L`ljum'.cku${vari}" ///  variables plotted
 		   "year" ///
-		   ${yrfirst} `lyear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
-		   "Crow-Siddiqi" "" "" "" "" "" "" "" "" /// Labels 
+		   `fyear' `lyear' 2 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
+		   "Crow-Siddiqui" "" "" "" "" "" "" "" "" /// Labels 
 		   "1" "11" ///
 		   "" /// x axis title
-		   "Crow-Siddiqi of `labtitle' (%)" /// y axis title 
-		   "Kurtosis of `labtitle'" ///  Plot title
+		   "Crow-Siddiqui of `labtitle'" /// y axis title 
+		   "Kurtosis of `labtitle' for Sample: `labtitle2'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig7cku_`subgp'_${vari}"	/// Figure name
 		   "" "" ""			/// ylimits
-		   "" 						/// If legend is active or nor	
+		   "off" 						/// If legend is active or nor	
 		   "blue red"			// Colors	
 		   
 		   
 		   
-	tspltAREALim2  "F`ljum'.kurt${vari}" ///  variables plotted
+	tspltAREALim2  "L`ljum'.kurt${vari}" ///  variables plotted
 		   "year" ///
-		   ${yrfirst} `lyear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
-		   "Coeff. of Kurtosis" "" "" "" "" "" "" "" "" /// Labels 
+		   `fyear' `lyear' 2 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
+		   "Coef. of Kurtosis" "" "" "" "" "" "" "" "" /// Labels 
 		   "1" "11" ///
 		   "" /// x axis title
-		   "Coeff. of Kurtosis of `labtitle' (%)" /// y axis title 
-		   "Kurtosis of `labtitle'" ///  Plot title
+		   "Coef. of Kurtosis of `labtitle'" /// y axis title 
+		   "Kurtosis of `labtitle' for Sample: `labtitle2'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig7ku_`subgp'_${vari}"	/// Figure name
 		   "" "" ""			/// ylimits
-		   "" 						/// If legend is active or nor	
+		   "off" 						/// If legend is active or nor	
 		   "blue red"			// Colors
 		   
 		   
-	tsplt2sc "F`ljum'.cku${vari}" "F`ljum'.kurt${vari}" /// variables plotted
+	tsplt2sc "L`ljum'.cku${vari}" "L`ljum'.kurt${vari}" /// variables plotted
 		   "year" ///
-		   ${yrfirst} `lyear' 3 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
-		   "Crow-Siddiqi Kurtosis" "Coeff. of Kurtosis" /// Labels 
+		   `fyear' `lyear' 2 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
+		   "Crow-Siddiqui Kurtosis" "Coef. of Kurtosis" /// Labels 
 		   "" /// x axis title
-		   "Crow-Siddiqi Kurtosis of `labtitle'" /// y axis title (left)
-		   "Coeff. of Kurtosis of `labtitle'" /// y axis title  (right)
+		   "Crow-Siddiqui Kurtosis of `labtitle'" /// y axis title (left)
+		   "Coef. of Kurtosis of `labtitle'" /// y axis title  (right)
 		   "Measures of Kurtosis of `labtitle'" ///  Plot title
 		   ""  /// 	 Plot subtitle  (left blank in this example)
 		   "fig7_`subgp'_${vari}"	// Figure name 
+		   
 	   }	// END of loop over subgroups
 }	// END loop over variables
+
 
 }
 ***
@@ -1323,8 +1367,8 @@ foreach var in researn5F researn1F  {
 			"fig9b_${vari}"			// Name of file
 
 	dnplot "cku${vari}1 cku${vari}2 cku${vari}3 " "permrank" /// y and x variables 
-			"Quantiles of P{sub:it-1}" "Crow-Siddiqi of `labtitle'" "medium" "medium" 		/// x and y axcis titles and sizes 
-			 "Crow-Siddiqi of `labtitle' by P{sub:it-1}" "" "large" ""  ///	Plot title
+			"Quantiles of P{sub:it-1}" "Crow-Siddiqui of `labtitle'" "medium" "medium" 		/// x and y axcis titles and sizes 
+			 "Crow-Siddiqui of `labtitle' by P{sub:it-1}" "" "large" ""  ///	Plot title
 			 "[25-34]" "[35-44]" "[45-55]" "" "" ""						/// Legends
 			 ""	"5"	"1"								/// Leave empty for active legend
 			"fig10a_${vari}"			// Name of file
@@ -1495,7 +1539,7 @@ foreach var in logearn{	// Add here other variables
 			 "${yrfirst}" "${yrlast}" "5" /// x-axis
 			 "on" "11" "1" "Age 25" "Age 30" "Age 35" /// Legends
 			 "Year" "10th percentile of Log Real Earnigs"  /// x and y titles 
-			 "Age Profiles of 90th percentile Earnings for `tlocal'" "large" "" "" ///
+			 "Age Profiles of 10th percentile Earnings for `tlocal'" "large" "" "" ///
 			 "fig14_gksw_p10`var'_`subgp'"			 
 		
 	gkswplot "p90`var'" "year" ///
@@ -1504,7 +1548,7 @@ foreach var in logearn{	// Add here other variables
 			 "${yrfirst}" "${yrlast}" "5" /// x-axis
 			 "on" "11" "1" "Age 25" "Age 30" "Age 35" /// Legends
 			 "Year" "90th percentile of Log Real Earnigs"  /// x and y titles 
-			 "Age Profiles of 10th percentile Earnings `tlocal'" "large" "" "" ///
+			 "Age Profiles of 90th percentile Earnings `tlocal'" "large" "" "" ///
 			 "fig14_gksw_p90`var'_`subgp'"	
 			 
 	gkswplot "p9010`var'" "year" ///

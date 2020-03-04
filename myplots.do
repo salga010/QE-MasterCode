@@ -767,13 +767,13 @@ qui: sum `varilist1'
 	local ymax1: di %4.2f round(r(max)*(1+0.1),0.1)
 	local ydis1 = (`ymax1' - `ymin1')/5
 	
-qui: sum `varilist2'
+	qui: sum `varilist2'
 	local aux1 = r(min) 
 	if `aux1' < 0 {
 		local mfact = 1.1
 	}
 	else {
-		local mfact = 0.9
+		local mfact = 1.1
 	}
 	local ymin2: di %4.2f round(r(min)*`mfact',0.01)
 	local ymax2: di %4.2f round(r(max)*(1+0.1),0.01)
@@ -785,7 +785,7 @@ qui: sum `varilist2'
 
 *Plot
 tw  (rbar recedo receup  year if `timevar' >= `xmin' & `timevar' <= `xmax', c(l) color(gray*0.5)) ///
-    (connected `varilist1'  `timevar', 				 /// Plot
+    (connected `varilist1'  `timevar' if `timevar' >= `xmin' & `timevar' <= `xmax', 				 /// Plot
 	lcolor(red blue green maroon navy forest_green navy magenta orange)  ///			Line color
 	lpattern(solid longdash dash solid longdash dash solid longdash dash)  ///			Line pattern
 	msymbol(T D O T D O T D)		/// Marker
@@ -794,7 +794,7 @@ tw  (rbar recedo receup  year if `timevar' >= `xmin' & `timevar' <= `xmax', c(l)
 	mlcolor(red blue green maroon navy forest_green navy magenta orange)  ///			Marker  line color
 	yaxis(1)  ytitle("`ytitle1'", axis(1) size(`ytitlesize')) ylabel(,axis(1))) ///
 	///
-	(connected `varilist2'  `timevar', 				 /// Plot
+	(connected `varilist2'  `timevar' if `timevar' >= `xmin' & `timevar' <= `xmax', 				 /// Plot
 	lcolor(blue green maroon navy forest_green navy magenta orange red)  ///			Line color
 	lpattern(longdash dash solid longdash dash solid longdash dash solid)  ///			Line pattern
 	msymbol(O T D O T D O T D)		/// Marker

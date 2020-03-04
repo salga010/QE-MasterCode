@@ -76,7 +76,7 @@ foreach yr of numlist $yrlist{
 	// Drop if log earnings does not exist
 	qui: drop if logearn==.
 	
-	// Gen earnings adjusted by the real min income
+	// Gen earnings adjusted by the real min income (used to calculate measures of concetration)
 	gen earn = labor`yr' if labor`yr'>=rmininc[`yr'-${yrfirst}+1,1]
 
 	
