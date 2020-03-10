@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the core figures
-// Last edition March, 03, 2020
+// Last edition March, 09, 2020
 // Serdar Ozkan and Sergio Salgado
 // 
 // The figures below are meant to be a guideline and might require some changes 
@@ -12,11 +12,11 @@
 clear all
 set more off
 
-global maindir =".../GLOBAL-MASTER-CODE/STATA"
+global maindir ="../STATA/"
 
 // Where the data is stored
 global ineqdata = ".."			// Data on Inequality 
-global voladata = "..."			// Data on Volatility
+global voladata = ".."			// Data on Volatility
 global mobidata = ".."			// Data on Mobility
 
 // Do not make change from here on. Contact Ozkan/Salgado if changes are needed. 
@@ -81,7 +81,6 @@ global mobidata = ".."			// Data on Mobility
 	global figmob = "no"			// Mobility Fig 11
 	global figcoh = "no"			// Cohorts Fig 12
 	
-	global yrlast = 2017
 		
 /*---------------------------------------------------	
     This section generates the figures 1 and 2 
@@ -937,100 +936,99 @@ if "${figvol}" == "yes"{
 
 *Densities 
 	
-// 	local yy = 1995	
-// // 	local vari = "researn5F"
-// 	foreach sam in men women all {
-// 	foreach yy in 1995 2000 2005{
-// 	foreach vari in researn1F researn5F  {
+	local yy = 1995	
+// 	local vari = "researn5F"
+	foreach sam in men women all {
+	foreach yy in 1995 2000 2005{
+	foreach vari in researn1F researn5F  {
 	
-// 		*Labels 
-// 		if "`vari'" == "researn1F"{
-// 			local labtitle = "{&Delta}{sup:1}{&epsilon}{sub:it}"
-// 		}
-// 		if "`vari'" == "researn5F"{
-// 			local labtitle = "{&Delta}{sup:5}{&epsilon}{sub:it}"
-// 		}
+		*Labels 
+		if "`vari'" == "researn1F"{
+			local labtitle = "{&Delta}{sup:1}{&epsilon}{sub:it}"
+		}
+		if "`vari'" == "researn5F"{
+			local labtitle = "{&Delta}{sup:5}{&epsilon}{sub:it}"
+		}
 	
-// 		*Data
-// 		if "`sam'" == "all"{
-// 			insheet using "out${sep}${voladata}${sep}L_`vari'_sumstat.csv", case clear
+		*Data
+		if "`sam'" == "all"{
+			insheet using "out${sep}${voladata}${sep}L_`vari'_sumstat.csv", case clear
 			
-// 			sum sd`vari' if year == `yy'
-// 			global sd = r(mean) 
-// 			global sdplot: di %4.2f  ${sd}
+			sum sd`vari' if year == `yy'
+			global sd = r(mean) 
+			global sdplot: di %4.2f  ${sd}
 			
-// 			insheet using "out${sep}${voladata}${sep}L_`vari'_hist.csv", case clear
-// 			local labtitle2 = "(All Sample)"
-// 		}
-// 		else if "`sam'" == "men"{
-// 			insheet using "out${sep}${voladata}${sep}L_`vari'_male_sumstat.csv", case clear
+			insheet using "out${sep}${voladata}${sep}L_`vari'_hist.csv", case clear
+			local labtitle2 = "(All Sample)"
+		}
+		else if "`sam'" == "men"{
+			insheet using "out${sep}${voladata}${sep}L_`vari'_male_sumstat.csv", case clear
 			
-// 			sum sd`vari' if year == `yy' & male == 1
-// 			global sd = r(mean) 
-// 			global sdplot: di %4.2f  ${sd}
+			sum sd`vari' if year == `yy' & male == 1
+			global sd = r(mean) 
+			global sdplot: di %4.2f  ${sd}
 			
 			
-// 			insheet using "out${sep}${voladata}${sep}L_`vari'_hist_male.csv", case clear
-// 			keep if male == 1
-// 			local labtitle2 = "(Men Only)"
-// 		}
-// 		else if "`sam'" == "women"{
-// 			insheet using "out${sep}${voladata}${sep}L_`vari'_male_sumstat.csv", case clear
+			insheet using "out${sep}${voladata}${sep}L_`vari'_hist_male.csv", case clear
+			keep if male == 1
+			local labtitle2 = "(Men Only)"
+		}
+		else if "`sam'" == "women"{
+			insheet using "out${sep}${voladata}${sep}L_`vari'_male_sumstat.csv", case clear
 			
-// 			sum sd`vari' if year == `yy' & male == 0
-// 			global sd = r(mean) 
-// 			global sdplot: di %4.2f  ${sd}
+			sum sd`vari' if year == `yy' & male == 0
+			global sd = r(mean) 
+			global sdplot: di %4.2f  ${sd}
 			
-// 			insheet using "out${sep}${voladata}${sep}L_`vari'_hist_male.csv", case clear
-// 			keep if male == 0
-// 			local labtitle2 = "(Women Only)"
-// 		}
+			insheet using "out${sep}${voladata}${sep}L_`vari'_hist_male.csv", case clear
+			keep if male == 0
+			local labtitle2 = "(Women Only)"
+		}
 		
 		
-// 		*Log densities 
-// 		gen lden_`vari'`yy' = log(den_`vari'`yy')
-// 		gen lnden_`vari'`yy' = log(normalden(val_`vari'`yy',0,${sd}))
+		*Log densities 
+		gen lden_`vari'`yy' = log(den_`vari'`yy')
+		gen lnden_`vari'`yy' = log(normalden(val_`vari'`yy',0,${sd}))
 		
-// 		*Slopes
-// 		reg lden_`vari'`yy' val_`vari'`yy' if val_`vari'`yy' < -1 & val_`vari'`yy' > -4
-// 		global blefttail: di %4.2f _b[val_`vari'`yy']
-// 		predict lefttail if e(sample), xb 
+		*Slopes
+		reg lden_`vari'`yy' val_`vari'`yy' if val_`vari'`yy' < -1 & val_`vari'`yy' > -4
+		global blefttail: di %4.2f _b[val_`vari'`yy']
+		predict lefttail if e(sample), xb 
 		
-// 		reg lden_`vari'`yy' val_`vari'`yy' if val_`vari'`yy' > 1 & val_`vari'`yy' < 4
-// 		global brighttail: di %4.2f _b[val_`vari'`yy']
-// 		predict righttail if e(sample), xb 
+		reg lden_`vari'`yy' val_`vari'`yy' if val_`vari'`yy' > 1 & val_`vari'`yy' < 4
+		global brighttail: di %4.2f _b[val_`vari'`yy']
+		predict righttail if e(sample), xb 
 		
-// 		*Trimming for plots
-// 		replace lnden_`vari'`yy' = . if val_`vari'`yy' < -2
-// 		replace lnden_`vari'`yy' = . if val_`vari'`yy' > 2
+		*Trimming for plots
+		replace lnden_`vari'`yy' = . if val_`vari'`yy' < -2
+		replace lnden_`vari'`yy' = . if val_`vari'`yy' > 2
 		
-// 		replace lden_`vari'`yy' = . if val_`vari'`yy' < -4
-// 		replace lden_`vari'`yy' = . if val_`vari'`yy' > 4
+		replace lden_`vari'`yy' = . if val_`vari'`yy' < -4
+		replace lden_`vari'`yy' = . if val_`vari'`yy' > 4
 		
-// 		replace lefttail = . if val_`vari'`yy' < -4
-// 		replace lden_`vari'`yy' = . if val_`vari'`yy' > 4
+		replace lefttail = . if val_`vari'`yy' < -4
+		replace lden_`vari'`yy' = . if val_`vari'`yy' > 4
 		
-// 		replace righttail = . if val_`vari'`yy' > 4
-// 		replace lden_`vari'`yy' = . if val_`vari'`yy' > 4
+		replace righttail = . if val_`vari'`yy' > 4
+		replace lden_`vari'`yy' = . if val_`vari'`yy' > 4
 		
 		
-// 		logdnplot "lden_`vari'`yy' lnden_`vari'`yy' lefttail righttail" "val_`vari'`yy'" /// y and x variables 
-// 				"`labtitle'" "Log-Density" "medium" "medium" 		/// x and y axcis titles and sizes 
-// 				 "Log Density of `labtitle' in `yy' `labtitle2'" "" "large" ""  ///	Plot title
-// 				 "Data" "N(0,${sdplot}{sup:2})" "Left Slope: ${blefttail}" "Right Slope: ${brighttail}" "" ""						/// Legends
-// 				 "on" "11"	"1"							/// Leave empty for active legend
-// 				 "-4" "4" "1" "-10" "2" "2"				/// Set limits of x and y axis 
-// 				 "lden_`vari'`yy'"					/// Set what variable defines the y-axis
-// 				"fig13_lden_`vari'_`sam'_`yy'"			// Name of file
+		logdnplot "lden_`vari'`yy' lnden_`vari'`yy' lefttail righttail" "val_`vari'`yy'" /// y and x variables 
+				"`labtitle'" "Log-Density" "medium" "medium" 		/// x and y axcis titles and sizes 
+				 "Log Density of `labtitle' in `yy' `labtitle2'" "" "large" ""  ///	Plot title
+				 "Data" "N(0,${sdplot}{sup:2})" "Left Slope: ${blefttail}" "Right Slope: ${brighttail}" "" ""						/// Legends
+				 "on" "11"	"1"							/// Leave empty for active legend
+				 "-4" "4" "1" "-10" "2" "2"				/// Set limits of x and y axis 
+				 "lden_`vari'`yy'"					/// Set what variable defines the y-axis
+				"fig13_lden_`vari'_`sam'_`yy'"			// Name of file
 				
 	
-// 	}	// END loop over variables	
-// 	}	// END loop over years 
-// 	}	// END loop over samples
+	}	// END loop over variables	
+	}	// END loop over years 
+	}	// END loop over samples
 	
 *Time series 
-*Time series 
-foreach var in researn1F researn5F  arcearn1F arcearn5F {				
+foreach var in arcearn5F researn5F researn1F arcearn1F  {				
 	foreach subgp in all male fem{
 	
 	*Which variable will be ploted
@@ -1085,10 +1083,14 @@ foreach var in researn1F researn5F  arcearn1F arcearn5F {
 		local nyear = ${normyear}
 	}
 	if "${vari}" == "researn5F" | "${vari}" == "arcearn5F"{
-		local lyear = ${yrlast} - 5
-		local ljum = 2		// So plot is centered in year 3
-		local fyear = ${yrfirst} + `ljum'
-		local nyear = ${normyear}
+		local lyear = ${yrlast} - 2
+		local ljum = 0		// So plot is centered in year 3
+		local fyear = ${yrfirst} + 3
+		local nyear = `fyear'
+		replace year = year + 3		// This just re labels the year to center the 5-year changes to the "middle" year. 	
+									// I.e. if your data goes from 1993/2017 and the first 5-years change in between 1993 and 1998
+									// the "middle" year is 1996 (which is the starting point of your plot)
+									// The last 5 year change dates on 2012, which will be plotted in the "middle" year, 2015
 	}
 
 	*Normalize Percentiles 
@@ -1111,7 +1113,6 @@ foreach var in researn1F researn5F  arcearn1F arcearn5F {
 		qui: gen n`vv' = `vv' - r(mean)
 		
 	}
-	
 	tsset year
 // Figure 4	
 	tspltEX "L`ljum'.p5$vari L`ljum'.p10$vari L`ljum'.p25$vari L`ljum'.p50$vari L`ljum'.p75$vari L`ljum'.p90$vari L`ljum'.p95$vari L`ljum'.p99$vari L`ljum'.p99_9$vari" /// Which variables?
@@ -1162,7 +1163,8 @@ foreach var in researn1F researn5F  arcearn1F arcearn5F {
 	   "fig4ashort_`subgp'_n${vari}"	/// Figure name
 	   "-0.3" "0.3" "0.2"				/// ylimits
 	   "" 						/// If legend is active or nor	
-	    "green black maroon red navy blue forest_green purple gray orange"			// Colors	   
+	    "green black maroon red navy blue forest_green purple gray orange"			// Colors	
+		
 		   
 // Figure 5	   
 	tspltAREALim2 "L`ljum'.p9010${vari}" ///  variables plotted
@@ -1259,9 +1261,7 @@ foreach var in researn1F researn5F  arcearn1F arcearn5F {
 		   "" "" ""			/// ylimits
 		   "off" 						/// If legend is active or nor	
 		   "blue red"			// Colors	
-		   
-		   
-		   
+		    
 	tspltAREALim2  "L`ljum'.kurt${vari}" ///  variables plotted
 		   "year" ///
 		   `fyear' `lyear' 2 /// Limits of x and y axis. Example: x axis is -.1(0.05).1 
