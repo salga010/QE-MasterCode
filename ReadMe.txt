@@ -1,9 +1,13 @@
 Log of Changes 
 First version April, 19, 2019
-This  version January, 18, 2019 
+This  version July, 21, 2019 
 Serdar Ozkan (serdar.ozkan@toronto.ca)
 Sergio Salgado (ssalgado@wharton.upenn.edu)
 ----------------
+
+July 21, 2020
+
+Relative to March 03, 2020, this version updated all do-files, from sample creation to the generation of the plots.
 
 March 03, 2020
 
