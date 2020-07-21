@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the base sample 
-// This version Mar 03, 2020
+// This version July 17, 2020
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -9,8 +9,7 @@ set more off
 
 // PLEASE MAKE THE APPROPRIATE CHANGES BELOW. 
 // You should change the below directory. 
-*global maindir ="/Users/serdar/Dropbox/GLOBAL-MASTER-CODE/STATA"
-global maindir ="/Users/sergiosalgado/Dropbox/GLOBAL-MASTER-CODE/STATA/"
+global maindir ="..."
 
 do "$maindir/do/0_Initialize.do"
 
@@ -155,7 +154,7 @@ forvalues yr = $yrfirst/$yrlast{
 	
 	gen logearn`yr' = log(labor`yr') if labor`yr'>=rmininc[`yr'-${yrfirst}+1,1] & labor`yr'!=. 
 	gen logearnc`yr' = log(labor`yr') if labor`yr'>=(1/3)*rmininc[`yr'-${yrfirst}+1,1] & labor`yr'!=. 
-
+	drop if logearnc`yr' == . & logearn`yr' == .
 	
 	// Create dummies for age and education groups
 	tab age, gen(agedum)
@@ -270,11 +269,6 @@ foreach k in 1 5{
 		gen researn`k'F`yr'= researnc`yrnext'-researn`yr'		// Growth with earnings above mininc in t and 1/3*mininc in t+k
 		gen arcearn`k'F`yr'= (labor`yrnext'/avelabor`yrnext' - labor`yr'/avelabor`yr')/(0.5*(labor`yrnext'/avelabor`yrnext' + labor`yr'/avelabor`yr'))
 		
-		replace arcearn`k'F`yr' = . ///
-			if (labor`yr' < rmininc[`yr'-${yrfirst}+1,1]) & (labor`yrnext' < rmininc[`yrnext'-${yrfirst}+1,1])
-											// This is to enture we do not calculate growth rates individuals with very little income
-											// in both periods
-		
 		label var researn`k'F`yr'  "Residual earnings growth between `yrnext' and `yr'"
 		label var arcearn`k'F`yr'  "Arc-percent earnings growth between `yrnext' and `yr'"
 
@@ -324,23 +318,22 @@ forvalues yr = `firstyr'/$yrlast{
 	// the treshold income between t-1 and t-3
 	gen totearn=0
 	gen numobs=0
-	gen tnumobs = 0
 	
 	*replace numobs = -5 if labor`yr' < rmininc[`yr'-${yrfirst}+1,1]
 	// This ensures that permanent income is only constructed for those 
 	// with income above the threshold in t-1
 		
+	
 	forvalues yrp=`yrL2'/`yr'{
 		replace totearn=totearn+labor`yrp' if labor`yrp'~=.
-		replace tnumobs=tnumobs+1 if labor`yrp'~=.		
 		replace numobs=numobs+1 if labor`yrp'>=rmininc[`yrp'-${yrfirst}+1,1] & labor`yrp'~=.		
 		// Notice earnings below the min threshold are still used to get totearn
-		// but we will consider the observation  valid if the number of labor`yrp'>=rmininc is 2 or more
-	}		
-	drop	if numobs<2							// Drop if less than 2 obs
-	replace totearn=totearn/tnumobs 			// Average income
+	}
+		
+	replace totearn=totearn/numobs if numobs>=2			// Average income
+	drop	if numobs<2									// Drop if less than 2 obs
 	
-	// Create log earn of permanent income
+	// Create log earn
 	replace totearn = log(totearn) 
 	drop if totearn==.
 	
@@ -390,13 +383,12 @@ save "permearn.dta", replace
    even thouse with low earnimgs. See section "Key Statisitcs 4: Mobilitity"
 */
 clear
-local firstyr=$yrfirst + 1
-local lastyr = $yrlast - 1
-forvalues yr = `firstyr'/`lastyr'{
+local firstyr=$yrfirst+2
+forvalues yr = `firstyr'/$yrlast{
 	local yrL1=`yr'-1
-	local yrF1=`yr'+1		
+	local yrL2=`yr'-2			
 
-	use personid male yob educ labor`yrF1' labor`yrL1' labor`yr' using ///
+	use personid male yob educ labor`yrL1' labor`yrL2' labor`yr' using ///
 	"$maindir${sep}dta${sep}base_sample.dta" if labor`yr'~=. , clear  
 	
 	// Create year
@@ -410,7 +402,7 @@ forvalues yr = `firstyr'/`lastyr'{
 	gen totearn=0
 	gen numobs=0
 
-	forvalues yrp=`yrL1'/`yrF1'{
+	forvalues yrp=`yrL2'/`yr'{
 		replace totearn=totearn+labor`yrp' if labor`yrp'~=.
 		replace numobs=numobs+1 if labor`yrp'~=.
 			// Notice earnings below the min threshold are still used to get totearn
@@ -418,14 +410,9 @@ forvalues yr = `firstyr'/`lastyr'{
 	}
 	replace totearn=totearn/numobs if numobs==3			// Average income	
 	drop if numobs<3									// Drop if less than 2 obs
-	drop if totearn==.
-	
-	bys male age: egen avg = mean(totearn)
-	bys male: egen avgall = mean(totearn)
+	drop if totearn==.	
+	gen permearnalt`yr' = totearn
 		
-	gen permearnalt`yr' = avgall*totearn/avg					// This is because we want to control for age effects
-	
-	
 	// Save 
 	keep personid permearnalt`yr'
 	label var permearnalt`yr' "Altenative residual permanent income between `yr' and `yrL2'"

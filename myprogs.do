@@ -1,9 +1,10 @@
 capture program drop bymySho bymyTranMat bymyKDN bymyKDNmale bymyCNT bymyPCT bymysum bymysum_detail ///
-					bymysum_meanonly bymyxtile bymyCNTg bymyCNTgPop Hist_CDF bymyRAT bymyAAT
+					bymysum_meanonly bymyxtile bymyCNTg bymyCNTgPop Hist_CDF bymyRAT
 
 /*
 	Programs do file for different statistics 
-	Last update: Dec,01,2019
+	Last update: July,06,2020
+	
 */
 
 program Hist_CDF
@@ -264,7 +265,7 @@ program bymyTranMat
 	
 	local suffix = "`4'"	// Conditioning variables
 	
-	*preserve 
+	preserve 
 	
 	gen progaux = 1			// Auxiliary variable
 	
@@ -283,10 +284,6 @@ program bymyTranMat
 	
 	*Replaces missing transitions (transitions that are not present in the data) by 0
 	levelsof `varT1', local(counts) clean
-	foreach dd of local counts{
-		cap noisily: replace movecount`dd' = 0 if movecount`dd' == .
-		cap noisily: replace share`dd' = 0 if share`dd' == .
-	}
 	
 	*Drop totals, they are not necessary.
 	drop totcount*
@@ -294,12 +291,16 @@ program bymyTranMat
 	*Reshape back to long form 
 	reshape long movecount share, i(`suffix' `varT1') j(`varT2')
 	
+	*Replaces 
+	cap noisily: replace movecount = 0 if movecount == . 
+	cap noisily: replace share = 0 if share == . 
+	
 	*Saves 
 	local suffix = subinstr("`suffix'"," ","",.)
 	save "`prefix'`varT2'_`suffix'.dta", replace	
 	
 	
-	*restore 
+	restore 
 
 end 
 
@@ -691,48 +692,6 @@ program bymyRAT
 
 end 
 
-
-*Program to calculate the tail ratios. This calculates absolute ratios using fixed values
-
-program bymyAAT
-
-	local varM   = "`1'"
-	local prefix = "`2'"
-	local suffix = "`3'"
-	
-	preserve
-		qui: drop if `varM'==.
-		
-		local ii = 1 
-		forvalues tlevel = 25000(25000)1000000{
-		
-			sum `varM' if `varM' >= `tlevel', meanonly
-			local tlevel`ii' = `tlevel'
-			local melevel`ii' = r(mean)
-			local ralevel`ii' = r(mean)/`tlevel'
-			local oblevel`ii' = r(N)
-			
-			local ii = `ii' + 1
-		}
-		
-		clear 
-		qui: set obs 1 
-		gen year = `suffix'
-		local ii = 1
-		forvalues tlevel = 25000(25000)1000000{
-			gen tlevel`ii' = `tlevel`ii''
-			gen melevel`ii' = `melevel`ii''
-			gen ralevel`ii' = `ralevel`ii''
-			gen oblevel`ii' = `oblevel`ii''
-			local ii = `ii' + 1
-		}
-		
-		qui: save `prefix'`varM'_`suffix'_idex.dta, replace		
-	restore
-
-end 
-
-
 *Program to calculate the concetration measures 
 program bymyCNT 
 
@@ -955,3 +914,18 @@ program bymyxtile, byable(recall)
 	capture noisily xtile `temp_rank'=`1' if `touse', nq(`numq')
 	capture noisily replace `2'=`temp_rank' if `touse'
 end 
+
+
+*Program to calculate percentiles using pctiles
+program bymypctile, byable(recall)
+	local numq = "`3'"
+	disp "`numq'"
+	marksample touse 
+	tempvar temp_rank
+	capture noisily  _pctile `1' if `touse', p(`numq')
+		forvalues hh = 1/`4'  {
+			capture noisily replace `2'=`hh' if `1' <= r(r`hh') & `touse' & `2' == . 
+		}
+			replace `2'=`4'+1 if  `1' >= r(r`4') & `touse' & `2' == . & `1' != .
+end 
+

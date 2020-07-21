@@ -1,7 +1,7 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This code specify country-specific variables.  
-// This version December 10, 2019
-// Serdar Ozkan and Sergio Salgado
+// This version July 21, 2020
+//	Halvorsen, Ozkan, Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 // PLEASE DO NOT CHANGE VALUES FRM LINE 7 TO 20. IF NEEDS TO BE CHANGED, CONTACT Ozkan/Salgado
@@ -22,8 +22,8 @@ global noise=0.0			// Noise added to income. See line 112 in 1_Gen_Base_Sample.d
 
 global unix=1  // Please change this to 1 if you run stata on Unix or Mac
 
-global wide=0  // Please change this to 1 if your raw data is in wide format; 0 if long. 
-
+global wide=0  // Please change this to 1 if your raw data is in wide format; 0 if long.
+ 
 if($unix==1){
 	global sep="/"
 }
@@ -47,6 +47,22 @@ global educ_var="educ" 		// The variable name for year of death.
 global labor_var="wage_inc" // The variable name for total annual labor earnings from all jobs during the year.  
 global year_var="year" 		// The variable name for year if the data is in long format
 
+// SE income 
+global seinc_var =  "selfinc"	// The variable name for Self Employment Income
+
+// Wealth variables. (change here to define the variables)
+global deposits = "deposits"
+global mfund = "mfund"
+global stocks = "stocks" 
+global stocks_nonreg = "stocks_nonreg"
+global other_finassets = "other_finassets"
+global housing = "housing" 
+global cabin = "cabin" 
+global motor = "motor" 
+global boats = "boats" 
+global other_real_estate = "other_real_estate" 
+global liabilities = "liabilities" 
+global bonds = "bonds"
 
 // Define these variables for your dataset
 global yrfirst = 1993 		// First year in the dataset 
@@ -88,7 +104,7 @@ matrix cpimat = /*  CPI between ${yrfirst}  and ${yrlast}
 
 matrix cpimat = cpimat/${cpi2018}
 
-
+global exrate2018 = 6.297		// Set the value the exchange rate from LC to 1US$ in 2018 (e.g. 1US$ = $(exrate2018) LC)
 matrix exrate = /*  Nominal average exchange rate from FRED between ${yrfirst}  and ${yrlast} (LC per dollar)
 */ (7.101,7.055,6.335,6.459,7.086,7.552,7.807,8.813,8.996,7.984, /*
 */	7.080,6.740,6.441,6.409,5.856,5.637,6.291,6.045,5.602,5.818, /*
@@ -123,79 +139,81 @@ forvalues yr =  $yrfirst/$yrlast{
 			// Coverting nominal exchange rate to real exchange rate
 }
 **********************************************
-// The below part uses US minimum wage values to create the minimum income threshold. 
+
+global set_rmininc = 1
+// Set to 1: 
+// If you want to use US min wages to create the minimum income threshold. 
 // If your country does not have a minimum wage, and you want to use the US specific threshold
-// then do not make any changes below.
+// then set set_rmininc = 1
 
-// If your country has a minimum wage, then use the commented out part below. 
+// Set to 2:
+// If your country has a minimum wage 
 
-// Or if you want to use  a percentage criterion, then you need to specify those rmininc values.
+// Set to 3:
+// If you want to use a percentage criterion or a particular custom value, then you need to specify those rmininc values below.
 
-// CREATING MINIMUM INCOME THRESHOLD USING US MINIMUM WAGE  
 
-matrix minwgus = /* Nominal minimum wage 1959-2018 in the US
-*/ (1.00,1.00,1.00,1.15,1.15,1.25,1.25,1.25,1.25,1.40,1.60,1.60,1.60,1.60,/*
-*/  1.60,1.60,2.00,2.10,2.10,2.30,2.65,2.90,3.10,3.35,3.35,3.35,3.35,3.35,/*
-*/  3.35,3.35,3.35,3.35,3.80,4.25,4.25,4.25,4.25,4.25,4.75,5.15,5.15,5.15,/*
-*/  5.15,5.15,5.15,5.15,5.15,5.15,5.15,5.85,6.55,7.25,7.25,7.25,7.25,7.25,/*
-*/  7.25,7.25,7.25)'
 
-local yinic = ${yrfirst} - 1959 + 1						
-local yend = ${yrlast} - 1959 + 1
+if ${set_rmininc} == 1{
+	
+	// CREATING MINIMUM INCOME THRESHOLD USING US MINIMUM WAGE  
+	matrix minwgus = /* Nominal minimum wage 1959-2018 in the US
+	*/ (1.00,1.00,1.00,1.15,1.15,1.25,1.25,1.25,1.25,1.40,1.60,1.60,1.60,1.60,/*
+	*/  1.60,1.60,2.00,2.10,2.10,2.30,2.65,2.90,3.10,3.35,3.35,3.35,3.35,3.35,/*
+	*/  3.35,3.35,3.35,3.35,3.80,4.25,4.25,4.25,4.25,4.25,4.75,5.15,5.15,5.15,/*
+	*/  5.15,5.15,5.15,5.15,5.15,5.15,5.15,5.85,6.55,7.25,7.25,7.25,7.25,7.25,/*
+	*/  7.25,7.25,7.25)'
 
-matrix minincus = 260*minwgus[`yinic'..`yend',1]		// Nominal min income in the US
-														// This uses the factor of 260 given in the Guidelines
-matrix rmininc = J(${yrlast}-${yrfirst}+1,1,0)
-local tnum = ${yrlast}-${yrfirst}+1
+	local yinic = ${yrfirst} - 1959 + 1						
+	local yend = ${yrlast} - 1959 + 1
 
-forvalues i = 1(1)`tnum'{
-	local ii = `i' + ${yrfirst} - 1970
-	matrix rmininc[`i',1] = minincus[`i',1]*exrate[`i',1]/cpimatus[`ii',1]				
-					// real min income threshold in local currency 
+	matrix minincus = 260*minwgus[`yinic'..`yend',1]		// Nominal min income in the US
+															// This uses the factor of 260 given in the Guidelines
+	matrix rmininc = J(${yrlast}-${yrfirst}+1,1,0)
+	local tnum = ${yrlast}-${yrfirst}+1
+
+	forvalues i = 1(1)`tnum'{
+		local ii = `i' + ${yrfirst} - 1970
+		matrix rmininc[`i',1] = minincus[`i',1]*${exrate2018}/cpimatus[`ii',1]				
+						// real min income threshold in local currency 
+	}
+	
 }
+else if ${set_rmininc} == 2{
+	
+	// CREATING MINIMUM INCOME THRESHOLD USING COUNTRY SPECIFIC MINIMUM WAGE  
+	
+	matrix minwg_C = /* Nominal minimum wage 1959-2018 in YOUR COUNTRY
+	*/ (1.00,1.00,1.00,1.15,1.15,1.25,1.25,1.25,1.25,1.40,1.60,1.60,1.60,1.60,/*
+	*/  1.60,1.60,2.00,2.10,2.10,2.30,2.65,2.90,3.10,3.35,3.35,3.35,3.35,3.35,/*
+	*/  3.35,3.35,3.35,3.35,3.80,4.25,4.25,4.25,4.25,4.25,4.75,5.15,5.15,5.15,/*
+	*/  5.15,5.15,5.15,5.15,5.15,5.15,5.15,5.85,6.55,7.25,7.25,7.25,7.25,7.25,/*
+	*/  7.25,7.25,7.25)'
 
-// CREATING MINIMUM INCOME THRESHOLD USING COUNTRY SPECIFIC MINIMUM WAGE  
-/*
-matrix minwg_C = /* Nominal minimum wage 1959-2018 in YOUR COUNTRY
-*/ (1.00,1.00,1.00,1.15,1.15,1.25,1.25,1.25,1.25,1.40,1.60,1.60,1.60,1.60,/*
-*/  1.60,1.60,2.00,2.10,2.10,2.30,2.65,2.90,3.10,3.35,3.35,3.35,3.35,3.35,/*
-*/  3.35,3.35,3.35,3.35,3.80,4.25,4.25,4.25,4.25,4.25,4.75,5.15,5.15,5.15,/*
-*/  5.15,5.15,5.15,5.15,5.15,5.15,5.15,5.85,6.55,7.25,7.25,7.25,7.25,7.25,/*
-*/  7.25,7.25,7.25)'
+	// Change 1959 to the first year in your minwg_C matrix
+	local yinic = ${yrfirst} - 1959 + 1	
+	local yend = ${yrlast} - 1959 + 1
 
-// Change 1959 to the first year in your minwg_C matrix
-local yinic = ${yrfirst} - 1959 + 1	
-local yend = ${yrlast} - 1959 + 1
-
-matrix mininc_C = 260*minwg_C[`yinic'..`yend',1]		// Nominal min income in the US
-														// This uses the factor of 260 given in the Guidelines
-matrix rmininc = J(${yrlast}-${yrfirst}+1,1,0)
-local i = 1
-local tnum = ${yrlast}-${yrfirst}+1
-forvalues pp = 1(1)`tnum'{
-	matrix rmininc[`i',1] = 100*mininc_C[`i',1]/cpimat[`i',1]					
-					// real min income threshold in local currency 
-	local i = `i' + 1
+	matrix mininc_C = 260*minwg_C[`yinic'..`yend',1]		// Nominal min income in the US
+															// This uses the factor of 260 given in the Guidelines
+	matrix rmininc = J(${yrlast}-${yrfirst}+1,1,0)
+	local i = 1
+	local tnum = ${yrlast}-${yrfirst}+1
+	forvalues pp = 1(1)`tnum'{
+		matrix rmininc[`i',1] = 100*mininc_C[`i',1]/cpimat[`i',1]					
+						// real min income threshold in local currency 
+		local i = `i' + 1
+	}
+}	
+else if ${set_rmininc} == 3{
+	// CREATING MINIMUM INCOME THRESHOLD USING CUSTOM VALUES 
+	// (E.G., the bottom 23% of the gender, combined earnings distribution, etc.)  
+	
+	matrix rmininc = /* REAL MINIMUM INCOME THRESHOLD ${yrfirst}-${yrlast} in YOUR COUNTRY
+	*/ (1.00,1.00,1.00,1.15,1.15,1.25,1.25,1.25,1.25,1.40,1.60,1.60,1.60,/*
+	*/  1.60,1.60,2.00,2.10,2.10,2.30,2.65,2.90,3.10,3.35,3.35,3.35)'
+	
 }
-*/
-
-// CREATING MINIMUM INCOME THRESHOLD USING CUSTOM VALUES 
-// (E.G., the bottom 23% of the gender, combined earnings distribution, etc.)  
-/*
-matrix rmininc = /* REAL MINIMUM INCOME THRESHOLD ${yrfirst}-${yrlast} in YOUR COUNTRY
-*/ (1.00,1.00,1.00,1.15,1.15,1.25,1.25,1.25,1.25,1.40,1.60,1.60,1.60,/*
-*/  1.60,1.60,2.00,2.10,2.10,2.30,2.65,2.90,3.10,3.35,3.35,3.35)'
-*/
-
-
-
-
-
-
-
-
-
-
 
 // PLEASE DO NOT CHANGE THIS PART. IF NEEDS TO BE CHANGED, CONTACT Ozkan/Salgado
 

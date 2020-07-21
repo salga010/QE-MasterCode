@@ -1,15 +1,13 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the descriptive statistics 
-// This version Feb 08, 2020
+// This version July 17, 2020
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 clear all
 set more off
 // You should change the below directory. 
-
-*global maindir ="/Users/serdar/Dropbox/GLOBAL-MASTER-CODE/STATA/"
-global maindir ="/Users/ssalgado/Dropbox/GLOBAL-MASTER-CODE/STATA/"
+global maindir ="..."
 
 // Do not make change from here on. Contact Ozkan/Salgado if changes are needed. 
 do "$maindir/do/0_Initialize.do"
@@ -41,7 +39,7 @@ else if "`spl'" == "LX" {
 	local lastyr = $yrlast - 5		// So 5 year changes are present in the sample
 }
 else if "`spl'" == "H" {
-	local fsrtyr = $yrfirst + 2		// So perm   income is present in the sample
+	local fsrtyr = $yrfirst + 3		// So perm   income is present in the sample
 	local lastyr = $yrlast - 5		// So 5 year change is present in the sample
 }
 
@@ -58,7 +56,8 @@ forvalues yr = `fsrtyr'/`lastyr'{
 			"$maindir${sep}dta${sep}master_sample.dta" if labor`yr'~=. , clear  	
 	}
 	else if "`spl'" == "H" {
-		use  male yob educ labor`yr' researn1F`yr' researn5F`yr' permearn`yr' using ///
+		local yrp = `yr'-1
+		use  male yob educ labor`yr' researn1F`yr' researn5F`yr' permearn`yrp' using ///
 			"$maindir${sep}dta${sep}master_sample.dta" if labor`yr'~=. , clear  	
 	}
 	
@@ -82,12 +81,12 @@ forvalues yr = `fsrtyr'/`lastyr'{
 	// Select H sample (Individual has permanent income measure)
 	if "`spl'" == "H"{
 		qui: keep if researn1F`yr'!=. & researn5F`yr'!= . 
-		qui: keep if permearn`yr' != . 
+		qui: keep if permearn`yrp' != . 
 	}
 	
 	// Transform to US dollars
 	local er_index = `yr'-${yrfirst}+1
-	qui: replace labor`yr' = labor`yr'/exrate[`er_index',1]
+	qui: replace labor`yr' = labor`yr'/${exrate2018}
 	
 	// Calculate cross sectional moments for year `yr'
 	rename labor`yr' labor 	
