@@ -396,7 +396,7 @@ forvalues yr = `firstyr'/$yrlast{
 	
 	// Create age 
 	gen age = `yr'-yob+1
-	drop if age<${begin_age} + 1 | age>${end_age} - 1			// This makes the min age 26 and max age 54
+	drop if age<${begin_age} + 2 | age>${end_age}			// This makes the min age 26 and max age 54
 	
 	// Create average income for those with at least 2 years of income 
 	gen totearn=0
@@ -426,9 +426,8 @@ forvalues yr = `firstyr'/$yrlast{
 ***
 
 clear
-local firstyr=$yrfirst + 1
-local lastyr = $yrlast - 1
-forvalues yr = `firstyr'/`lastyr'{
+local firstyr=$yrfirst + 2
+forvalues yr = `firstyr'/$yrlast{
 
 	if (`yr' == `firstyr'){
 		use permearnalt`yr'.dta, clear

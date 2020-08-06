@@ -247,8 +247,8 @@ foreach yr of numlist $d1yrlist{
 
 // Calculating Transition Rates
 local firstyr = $yrfirst + 2
-foreach subgp in 1 3 5 10 15 20 {				// This is the of years that will be used for the jump from t to t+subgp
-	local yrmax = ${yrlast} - `subgp' - 1	// This should not be negative, make sure that ${yrlast} > `subgp' - 1 for at least 
+foreach subgp in 1 3 5 10 15 20 {		    // This is the of years that will be used for the jump from t to t+subgp
+	local yrmax = ${yrlast} - `subgp'		// This should not be negative, make sure that ${yrlast} > `subgp' - 1 for at least 
 											// one year in the sample. The -1 is necessary to ensure we are looking to mid year 
 											// of the calculation of alt permanent income measure
     if `yrmax' < 0 {
@@ -313,7 +313,7 @@ foreach subgp in 1 3 5 10 15 20 {				// This is the of years that will be used f
 		replace `varx'ranktp = ${nquantilestran} + 2 if `varx'`yrt' > aux1 & `varx'`yrt' !=. 
 		replace `varx'ranktp = ${nquantilestran} + 3 if `varx'`yrt' > aux2 & `varx'`yrt' !=. 
 		replace `varx'ranktp = ${nquantilestran} + 4 if `varx'`yrt' ==. 	// If value in ytr is missing (e.g. researn below min income tresh)
-		replace `varx'ranktp = ${nquantilestran} + 5 if  age>${end_age}		// If individuals exit the sample because of age
+		replace `varx'ranktp = ${nquantilestran} + 5 if  age+ `subgp'>${end_age}		// If individuals exit the sample because of age
 		drop aux0 aux1 aux2
 		
 		// Create the transition shares
@@ -348,7 +348,7 @@ foreach subgp in 1 3 5 10 15 20 {				// This is the of years that will be used f
 		replace `varx'ranktp = ${nquantilestran} + 2 if `varx'`yrt' > aux1 & `varx'`yrt' !=. 
 		replace `varx'ranktp = ${nquantilestran} + 3 if `varx'`yrt' > aux2 & `varx'`yrt' !=. 
 		replace `varx'ranktp = ${nquantilestran} + 4 if `varx'`yrt' ==. 
-		replace `varx'ranktp = ${nquantilestran} + 5 if  age>${end_age}	
+		replace `varx'ranktp = ${nquantilestran} + 5 if  age + `subgp'>${end_age}	
 		drop aux0 aux1 aux2
 		
 
@@ -519,7 +519,7 @@ foreach vv in researnranktp permearnaltranktp  permearnranktp {
 	clear 
 	local firstyr = $yrfirst + 2
 	foreach subgp in 5 10 15 20 {				
-		local yrmax = ${yrlast} - `subgp' - 1										
+		local yrmax = ${yrlast} - `subgp'										
 		if `yrmax' < 0 {
 			continue
 			// This ensure the calculation only happens if yrmax > 0
@@ -537,7 +537,7 @@ foreach vv in researnranktp permearnaltranktp  permearnranktp {
 	clear 
 	local firstyr = $yrfirst + 2
 	foreach subgp in 5 10 15 20 {				
-		local yrmax = ${yrlast} - `subgp' - 1										
+		local yrmax = ${yrlast} - `subgp'										
 		if `yrmax' < 0 {
 			continue
 			// This ensure the calculation only happens if yrmax > 0

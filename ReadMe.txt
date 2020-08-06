@@ -1,9 +1,14 @@
 Log of Changes 
 First version April, 19, 2019
-This  version July, 21, 2019 
+This  version August 6, 2020
 Serdar Ozkan (serdar.ozkan@toronto.ca)
 Sergio Salgado (ssalgado@wharton.upenn.edu)
 ----------------
+
+August 6, 2020
+
+Fixes a bug in the construction of permalt income in 1_Gen_Sample.do (not it is constructed between years $yrfirst+2 and $yrlast and age > begin_age + 2
+Fixed also a small big in the transition matrices in 5_Mobility.do
 
 July 21, 2020
 
