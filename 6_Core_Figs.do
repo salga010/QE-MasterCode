@@ -1,7 +1,7 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the core figures
 // Old Version  May  13, 2020
-// This version July 12, 2020
+// This version Oct  23, 2020
 // Serdar Ozkan and Sergio Salgado
 // 
 // The figures below are meant to be a guideline and might require some changes 
@@ -28,14 +28,6 @@ capture noisily mkdir "$maindir${sep}figs${sep}${outfolder}"
 do "$maindir/do/0_Initialize.do"
 do "$maindir${sep}do${sep}myplots.do"		
 	
-
-// Install heat plot ado files to plot transition matrices
-// You'll need this for the transition matrices. If you cannot download it, comment out lines 1885 to 1958
-cap: ssc install heatplot	
-cap: ssc install gtools
-cap: ssc install palettes
-cap: ssc install colrspace
-
 // Define some common charactristics of the plots 
 	global xtitlesize =   "medium" 
 	global ytitlesize =   "medium" 
@@ -1918,79 +1910,6 @@ foreach var in researn5F researn1F  {
 ------------------------------------------------*/
 if "${figmob}" == "yes"{ 
 	
-	*What is the folder to save files 
-	global folderfile = "figs${sep}${outfolder}${sep}Mobility"
-	
-	/*Transition Matrices*/	
-	foreach vv in permearnalt researn {
-		if "`vv'" == "permearnalt"{
-			local ylabel = "P{sub:it}"
-			local colors = "maroon*0.1 maroon"
-		}
-		else{
-			local ylabel = "{&epsilon}{sub:it}"
-			local colors = "dkgreen*0.1 dkgreen"
-		}
-		
-		forvalues gg = 1/3{
-			forvalues mm = 0/1{
-			if `gg' == 1{
-				local sublist = "5 10 15 20"
-			}
-			if `gg' == 2{
-				local sublist = "5 10 15"
-			}
-			if `gg' == 3{
-				local sublist = "5"
-			}
-			
-			foreach ss of local sublist{
-				insheet using "out${sep}${mobidata}${sep}T_male`vv'ranktp_tranmat.csv", clear
-				sort year subg male agegp `vv'rankt `vv'ranktp 
-				keep if agegp == `gg'
-				keep if male == `mm'
-				keep if subg == `ss'
-				
-				drop subg agegp male
-				drop if `vv'rankt == . 		
-				// For researn, there are some individuals that do not have period t obs. Do nt affect estimates 
-				// Transition matrices
-				
-				reshape wide movecount share, i(year  `vv'rankt) j( `vv'ranktp)
-				order year `vv'rankt share* move*
-				
-				collapse movecount* share*, by( `vv'rankt)
-				mkmat  share*, matrix(xyzmat)
-				
-				if `gg' == 1 & `mm' == 1{		
-					local tlabel = "Men of Age [25-34]"
-				}
-				if `gg' == 1 & `mm' == 0{		
-					local tlabel = "Women of Age [25-34]"
-				}		
-				if `gg' == 2 & `mm' == 1{		
-					local tlabel = "Men of Age [35-44]"
-				}
-				if `gg' == 2 & `mm' == 0{		
-					local tlabel = "Women of Age [35-44]"
-				}		
-				if `gg' == 3 & `mm' == 1{		
-					local tlabel = "Men of Age [45-55]"
-				}
-				if `gg' == 3 & `mm' == 0{		
-					local tlabel = "Women of Age [45-55]"
-				}
-				
-				heatplot xyzmat, values(format(%9.1f) mlabsize(vsmall)) legend(off) colors(`colors', n(20) ipolate(20)) xscale(alt) ///
-				xlabel(1 "P10" 2 "P20" 3 "P30" 4 "P40" 5 "P50" 6 "P60" 7 "P70" 8 "P80" 9 "P90" 10 "P95" 11 "P99" 12 "P99.9" 13 "+0.1%" 14 "Exit", grid labsize(small) ) ///
-				ylabel(1 "P10" 2 "P20" 3 "P30" 4 "P40" 5 "P50" 6 "P60" 7 "P70" 8 "P80" 9 "P90" 10 "P95" 11 "P99" 12 "P99.9" 13 "+0.1%", grid labsize(small)) ///
-				graphregion(color(white)) plotregion(lcolor(black)) ytitle("Percentiles of `ylabel' in year t", color(black) size(small)) ///
-				xtitle("Percentiles of `ylabel' in year t+`ss'", color(black) size(small)) title("Transition Matrix for `tlabel'", color(black) size(medsmall))			
-				graph export "${folderfile}/fig11A_Tran_`vv'_male`mm'_agegp`gg'_jump`ss'.pdf", replace 								
-				}
-			}
-		}
-	}
 	
 // Figure 11A
 	*What is the folder to save files 
