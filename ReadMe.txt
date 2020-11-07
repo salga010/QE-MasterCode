@@ -1,9 +1,13 @@
 Log of Changes 
 First version April, 19, 2019
-This  version August 6, 2020
+This  version November 6, 2020
 Serdar Ozkan (serdar.ozkan@toronto.ca)
 Sergio Salgado (ssalgado@wharton.upenn.edu)
 ----------------
+
+November 6, 2020
+
+Fixes the volatility code. The in previous version, the moments conditional on permanent earnings were calculated after dropping all observations that did not have researnXF and arcearnXF with X \in {1 5}. 
 
 August 6, 2020
 

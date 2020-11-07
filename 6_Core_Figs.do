@@ -77,7 +77,7 @@ do "$maindir${sep}do${sep}myplots.do"
 	global figcon =  "no"			// Concetration Figs 3a
 	global figvol =  "no"			// Volatility Figs 4 to 7
 	global figquan = "no"			// quantiles Figs 8
-	global figmob =  "yes"			// Mobility Figs 11
+	global figmob =  "no"			// Mobility Figs 11
 	global figcoh =  "no"			// Cohorts Figs 12
 
 /*---------------------------------------------------	
