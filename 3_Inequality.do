@@ -1,7 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the time series of concetration and inequality
-// This version Dec 01, 2019
-// This version June 17, 2020
+// This version Dec 01, 2020
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -255,10 +254,22 @@ foreach yr of numlist $yrlist{
 	
 	}	
 }	// END loop over years 
-*/
 
+*Moments of Residuals Earnings wit Education Controls
+foreach yr of numlist $yrlist{
+	
+	// Load data	
+	use researne`yr' using "$maindir${sep}dta${sep}researne.dta", clear   
+	
+	// Create year
+	gen year=`yr'
+	
+	// Moments of Residuals by Education
+	bymysum "researne" "L_" "_`yr'" "year"
+	
+	bymyPCT "researne" "L_" "_`yr'" "year"
+}	
 
-*
 
 // Collect data across years 
 clear
@@ -413,7 +424,6 @@ foreach yr of numlist $yrlist{
 	append using "$maindir${sep}out${sep}$outfolder/L_earn_`yr'_con.dta"
 	erase "$maindir${sep}out${sep}$outfolder/L_earn_`yr'_con.dta"	
 } 
-	//save "$maindir${sep}out${sep}$outfolder/L_earn_con.dta", replace
 	outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con.csv", replace comma
 
 // Collect data across years for the concentration measures for heterogeneoty groups
@@ -427,7 +437,6 @@ foreach yr of numlist $yrlist{
 		cap:replace male = `mm'  if male == .
 		}
 	} 
-		//save "$maindir${sep}out${sep}$outfolder/L_earn_con.dta", replace
 		order male
 		outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con_male.csv", replace comma
 
@@ -441,7 +450,6 @@ foreach yr of numlist $yrlist{
 		cap:replace agegp = `mm'  if agegp == .
 		}
 	}	
-		//save "$maindir${sep}out${sep}$outfolder/L_earn_con.dta", replace
 		order agegp
 		outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con_age.csv", replace comma
 	*Age and gender
@@ -458,7 +466,6 @@ foreach yr of numlist $yrlist{
 		}
 		}
 	}	
-		//save "$maindir${sep}out${sep}$outfolder/L_earn_con.dta", replace
 		order male agegp
 		outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con_male_age.csv", replace comma
 	
@@ -472,7 +479,6 @@ foreach yr of numlist $yrlist{
 		cap:replace educ = `mm'  if educ == .
 		}
 	}	
-		//save "$maindir${sep}out${sep}$outfolder/L_earn_con.dta", replace
 		order educ
 		outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con_educ.csv", replace comma
 		
@@ -490,7 +496,6 @@ foreach yr of numlist $yrlist{
 		}
 		}
 	}	
-		//save "$maindir${sep}out${sep}$outfolder/L_earn_con.dta", replace
 		order male educ
 		outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con_male_educ.csv", replace comma
 
@@ -542,7 +547,6 @@ foreach yr of numlist $yrlist{
 		erase "$maindir${sep}out${sep}$outfolder/L_earn_`yr'_gStPop1.dta"	
 	}
 } 
-	//save "$maindir${sep}out${sep}$outfolder/L_earn_con.dta", replace
 	outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_gStPop1.csv", replace comma
 clear
 foreach yr of numlist $yrlist{
@@ -553,8 +557,26 @@ foreach yr of numlist $yrlist{
 		}
 	}
 } 
-	//save "$maindir${sep}out${sep}$outfolder/L_earn_con.dta", replace
 	outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_gStPop1_male.csv", replace comma
+	
+// Collect data from the researn
+foreach vari in researne{
+	foreach yr of numlist $yrlist{
+		use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta", clear
+		merge 1:1 year using "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`yr'.dta",nogenerate
+		erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`yr'.dta"		
+		save "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta", replace
+	}
+	clear 
+	foreach yr of numlist $yrlist{		
+		append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"	
+	}
+	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace comma
+}
+	
+	
 
 timer off 1
 timer list 1

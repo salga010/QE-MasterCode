@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This code specify country-specific variables.  
-// This version July 21, 2020
+// This version Dec 04, 2020
 //	Halvorsen, Ozkan, Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -47,22 +47,6 @@ global educ_var="educ" 		// The variable name for year of death.
 global labor_var="wage_inc" // The variable name for total annual labor earnings from all jobs during the year.  
 global year_var="year" 		// The variable name for year if the data is in long format
 
-// SE income 
-global seinc_var =  "selfinc"	// The variable name for Self Employment Income
-
-// Wealth variables. (change here to define the variables)
-global deposits = "deposits"
-global mfund = "mfund"
-global stocks = "stocks" 
-global stocks_nonreg = "stocks_nonreg"
-global other_finassets = "other_finassets"
-global housing = "housing" 
-global cabin = "cabin" 
-global motor = "motor" 
-global boats = "boats" 
-global other_real_estate = "other_real_estate" 
-global liabilities = "liabilities" 
-global bonds = "bonds"
 
 // Define these variables for your dataset
 global yrfirst = 1993 		// First year in the dataset 
@@ -77,11 +61,8 @@ global nquantiles = 40
 	// Number of quantiles used in the statistics conditioning on permanent income
 	// One additional quintile will be added at the top for a total of 41 (see Guidelines)
 		
-global nquantilesalt = 40
-	// Number of quantiles used in the statistics conditioning on the alternative measure of permanent income
-	
-global nquantilestran = 10 
-	// Number of quantiles used in the age transition matrix
+global nquantilemob = 40
+	// Number of quantiles used in the rank-rank mobility measures.
 	
 global qpercent = 99	
 	// Top percentile for which the change in top-share will be calculated. 

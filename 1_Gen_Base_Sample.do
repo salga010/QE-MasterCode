@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the base sample 
-// This version July 17, 2020
+// This version Dec 01, 2020
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -9,7 +9,7 @@ set more off
 
 // PLEASE MAKE THE APPROPRIATE CHANGES BELOW. 
 // You should change the below directory. 
-global maindir ="..."
+global maindir =".."
 
 do "$maindir/do/0_Initialize.do"
 
@@ -180,14 +180,15 @@ forvalues yr = $yrfirst/$yrlast{
 	regress logearnc`yr' agedum* if male==0
 	predict temp_f_c if e(sample)==1, resid
 	
-	// Regressions for profiles
+	// Regressions for profiles with education
 	statsby _b,  by(year) saving(age_educ_yr`yr'_m,replace):  ///
-	regress logearn`yr' educdum* agedum* if male==1
+	regress logearn`yr' educdum* agedum* if male==1	
+	predict temp_m_e if e(sample)==1, resid
 	
 	statsby _b,  by(year) saving(age_educ_yr`yr'_f,replace):  ///
-	regress logearn`yr' educdum* agedum* if male==0
-	
-	
+	regress logearn`yr' educdum* agedum* if male==0	
+	predict temp_f_e if e(sample)==1, resid
+		
 	// Generate the residuals by year and save a database for later append.
 	gen researn`yr'= temp_m
 	replace researn`yr'= temp_f if male==0
@@ -195,16 +196,27 @@ forvalues yr = $yrfirst/$yrlast{
 	gen researnc`yr'= temp_m_c
 	replace researnc`yr'= temp_f_c if male==0 
 	
-
-	keep personid researn`yr' researnc`yr' logearn`yr' logearnc`yr' labor`yr' male age
-	sort personid
+	gen researne`yr'= temp_m_e
+	replace researne`yr'= temp_f_e if male==0 	
+	
 	
 	// Save data set for later append
-	label var researn`yr' "Residual of real log-labor earnings of year `yr'"
+	label var researn`yr' "Residual of real log-labor earnings of year `yr'"	
 	label var logearn`yr' "Real log-labor earnings of year `yr' above min threshold"
 	label var researnc`yr' "Residual of real log-labor earnings of year `yr' above 1/3*min threshold"
-	label var logearnc`yr' "Real log-labor earnings of year `yr' above 1/3*min threshold"
-	save "researn`yr'.dta", replace
+	label var logearnc`yr' "Real log-labor earnings of year `yr' above 1/3*min threshold"	
+	label var researne`yr' "Residual of real log-labor earnings of year `yr' (Age and Education)"
+	
+	preserve
+		keep personid researn`yr' researnc`yr' logearn`yr' logearnc`yr' labor`yr' male yob
+		sort personid
+		save "researn`yr'.dta", replace
+	restore 
+	
+	keep personid researne`yr' male
+	sort personid
+	save "researne`yr'.dta", replace
+
 }
 
 forvalues yr = $yrfirst/$yrlast{
@@ -219,6 +231,19 @@ forvalues yr = $yrfirst/$yrlast{
 	sort personid
 }
 save "researn.dta", replace 
+
+forvalues yr = $yrfirst/$yrlast{
+	if (`yr' == $yrfirst){
+		use researne`yr'.dta, clear
+		erase researne`yr'.dta
+	}
+	else{
+		merge 1:1 personid using researne`yr'.dta, nogen
+		erase researne`yr'.dta
+	}
+	sort personid
+}
+save "researne.dta", replace 
 // END: Residuals calculation complete
 
 // Appending coefficients of agen and education for gender groups 
@@ -260,8 +285,10 @@ foreach k in 1 5{
 	forvalues yr = $yrfirst/`lastyr'{
 	
 		local yrnext=`yr'+`k'
-
-		use personid male age researn`yr' researnc`yrnext' labor`yrnext' labor`yr' using "researn.dta", clear
+			
+		use personid male yob researn`yr' researnc`yrnext' labor`yrnext' labor`yr' using "researn.dta", clear
+		
+		gen age = `yr'-yob+1
 		
 		bys male age: egen avelabor`yrnext' = mean(labor`yrnext')
 		bys male age: egen avelabor`yr' = mean(labor`yr')
@@ -401,15 +428,18 @@ forvalues yr = `firstyr'/$yrlast{
 	// Create average income for those with at least 2 years of income 
 	gen totearn=0
 	gen numobs=0
+	gen numobspos=0
 
 	forvalues yrp=`yrL2'/`yr'{
 		replace totearn=totearn+labor`yrp' if labor`yrp'~=.
 		replace numobs=numobs+1 if labor`yrp'~=.
+		replace numobspos=numobspos+1 if labor`yrp'>= rmininc[`yrp'-${yrfirst}+1,1] & labor`yrp'~=.	
 			// Notice earnings below the min threshold are still used to get totearn
 			// This ensure we do not consider income of individuals when they were 24 yrs old or less
 	}
 	replace totearn=totearn/numobs if numobs==3			// Average income	
-	drop if numobs<3									// Drop if less than 2 obs
+	drop if numobs<3			// Drop if less than 2 obs
+	drop if numobspos < 1 		// Drop if less than 1 obs above min income 
 	drop if totearn==.	
 	gen permearnalt`yr' = totearn
 		

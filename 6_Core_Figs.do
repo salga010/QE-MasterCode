@@ -16,12 +16,12 @@ set more off
 global maindir ="..."
 
 // Where the data is stored
-global ineqdata = "24 jun 2020/24 Jun 2020 Inequality"			// Data on Inequality 
-global voladata = "8 Jul 2020/8 Jul 2020 Volatility"			// Data on Volatility
-global mobidata = "8 Jul 2020/8 Jul 2020 Mobility"			// Data on Mobility
+global ineqdata = "..."			// Data on Inequality 
+global voladata = "..."			// Data on Volatility
+global mobidata = "..."			// Data on Mobility
 
 // Where the firgures are going to be saved 
-global outfolder="figs_9July2020"			
+global outfolder="..."			
 capture noisily mkdir "$maindir${sep}figs${sep}${outfolder}"
 
 // Read initialize and plotting code. Do not change myplots.do

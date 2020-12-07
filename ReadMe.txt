@@ -1,9 +1,15 @@
 Log of Changes 
-First version April, 19, 2019
-This  version November 6, 2020
+First version April,  19, 2019
+This  version December 7, 2020
 Serdar Ozkan (serdar.ozkan@toronto.ca)
 Sergio Salgado (ssalgado@wharton.upenn.edu)
 ----------------
+
+December 7, 2020 
+
+Updates the 1_Gen_Base_Sample.do, 3_Inequality.do, and 5_Mobility.do codes. In 1_Gen_Base_Sample.do we change the definition of alternative permanent income, created a new version of residual earnings controlling for education dummies and age, and fixed a bug for the calculation of arc-percent changes. In 3_Inequality.do we added time series statistics for the new residual earnings measure (with education and age). The code 5_Mobility.do has been streamlined and we changed the selection of the sample used to calculate the mobility plots. 
+
+We also added a entire new file, 7_Paper_Figs.do, that produces the main core figures for the draft. See Figures_Paper.pdf for additional details and an example of each figure using the Norwegian data. 
 
 November 6, 2020
 
