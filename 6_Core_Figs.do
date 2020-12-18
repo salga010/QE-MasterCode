@@ -1,13 +1,15 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the core figures
-// Old Version  May  13, 2020
-// This version Oct  23, 2020
+// Old Version  May  	  13, 2020
+// This version December  18, 2020
 // Serdar Ozkan and Sergio Salgado
 // 
 // The figures below are meant to be a guideline and might require some changes 
 // to accommodate the particularities of each dataset. If you have any question
 // or suggestions, please contact Ozkan/Salgado in Slack
 //
+// NOTE: THIS CODE IS OBSOLETE IT WILL BE REMOVED 
+// 		 FROM GITHUB IN THE FINAL VERSION OF THE GID-CODE
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 clear all
@@ -228,7 +230,7 @@ if "${figineq}" == "yes"{
 	gen p9010${vari} = p90${vari} - p10${vari}
 	gen p9050${vari} = p90${vari} - p50${vari}
 	gen p5010${vari} = p50${vari} - p10${vari}
-	gen ksk${vari} = (p9050${vari} - p9010${vari})/p9010${vari}
+	gen ksk${vari} = (p9050${vari} - p5010${vari})/p9010${vari}
 
 	*Rescale by first year 
 	foreach vv in sd$vari var$vari p1$vari p2_5$vari p5$vari p10$vari p12_5$vari p25$vari ///
@@ -396,7 +398,7 @@ if "${figineq}" == "yes"{
 	gen p9505${vari} = p95${vari} - p5${vari}
 	gen p9050${vari} = p90${vari} - p50${vari}
 	gen p5010${vari} = p50${vari} - p10${vari}
-	gen ksk${vari} = (p9050${vari} - p9010${vari})/p9010${vari}
+	gen ksk${vari} = (p9050${vari} - p5010${vari})/p9010${vari}
 
 	*Rescale by first year 
 	foreach vv in sd$vari  var$vari p1$vari p2_5$vari p5$vari p10$vari p12_5$vari p25$vari ///
@@ -615,7 +617,7 @@ tsplt2sc "p9050${vari}" "p5010${vari}" /// variables plotted
 	gen p9010${vari} = p90${vari} - p10${vari}
 	gen p9050${vari} = p90${vari} - p50${vari}
 	gen p5010${vari} = p50${vari} - p10${vari}
-	gen ksk${vari} = (p9050${vari} - p9010${vari})/p9010${vari}
+	gen ksk${vari} = (p9050${vari} - p5010${vari})/p9010${vari}
 
 	*Rescale by first year 
 	foreach vv in sd$vari var$vari p1$vari p2_5$vari p5$vari p10$vari p12_5$vari p25$vari ///
@@ -1907,221 +1909,11 @@ foreach var in researn5F researn1F  {
 	
 /*----------------------------------------------
 	This section generates figure 11: Mobility
+	
+	THIS SECTION HAS BEEN REMOVED; 
+	MOBILITY PLOTS ARE DONE IN 7_Paper_Figs.do
 ------------------------------------------------*/
-if "${figmob}" == "yes"{ 
-	
-	
-// Figure 11A
-	*What is the folder to save files 
-	global folderfile = "figs${sep}${outfolder}${sep}Mobility"
 
-	/*--- Mobility by age group---*/
-	/*Men*/
-		insheet using "out${sep}${mobidata}${sep}L_male_agegp_permearnalt_mobstat.csv", clear
-		keep if male == 1
-		collapse meanpermearnaltrankt5 meanpermearnaltrankt10, by(permearnaltrankt agegp)
-		keep meanpermearnaltrankt5 meanpermearnaltrankt10 permearnaltrankt agegp
-		reshape wide meanpermearnaltrankt5 meanpermearnaltrankt10 , i(permearnaltrankt) j(agegp)
-		gen idex = _n
-		
-		/*T+5 mobility*/
-		cap: drop  y1 x1 y2 x2
-		input y1 x1 y2 x2
-			95 85.0 95 97
-		end
-	
-		tw  (line meanpermearnaltrankt51 meanpermearnaltrankt52 meanpermearnaltrankt53 permearnaltrankt permearnaltrankt if idex<= 41, ///
-			color(red blue green black) lpattern(dash longdash solid dash dash_dot) lwidth(medthick medthick medthick)) ///
-			(scatter meanpermearnaltrankt51 meanpermearnaltrankt52 meanpermearnaltrankt53 permearnaltrankt if idex==42, ///
-			color(red blue green) lpattern(dash dash dash) msymbol(D S O)) ///
-			(pcarrow y1 x1 y2 x2, msize(medlarge) mlwidth(medthick) mlcolor(black) lcolor(black) ), ///
-			text(95 85 "Top 0.1% of P{sub:it-1}", place(w) size(medium))  ///
-			legend(ring(0) position(11) order(1 "[25-34]" 2 "[35-44]" 3 "[45-55]") size(medium) cols(1) symxsize(7) region(color(none))) ///
-			xtitle("Percentiles of P{sub:it}", size(medium)) title("Income Mobility for Men between t and t+5", color(black) size(medlarge)) ///
-			xlabel(0(10)90 99, grid) graphregion(color(white)) plotregion(lcolor(black)) ///
-			ytitle("Mean Percentiles of P{sub:it} in year t+5", color(black) size(medium))
-			graph export "${folderfile}/fig11A_mobility_men.pdf", replace 
-			 
-		/*T+10 mobility*/
-		cap: drop  y1 x1 y2 x2
-		input y1 x1 y2 x2
-			92 85.0 92 97
-		end
-		tw  (line meanpermearnaltrankt101 meanpermearnaltrankt102 meanpermearnaltrankt103 permearnaltrankt permearnaltrankt if idex<= 41, ///
-			color(red blue green black) lpattern(dash longdash solid dash dash_dot) lwidth(medthick medthick medthick)) ///
-			(scatter meanpermearnaltrankt101 meanpermearnaltrankt102 meanpermearnaltrankt103 permearnaltrankt if idex==42, ///
-			color(red blue green) lpattern(dash dash dash) msymbol(D S O)) ///
-			(pcarrow y1 x1 y2 x2, msize(medlarge) mlwidth(medthick) mlcolor(black) lcolor(black) ), ///
-			text(93 85 "Top 0.1% of P{sub:it-1}", place(w) size(medium))  ///
-			legend(ring(0) position(11) order(1 "[25-34]" 2 "[35-44]") size(medium) cols(1) symxsize(7) region(color(none))) ///
-			xtitle("Percentiles of P{sub:it}", size(medium)) title("Income Mobility for Men between t and t+10", color(black) size(medlarge)) ///
-			xlabel(0(10)90 99, grid) graphregion(color(white)) plotregion(lcolor(black)) ///
-			ytitle("Mean Percentiles of P{sub:it} in year t+10", color(black) size(medium))
-			graph export "${folderfile}/fig11A_long_mobility_men.pdf", replace 
-
-		
-	/*Women*/
-		insheet using "out${sep}${mobidata}${sep}L_male_agegp_permearnalt_mobstat.csv", clear
-		keep if male == 0
-		collapse meanpermearnaltrankt5 meanpermearnaltrankt10, by(permearnaltrankt agegp)
-		keep meanpermearnaltrankt5 meanpermearnaltrankt10 permearnaltrankt agegp
-		reshape wide meanpermearnaltrankt5 meanpermearnaltrankt10 , i(permearnaltrankt) j(agegp)
-		gen idex = _n
-		
-		/*T+5 mobility*/
-		cap: drop  y1 x1 y2 x2
-		input y1 x1 y2 x2
-			95 85.0 95 97
-		end
-	
-		tw  (line meanpermearnaltrankt51 meanpermearnaltrankt52 meanpermearnaltrankt53 permearnaltrankt permearnaltrankt if idex<= 41, ///
-			color(red blue green black) lpattern(dash longdash solid dash dash_dot) lwidth(medthick medthick medthick)) ///
-			(scatter meanpermearnaltrankt51 meanpermearnaltrankt52 meanpermearnaltrankt53 permearnaltrankt if idex==42, ///
-			color(red blue green) lpattern(dash dash dash) msymbol(D S O)) ///
-			(pcarrow y1 x1 y2 x2, msize(medlarge) mlwidth(medthick) mlcolor(black) lcolor(black) ), ///
-			text(95 85 "Top 0.1% of P{sub:it-1}", place(w) size(medium))  ///
-			legend(ring(0) position(11) order(1 "[25-34]" 2 "[35-44]" 3 "[45-55]") size(medium) cols(1) symxsize(7) region(color(none))) ///
-			xtitle("Percentiles of P{sub:it}", size(medium)) title("Income Mobility for Women between t and t+5", color(black) size(medlarge)) ///
-			xlabel(0(10)90 99, grid) graphregion(color(white)) plotregion(lcolor(black)) ///
-			ytitle("Mean Percentiles of P{sub:it} in year t+5", color(black) size(medium))
-			graph export "${folderfile}/fig11A_mobility_women.pdf", replace 
-			 
-		/*T+10 mobility*/
-		cap: drop  y1 x1 y2 x2
-		input y1 x1 y2 x2
-			93 85.0 93 97
-		end
-		tw  (line meanpermearnaltrankt101 meanpermearnaltrankt102 meanpermearnaltrankt103 permearnaltrankt permearnaltrankt if idex<= 41, ///
-			color(red blue green black) lpattern(dash longdash solid dash dash_dot) lwidth(medthick medthick medthick)) ///
-			(scatter meanpermearnaltrankt101 meanpermearnaltrankt102 meanpermearnaltrankt103 permearnaltrankt if idex==42, ///
-			color(red blue green) lpattern(dash dash dash) msymbol(D S O)) ///
-			(pcarrow y1 x1 y2 x2, msize(medlarge) mlwidth(medthick) mlcolor(black) lcolor(black) ), ///
-			text(93 85 "Top 0.1% of P{sub:it-1}", place(w) size(medium))  ///
-			legend(ring(0) position(11) order(1 "[25-34]" 2 "[35-44]") size(medium) cols(1) symxsize(7) region(color(none))) ///
-			xtitle("Percentiles of P{sub:it}", size(medium)) title("Income Mobility for Women between t and t+10", color(black) size(medlarge)) ///
-			xlabel(0(10)90 99, grid) graphregion(color(white)) plotregion(lcolor(black)) ///
-			ytitle("Mean Percentiles of P{sub:it} in year t+10", color(black) size(medium))
-			graph export "${folderfile}/fig11A_long_mobility_women.pdf", replace 
-			
-	
-	/*--- Mobility Across the Years---*/
-	/*Men*/
-		insheet using "out${sep}${mobidata}${sep}L_male_agegp_permearnalt_mobstat.csv", clear
-		keep if male == 1
-		collapse meanpermearnaltrankt5 meanpermearnaltrankt10, by(permearnaltrankt year)
-		
-		reshape wide meanpermearnaltrankt5 meanpermearnaltrankt10, i(permearnaltrankt) j(year)
-		
-		/*T+5 mobility*/
-		tw line meanpermearnaltrankt51995 meanpermearnaltrankt52000 meanpermearnaltrankt52004 permearnaltrankt permearnaltrankt, ///
-			color(red blue green black) lpattern(dash longdash solid dash dash_dot) lwidth(medthick medthick medthick) ///
-		legend(ring(0) position(11) order(1 "1995" 2 "2000" 3 "2004") size(medium) cols(1) symxsize(7) region(color(none))) ///
-			 xtitle("Percentiles of P{sub:it-1}", size(medium)) title("Income Mobility for Men between t and t+5", color(black) size(medlarge)) ///
-			  xlabel(2.5 "0" 10(10)90 100, grid) graphregion(color(white)) plotregion(lcolor(black)) ///
-			 ytitle("Mean Rank of P{sub:3t} in year t+5", color(black) size(medium))
-			 graph export "${folderfile}/fig11B_mobility_men.pdf", replace 
-			 
-		/*T+10 mobility*/	 
-		tw line meanpermearnaltrankt101995 meanpermearnaltrankt102000 meanpermearnaltrankt102004 permearnaltrankt permearnaltrankt, ///
-			color(red blue green black) lpattern(dash longdash solid dash dash_dot) lwidth(medthick medthick medthick) ///
-		legend(ring(0) position(11) order(1 "1995" 2 "2000" 3 "2004") size(medium) cols(1) symxsize(7) region(color(none))) ///
-			 xtitle("Percentiles of P{sub:it-1}", size(medium)) title("Income Mobility for Men between t and t+10", color(black) size(medlarge)) ///
-			  xlabel(2.5 "0" 10(10)90 100, grid) graphregion(color(white)) plotregion(lcolor(black)) ///
-			 ytitle("Mean Rank of P{sub:3t} in year t+10", color(black) size(medium))
-			 graph export "${folderfile}/fig11B_long_mobility_men.pdf", replace 
-			 
-	/*Women*/
-		insheet using "out${sep}${mobidata}${sep}L_male_agegp_permearnalt_mobstat.csv", clear
-		keep if male == 0
-		collapse meanpermearnaltrankt5 meanpermearnaltrankt10, by(permearnaltrankt year)		
-		reshape wide meanpermearnaltrankt5 meanpermearnaltrankt10, i(permearnaltrankt) j(year)
-		
-		/*T+5 mobility*/
-		tw line meanpermearnaltrankt51995 meanpermearnaltrankt52000 meanpermearnaltrankt52004 permearnaltrankt permearnaltrankt, ///
-			color(red blue green black) lpattern(dash longdash solid dash dash_dot) lwidth(medthick medthick medthick) ///
-		legend(ring(0) position(11) order(1 "1995" 2 "2000" 3 "2004") size(medium) cols(1) symxsize(7) region(color(none))) ///
-			 xtitle("Percentiles of P{sub:it-1}", size(medium)) title("Income Mobility for Women between t and t+5", color(black) size(medlarge)) ///
-			  xlabel(5(10)95 100, grid) graphregion(color(white)) plotregion(lcolor(black)) ///
-			 ytitle("Mean Rank of P{sub:3t} in year t+5", color(black) size(medium))
-			 graph export "${folderfile}/fig11B_mobility_women.pdf", replace 
-
-		/*T+10 mobility*/
-		tw line meanpermearnaltrankt101995 meanpermearnaltrankt102000 meanpermearnaltrankt102004 permearnaltrankt permearnaltrankt, ///
-			color(red blue green black) lpattern(dash longdash solid dash dash_dot) lwidth(medthick medthick medthick) ///
-		legend(ring(0) position(11) order(1 "1995" 2 "2000" 3 "2004") size(medium) cols(1) symxsize(7) region(color(none))) ///
-			 xtitle("Percentiles of P{sub:it-1}", size(medium)) title("Income Mobility for Women between t and t+5", color(black) size(medlarge)) ///
-			  xlabel(5(10)95 100, grid) graphregion(color(white)) plotregion(lcolor(black)) ///
-			 ytitle("Mean Rank of P{sub:3t} in year t+10", color(black) size(medium))
-			 graph export "${folderfile}/fig11B_long_mobility_women.pdf", replace 
-
-*			 
-foreach yr in 1995 2005{		// Add years here if you need
-	
-	*What is the folder to save files 
-	global folderfile = "figs${sep}${outfolder}${sep}Mobility"
-	
-	*Load data of short term mobility
-	insheet using "out${sep}${mobidata}${sep}L_ranktp1_mobstat.csv", clear
-	keep if year == `yr'
-		
-	dnplot "meanranktp1 rankt" "rankt" /// y and x variables 
-			"Rank of {&epsilon}{sub:t} in year t" ///
-			"Mean Rank of {&epsilon}{sub:t} in year t+1" "medium" "medium" 		/// x and y axcis titles and sizes 
-			 "Short-Term Mobility in Year: `yr'" "" "large" ""  ///	Plot title
-			 "" "" "" "" "" ""						/// Legends
-			 "off"	"2" "1"									/// Leave empty for active legend
-			"fig11a_`yr'_mobility"			// Name of file
-			
-	
-	*Load data of long term mobility
-	insheet using "out${sep}${mobidata}${sep}L_ranktp5_mobstat.csv", clear
-	keep if year == `yr'
-	
-	dnplot "meanranktp5 rankt" "rankt" /// y and x variables 
-	"Rank of {&epsilon}{sub:t} in year t" ///
-	"Mean Rank of {&epsilon}{sub:t} in year t+5" "medium" "medium" 		/// x and y axcis titles and sizes 
-	 "Long-Term Mobility in Year: `yr'" "" "large" ""  ///	Plot title
-	 "" "" "" "" "" ""						/// Legends
-	 "off"	"2" "1"										/// Leave empty for active legend
-	"fig11b_`yr'_mobility"			// Name of file		
-	
-}
-
-// Figure 11B
-foreach yr in 2000 1995 {	// Add more years here if you need
-
-	*Load data of short term mobility
-	insheet using "out${sep}${mobidata}${sep}L_permearnalt_mobstat.csv", clear
-	keep if year == `yr'
-		
-	dnplot "meanpermearnaltrankt5 permearnaltrankt" "permearnaltrankt" /// y and x variables 
-			"Rank of P{sub:3t} in year t" ///
-			"Mean Rank of P{sub:3t} in year t+5" "medium" "medium" 		/// x and y axcis titles and sizes 
-			"Permanent Income Mobility Year: `yr'" "" "large" ""  ///	Plot title
-			"" "" "" "" "" ""						/// Legends
-			 "off"	"2" "1"											/// Leave empty for active legend
-			"fig11b_`yr'_tp5_mobility"			// Name of file
- 
-	dnplot "meanpermearnaltrankt10 permearnaltrankt" "permearnaltrankt" /// y and x variables 
-			"Rank of P{sub:3t} in year t" ///
-			"Mean Rank of P{sub:3t} in year t+10" "medium" "medium" 		/// x and y axcis titles and sizes 
-			"Permanent Income Mobility Year: `yr'" "" "large" ""  ///	Plot title
-			"" "" "" "" "" ""						/// Legends
-			"off"	"2" "1"									/// Leave empty for active legend
-			"fig11b_`yr'_tp10_mobility"			// Name of file
- 
-	dnplot "meanpermearnaltrankt3 permearnaltrankt" "permearnaltrankt" /// y and x variables 
-			"Rank of P{sub:3t} in year t" ///
-			"Mean Rank of P{sub:3t} in year T{sup:Max}-3" "medium" "medium" 		/// x and y axcis titles and sizes 
-			"Permanent Income Mobility Year: `yr'" "" "large" ""  ///	Plot title
-			"" "" "" "" "" ""						/// Legends
-			"off"	"2" "1"										/// Leave empty for active legend
-			"fig11b_`yr'_tl3_mobility"			// Name of file
-			
-}
-
-*/
-}
 ****	
 	
 /*----------------------------------------
@@ -2219,7 +2011,7 @@ foreach var in logearn{	// Add here other variables
 	gen p9010${vari} = p90${vari} - p10${vari}	
 	gen p9050${vari} = p90${vari} - p50${vari}
 	gen p5010${vari} = p50${vari} - p10${vari}
-	gen ksk${vari} = (p9050${vari} - p9010${vari})/p9010${vari}
+	gen ksk${vari} = (p9050${vari} - p5010${vari})/p9010${vari}
 
 	*Gen cohort that is the age at which cohort was 25 years old 
 	gen cohort25 = year - age + 25
