@@ -1,9 +1,13 @@
 Log of Changes 
 First version April,  19, 2019
-This  version December 7, 2020
+This  version December 18, 2020
 Serdar Ozkan (serdar.ozkan@toronto.ca)
 Sergio Salgado (ssalgado@wharton.upenn.edu)
 ----------------
+
+December 18, 2020 
+
+The code 7_Paper_Figs.do has been updated to fix a problem in the calculation of the Kelley Skewness. We have also removed the mobility section from 6_Core_Figs.do. This code is obsolete--all core plots are done in 7_Paper_Figs.do. We will remove 6_Core_Figs.do from the GitHub page in a future update of the code. 
 
 December 7, 2020 
 
