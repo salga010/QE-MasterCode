@@ -134,7 +134,7 @@ if "${figineq}" == "yes"{
 	gen p9505${vari} = p95${vari} - p5${vari}
 	gen p9050${vari} = p90${vari} - p50${vari}
 	gen p5010${vari} = p50${vari} - p10${vari}
-	gen ksk${vari} = (p9050${vari} - p9010${vari})/p9010${vari}
+	gen ksk${vari} = (p9050${vari} - p5010${vari})/p9010${vari}
 
 	*Rescale by first year 
 	foreach vv in sd$vari  var$vari p1$vari p2_5$vari p5$vari p10$vari p12_5$vari p25$vari ///
@@ -323,7 +323,7 @@ foreach var in logearn{	// Add here other variables
 	gen p9010${vari} = p90${vari} - p10${vari}	
 	gen p9050${vari} = p90${vari} - p50${vari}
 	gen p5010${vari} = p50${vari} - p10${vari}
-	gen ksk${vari} = (p9050${vari} - p9010${vari})/p9010${vari}
+	gen ksk${vari} = (p9050${vari} - p5010${vari})/p9010${vari}
 
 	*Gen cohort that is the age at which cohort was 25 years old 
 	gen cohort25 = year - age + 25
@@ -441,7 +441,7 @@ foreach var in logearn{	// Add here other variables
 	gen p9010${vari} = p90${vari} - p10${vari}	
 	gen p9050${vari} = p90${vari} - p50${vari}
 	gen p5010${vari} = p50${vari} - p10${vari}
-	gen ksk${vari} = (p9050${vari} - p9010${vari})/p9010${vari}
+	gen ksk${vari} = (p9050${vari} - p5010${vari})/p9010${vari}
 
 	*Gen cohort that is the age at which cohort was 25 years old 
 	gen cohort25 = year - age + 25
@@ -539,7 +539,7 @@ if "${figvol}" == "yes"{
 	
 	*Figure 5
 	insheet using "out${sep}${voladata}${sep}L_${vari}_male_sumstat.csv", case clear
-	gen ksk${vari} = (p90${vari} - (p50${vari} - p10${vari} ) )/(p90$vari - p10${vari})
+	gen ksk${vari} = ((p90${vari} - p50${vari}) - (p50${vari} - p10${vari}) )/(p90$vari - p10${vari})
 	gen cku${vari} = (p97_5${vari} - p2_5${vari})/(p75$vari - p25${vari}) - 2.91
 	
 	keep year male ksk${vari} cku${vari}

@@ -1,7 +1,7 @@
 /*
 	This code plots the time series of the moments geneated for the QE project
 	First version, March,03,2019
-    Last edition,  May, 08, 2020
+    Last edition,  Dec, 08, 2020
 	
 	This code might need to be updated to accomodate the particular characteristics of 
 	the data in each country. If you have problems, contact Ozkan/Salgado on Slack
@@ -1536,6 +1536,8 @@ program tspltAREALimZero
 	local formatfile = "${formatfile}"			// format of saved file 
 	local folderfile = "${folderfile}"			// folder where the plot is saved
 	local marksize = "${marksize}"				// Marker size 
+	local xlabsize = "${xlabsize}"				// Size of xlabel 
+	local ylabsize = "${ylabsize}"				// size of ylabel
 
 
 *Calculating plot limits
@@ -1579,7 +1581,7 @@ program tspltAREALimZero
 	local ydis1 = (`ymax1' - `ymin1')/5
 	
 *Plot
-	tw   (bar rece year if `timevar' >= `xmin' & `timevar' <= `xmax', c(l) color(gray*0.5) yscale(off)) ///
+	tw   (bar rece year if `timevar' >= `xmin' & `timevar' <= `xmax', ylabel(,nogrid axis(1)) c(l) color(gray*0.5) yscale(off)) ///
 	(connected `varilist'  `timevar' if `timevar' >= `xmin' & `timevar' <= `xmax',  				 /// Plot
 	lcolor(`cframe')  ///			Line color
 	lpattern(`lframe')  ///			Line pattern
@@ -1587,7 +1589,7 @@ program tspltAREALimZero
 	msize("`marksize'" "`marksize'" "`marksize'" "`marksize'" "`marksize'" "`marksize'" "`marksize'" "`marksize'" "`marksize'" )		/// Marker size
 	mfcolor(`mcframe')  ///	Fill color
 	mlcolor(`cframe')  ///			Marker  line color
-	yaxis(2)  yscale(alt axis(2)) ytitle(`ytitle', axis(2) size(`ytitlesize')) ylabel(`ylbls', labsize(`ylabsize') axis(2))),  /// yaxis optins
+	yaxis(2)  yscale(alt axis(2)) ytitle(`ytitle', axis(2) size(`ytitlesize')) ylabel(`ylbls', grid labsize(`ylabsize') axis(2))),  /// yaxis optins
 	xtitle("") xtitle(`xtitle',size(`xtitlesize')) xlabel(`xmin'(`xdis')`xmax', labsize(`xlabsize') grid) ///		xaxis options
 	legend(`lgactive' size(medium) col(`cols') symxsize(7.0) ring(0) position(`posi') ///
 	order(2 "`lab1'" 3 "`lab2'" 4 "`lab3'" 5 "`lab4'" 6 "`lab5'" 7 "`lab6'" 8 "`lab7'" 9 "`lab8'" 10 "`lab9'") ///
