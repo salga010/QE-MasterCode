@@ -96,7 +96,7 @@ program gkswplot
 	graphregion(color(white)  ) ///				Graph region define
 	plotregion(lcolor(black))  ///				Plot regione define
 	title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize'))  // Title and subtitle
-	graph export `folderfile'/`namefile'.`formatfile', replace 
+	graph export "`folderfile'/`namefile'.`formatfile'", replace 
 	
 	
 end 
@@ -194,7 +194,7 @@ program gkswplotax
 	graphregion(color(white)  ) ///				Graph region define
 	plotregion(lcolor(black))  ///				Plot regione define
 	title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize'))  // Title and subtitle
-	graph export `folderfile'/`namefile'.`formatfile', replace 
+	graph export "`folderfile'/`namefile'.`formatfile'", replace 
 	
 	
 end 
@@ -295,7 +295,7 @@ program gkswplotaxSZ
 	graphregion(color(white)  ) ///				Graph region define
 	plotregion(lcolor(black))  ///				Plot regione define
 	title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize'))  // Title and subtitle
-	graph export `folderfile'/`namefile'.`formatfile', replace 
+	graph export "`folderfile'/`namefile'.`formatfile'", replace 
 	
 	
 end 
@@ -416,7 +416,7 @@ program gkswplot_co
 		graphregion(color(white)  ) ///				Graph region define
 		plotregion(lcolor(black))  ///				Plot regione define
 		title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize'))  // Title and subtitle
-		graph export `folderfile'/`namefile'.`formatfile', replace 
+		graph export "`folderfile'/`namefile'.`formatfile'", replace 
 	}
 	else { 
 		
@@ -432,7 +432,7 @@ program gkswplot_co
 		graphregion(color(white)  ) ///				Graph region define
 		plotregion(lcolor(black))  ///				Plot regione define
 		title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize'))  // Title and subtitle		
-		graph export `folderfile'/`namefile'.`formatfile', replace 
+		graph export "`folderfile'/`namefile'.`formatfile'", replace 
 	}
 	
 end 
@@ -506,7 +506,7 @@ graph set window fontface "${fontface}"
 	graphregion(color(white)  ) ///				Graph region define
 	plotregion(lcolor(black))  ///				Plot regione define
 	title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize'))  // Title and subtitle
-	graph export `folderfile'/`namefile'.`formatfile', replace 
+	graph export "`folderfile'/`namefile'.`formatfile'", replace 
 
 end 
 
@@ -578,7 +578,7 @@ graph set window fontface "${fontface}"
 	plotregion(lcolor(black))  ///				Plot regione define
 	title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize')) /// Title and subtitle
 	xlabel(`xmin'(`xdis')`xmax', grid) ylabel(`ymin'(`ydis')`ymax')
-	graph export `folderfile'/`namefile'.`formatfile', replace 
+	graph export "`folderfile'/`namefile'.`formatfile'", replace 
 
 end 
 
@@ -660,7 +660,7 @@ graph set window fontface "${fontface}"
 	plotregion(lcolor(black))  ///				Plot regione define
 	title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize')) ///
 	text(`31' "`28'", place(e) size(`legsize')) text(`32' "`29'", place(e) size(`legsize')) text(`33' "`30'", place(e) size(`legsize')) // Title and subtitle
-	graph export `folderfile'/`namefile'.`formatfile', replace 
+	graph export "`folderfile'/`namefile'.`formatfile'", replace 
 
 end 
 
@@ -751,7 +751,7 @@ tw  (connected `varilist'  `timevar' if `timevar' >= `xmin' & `timevar' <= `xmax
 	graphregion(color(white)  ) ///				Graph region define
 	plotregion(lcolor(black))  ///				Plot regione define
 	title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize'))  // Title and subtitle
-	cap noisily: graph export `folderfile'/`namefile'.`formatfile', replace 
+	cap noisily: graph export "`folderfile'/`namefile'.`formatfile'", replace 
 
 end
 
@@ -831,7 +831,7 @@ tw  (connected `varilist'  `timevar' if `timevar' >= `xmin' & `timevar' <= `xmax
 	graphregion(color(white)  ) ///				Graph region define
 	plotregion(lcolor(black))  ///				Plot regione define
 	title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize'))  // Title and subtitle
-	cap noisily: graph export `folderfile'/`namefile'.`formatfile', replace 
+	cap noisily: graph export "`folderfile'/`namefile'.`formatfile'", replace 
 
 end
 
@@ -970,7 +970,7 @@ local colors = "`26'"
 	graphregion(color(white)  ) ///				Graph region define
 	plotregion(lcolor(black))  ///				Plot regione define
 	title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize'))  // Title and subtitle
-	cap noisily: graph export `folderfile'/`namefile'.`formatfile', replace 
+	cap noisily: graph export "`folderfile'/`namefile'.`formatfile'", replace 
 	
 	// xsize(`26') ysize(`27')
 
@@ -1130,7 +1130,7 @@ local colors = "`26'"
 		graphregion(color(white)  ) ///				Graph region define
 		plotregion(lcolor(black))  ///				Plot regione define
 		title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize'))  // Title and subtitle
-		cap noisily: graph export `folderfile'/`namefile'.`formatfile', replace 
+		cap noisily: graph export "`folderfile'/`namefile'.`formatfile'", replace 
 	}
 	else{
 		*Without dashed line*
@@ -1151,7 +1151,7 @@ local colors = "`26'"
 		graphregion(color(white)  ) ///				Graph region define
 		plotregion(lcolor(black))  ///				Plot regione define
 		title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize'))  // Title and subtitle
-		cap noisily: graph export `folderfile'/`namefile'.`formatfile', replace 
+		cap noisily: graph export "`folderfile'/`namefile'.`formatfile'", replace 
 		
 	}
 
@@ -1297,7 +1297,7 @@ local colors = "`26'"
 	graphregion(color(white)  ) ///				Graph region define
 	plotregion(lcolor(black))  ///				Plot regione define
 	title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize'))  // Title and subtitle
-	cap noisily: graph export `folderfile'/`namefile'.`formatfile', replace 
+	cap noisily: graph export "`folderfile'/`namefile'.`formatfile'", replace 
 	
 	// xsize(`26') ysize(`27')
 
@@ -1448,7 +1448,7 @@ program tspltAREALimZeroSZ
 	graphregion(color(white)  ) ///				Graph region define
 	plotregion(lcolor(black))  ///				Plot regione define
 	title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize'))  // Title and subtitle
-	cap noisily: graph export `folderfile'/`namefile'.`formatfile', replace 
+	cap noisily: graph export "`folderfile'/`namefile'.`formatfile'", replace 
 	
 	// xsize(`26') ysize(`27')
 
@@ -1597,7 +1597,7 @@ program tspltAREALimZero
 	graphregion(color(white)  ) ///				Graph region define
 	plotregion(lcolor(black))  ///				Plot regione define
 	title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize'))  // Title and subtitle
-	cap noisily: graph export `folderfile'/`namefile'.`formatfile', replace 
+	cap noisily: graph export "`folderfile'/`namefile'.`formatfile'", replace 
 	
 	// xsize(`26') ysize(`27')
 
@@ -1745,7 +1745,7 @@ local colors = "`26'"
 	graphregion(color(white)  ) ///				Graph region define
 	plotregion(lcolor(black))  ///				Plot regione define
 	title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize'))  // Title and subtitle
-	cap noisily: graph export `folderfile'/`namefile'.`formatfile', replace 
+	cap noisily: graph export "`folderfile'/`namefile'.`formatfile'", replace 
 
 
 end
@@ -1861,7 +1861,7 @@ tw  (rbar recedo receup  year if `timevar' >= `xmin' & `timevar' <= `xmax', c(l)
 	graphregion(color(white)  ) ///				Graph region define
 	plotregion(lcolor(black))  ///				Plot regione define
 	title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize'))  // Title and subtitle
-	cap noisily: graph export `folderfile'/`namefile'.`formatfile', replace 
+	cap noisily: graph export "`folderfile'/`namefile'.`formatfile'", replace 
 	
 	drop receup recedo
 end
@@ -1981,7 +1981,7 @@ tw  (rbar recedo receup  year if `timevar' >= `xmin' & `timevar' <= `xmax', c(l)
 	graphregion(color(white)  ) ///				Graph region define
 	plotregion(lcolor(black))  ///				Plot regione define
 	title(`title', color(black) size(`titlesize')) subtitle(`subtitle', color(black) size(`subtitlesize'))  // Title and subtitle
-	cap noisily: graph export `folderfile'/`namefile'.`formatfile', replace 
+	cap noisily: graph export "`folderfile'/`namefile'.`formatfile'", replace 
 	
 	drop receup recedo
 end
