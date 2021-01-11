@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the core figures for the draft
-// This version December 06, 2020
+// This version January 11, 2020
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1039,16 +1039,16 @@ if "${figtail}" == "yes"{
 		drop lshob2015_hat lshob1995_hat
 		
 		/*1% Tail*/		
-		regress lshob1995 lt1995 if shob1995 >= 0.01
+		regress lshob1995 lt1995 if shob1995 < 0.01
 		predict lshob1995_hat if e(sample), xb
 		global slopep1995 : di %4.2f _b[lt1995]
 		
-		regress lshob2015 lt2015 if shob2015 >= 0.01
+		regress lshob2015 lt2015 if shob2015 < 0.01
 		predict lshob2015_hat if e(sample), xb
 		global slopep2015 : di %4.2f _b[lt2015]
 				
-		tw (line lshob1995 lshob1995_hat lt1995    if shob1995 >= 0.01, color(red red) lwidth(thick) lpattern(solid dash)) ///
-			(line  lshob2015 lshob2015_hat lt2015  if shob2015 >= 0.01, color(blue blue)  lwidth(thick) lpattern(solid dash)) , ///
+		tw (line lshob1995 lshob1995_hat lt1995    if shob1995 < 0.01, color(red red) lwidth(thick) lpattern(solid dash)) ///
+			(line  lshob2015 lshob2015_hat lt2015  if shob2015 < 0.01, color(blue blue)  lwidth(thick) lpattern(solid dash)) , ///
 		legend(ring(0) position(2) order(1 "1995 Level (Slope: ${slopep1995})" 3 "2015 Level (Slope: ${slopep2015})") ///
 		size(medium) cols(1) symxsize(7) region(color(none))) ///
 			 xtitle("log y{sub:it}", size(${xtitlesize})) title(, color(black) size(medlarge)) ///
