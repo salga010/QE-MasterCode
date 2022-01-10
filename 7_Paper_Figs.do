@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the core figures for the draft
-// This version January 11, 2020
+// This version January 10, 2022
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -23,8 +23,15 @@ do "$maindir/do/0_Initialize.do"
 do "$maindir${sep}do${sep}myplots.do"		
 
 // Define these variables for your dataset
-global yrfirst = 1993 		// First year in the dataset 
-global yrlast =  2017 		// Last year in the dataset
+global yrfirst = 1993 					// First year in the dataset 
+global yrlast =  2017 					// Last year in the dataset	
+
+/* Following the guidelines 
+	Our suggestion is set  Tmax to the maximum length available (i.e., 24 years for Brazil, 34 years for Canada, etc.). As for Tcommon, we recommend  Tcommon=min{Tmax, 20}, going backward from the last year for which data are currently available (hence for Brazil is 1998-2017, for Canada 1997-2016, etc., while for Mexico would be 2005-2014).
+*/
+global Tcommon = ${yrlast} - 20 + 1	
+
+
 
 // Define some common charactristics of the plots 
 	global xtitlesize =   "large" 
@@ -647,7 +654,8 @@ if "${figquan}" == "yes"{
 			local mlabel = "Women"
 		}
 		
-						
+		drop if year < ${Tcommon} 	// we would like to compare countries over the same time period. This shorter sample period will be called Tcommon. Notice, Tcommon is defined in the start of this code. 
+		
 		collapse  p9010${vari} p9050${vari} p5010${vari} sd${vari} ksk${vari} skew${vari} cku${vari} kurt${vari}, by(agegp permrank)
 		reshape wide p9010${vari} p9050${vari} p5010${vari} sd${vari} ksk${vari} skew${vari} cku${vari} kurt${vari}, i(permrank) j(agegp)
 		
