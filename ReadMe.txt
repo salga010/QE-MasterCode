@@ -1,9 +1,15 @@
 Log of Changes 
 First version April,  19, 2019
-This  version December 18, 2020
+This  version January 10, 2022
 Serdar Ozkan (serdar.ozkan@toronto.ca)
 Sergio Salgado (ssalgado@wharton.upenn.edu)
 ----------------
+
+January 10, 2022
+
+Updated figure codes 6_Core_Figs.do 7_Paper_Figs.do adding 
+global Tcommon = ${yrlast} - 20 + 1	 
+To define the minimum year used for the heterogeneity plots. 
 
 December 18, 2020 
 
