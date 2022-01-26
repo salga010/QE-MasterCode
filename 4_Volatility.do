@@ -1,7 +1,7 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the time series of Volatility and Higher Order Moments
 // First  version January  06, 2019
-// This version   November 06, 2020
+// This version   January  20, 2022
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -32,10 +32,13 @@ global kpoints =  400
 timer clear 1
 timer on 1
 
+// global d1yrlist = "2000"	// For debug
+// global d5yrlist = "2000"
 
 foreach yr of numlist $d1yrlist{
-	
+	disp("---------------------------------")
 	disp("Working in year `yr'")
+	disp("---------------------------------")
 
 	local yrp = `yr' - 1		// Past year
 	
@@ -183,12 +186,25 @@ foreach yr of numlist $d1yrlist{
 			replace permrank = 99 if permearn > r(r1) & permearn <= r(r2) & permearn !=. 
 			replace permrank = 99.9 if permearn > r(r2) & permearn <= r(r3) & permearn !=. 
 			replace permrank = 100 if permearn > r(r3) & permearn !=.				
-			
+						
+			gen permrankT025 = 1 if permearn >= r(r1) & permearn !=. 	// Top 2.5P
+			replace permrankT025 = 0 if permrankT025 == . 
+			gen permrankT01 =  1 if permearn >= r(r2) & permearn !=. 	// Top 1P. Notice we have the top 0.1 already
+			replace permrankT01 = 0 if permrankT01 == . 
+									
 			bymysum_detail "`meas'earn1F" "L_" "_allrank`yr'" "year permrank"
 			bymyPCT "`meas'earn1F" "L_" "_allrank`yr'" "year permrank"	
 			
 			bymysum_detail "`meas'earn5F" "L_" "_allrank`yr'" "year permrank"
 			bymyPCT "`meas'earn5F" "L_" "_allrank`yr'" "year permrank"
+			
+				foreach uup in T025 T01{					
+					bymysum_detail "`meas'earn1F" "L_" "_allrank`uup'`yr'" "year permrank`uup'"
+					bymyPCT "`meas'earn1F" "L_" "_allrank`uup'`yr'" "year permrank`uup'"	
+			
+					bymysum_detail "`meas'earn5F" "L_" "_allrank`uup'`yr'" "year permrank`uup'"
+					bymyPCT "`meas'earn5F" "L_" "_allrank`uup'`yr'" "year permrank`uup'"
+				}
 												
 			* Calculate "kurtosis" moments within permrank
 			if "`meas'" == "res"{
@@ -204,7 +220,7 @@ foreach yr of numlist $d1yrlist{
 				}
 				drop permrankaux				
 			}
-				drop permrank
+				drop permrank permrankT025 permrankT01
 			
 			// Within age group rankings
 			gen permrank = .
@@ -218,6 +234,12 @@ foreach yr of numlist $d1yrlist{
 			replace permrank = 99   if permearn > aux1 & permearn <= aux2 & permearn !=. 
 			replace permrank = 99.9 if permearn > aux2 & permearn <= aux3 & permearn !=. 
 			replace permrank = 100  if permearn > aux3 & permearn !=. 
+						
+			gen permrankT025 = 1 if permearn >= aux1 & permearn !=. 	// Top 2.5P
+			replace permrankT025 = 0 if permrankT025 == . 
+			gen permrankT01 =  1 if permearn >= aux2 & permearn !=. 	// Top 1P. Notice we have the top 0.1 already
+			replace permrankT01 = 0 if permrankT01 == . 
+			
 			drop aux1 aux2 aux3
 			
 			bymysum_detail "`meas'earn1F" "L_" "_agerank`yr'" "year agegp permrank"
@@ -225,6 +247,14 @@ foreach yr of numlist $d1yrlist{
 			
 			bymysum_detail "`meas'earn5F" "L_" "_agerank`yr'" "year agegp permrank"
 			bymyPCT "`meas'earn5F" "L_" "_agerank`yr'" "year agegp permrank"
+							
+			foreach uup in T025 T01{
+				bymysum_detail "`meas'earn1F" "L_" "_agerank`uup'`yr'" "year agegp permrank`uup'"
+				bymyPCT "`meas'earn1F" "L_" "_agerank`uup'`yr'" "year agegp permrank`uup'"	
+		
+				bymysum_detail "`meas'earn5F" "L_" "_agerank`uup'`yr'" "year agegp permrank`uup'"
+				bymyPCT "`meas'earn5F" "L_" "_agerank`uup'`yr'" "year agegp permrank`uup'"
+			}
 						
 			// Calculate "kurtosis" moments within permrank/agegp 
 			if "`meas'" == "res"{
@@ -243,7 +273,7 @@ foreach yr of numlist $d1yrlist{
 				}			
 				drop permrankaux 
 			}
-			drop permrank 
+			drop permrank permrankT025 permrankT01
 			
 			
 			// Within gender group rankings			
@@ -258,6 +288,12 @@ foreach yr of numlist $d1yrlist{
 			replace permrank = 99 if permearn > aux1 & permearn <= aux2 & permearn !=. 
 			replace permrank = 99.9 if permearn > aux2 & permearn <= aux3 & permearn !=. 
 			replace permrank = 100 if permearn > aux3 & permearn !=. 
+			
+			gen permrankT025 = 1 if permearn >= aux1 & permearn !=. 	// Top 2.5P
+			replace permrankT025 = 0 if permrankT025 == . 
+			gen permrankT01 =  1 if permearn >= aux2 & permearn !=. 	// Top 1P. Notice we have the top 0.1 already
+			replace permrankT01 = 0 if permrankT01 == . 
+			
 			drop aux1 aux2 aux3
 			
 			bymysum_detail "`meas'earn1F" "L_" "_malerank`yr'" "year male permrank"
@@ -265,6 +301,14 @@ foreach yr of numlist $d1yrlist{
 			
 			bymysum_detail "`meas'earn5F" "L_" "_malerank`yr'" "year male permrank"
 			bymyPCT "`meas'earn5F" "L_" "_malerank`yr'" "year male permrank"
+						
+			foreach uup in T025 T01{
+				bymysum_detail "`meas'earn1F" "L_" "_malerank`uup'`yr'" "year male permrank`uup'"
+				bymyPCT "`meas'earn1F" "L_" "_malerank`uup'`yr'" "year male permrank`uup'"	
+		
+				bymysum_detail "`meas'earn5F" "L_" "_malerank`uup'`yr'" "year male permrank`uup'"
+				bymyPCT "`meas'earn5F" "L_" "_malerank`uup'`yr'" "year male permrank`uup'"
+			}						
 					
 			* Calculate "kurtosis" moments within permrank/agegp 
 			if "`meas'" == "res"{	
@@ -283,7 +327,7 @@ foreach yr of numlist $d1yrlist{
 				}
 				drop permrankaux 
 			}
-			drop permrank 	
+			drop permrank permrankT025 permrankT01	
 			
 						
 			// Within gender/age group rankings			
@@ -298,6 +342,12 @@ foreach yr of numlist $d1yrlist{
 			replace permrank = 99 if permearn > aux1 & permearn <= aux2 & permearn !=. 
 			replace permrank = 99.9 if permearn > aux2 & permearn <= aux3 & permearn !=. 
 			replace permrank = 100 if permearn > aux3 & permearn !=. 
+			
+			gen permrankT025 = 1 if permearn >= aux1 & permearn !=. 	// Top 2.5P
+			replace permrankT025 = 0 if permrankT025 == . 
+			gen permrankT01 =  1 if permearn >= aux2 & permearn !=. 	// Top 1P. Notice we have the top 0.1 already
+			replace permrankT01 = 0 if permrankT01 == . 
+						
 			drop aux1 aux2 aux3
 			
 			bymysum_detail "`meas'earn1F" "L_" "_maleagerank`yr'" "year male agegp permrank"
@@ -305,7 +355,15 @@ foreach yr of numlist $d1yrlist{
 			
 			bymysum_detail "`meas'earn5F" "L_" "_maleagerank`yr'" "year male agegp permrank"
 			bymyPCT "`meas'earn5F" "L_" "_maleagerank`yr'" "year male agegp permrank"
-									
+			
+			foreach uup in T025 T01{
+				bymysum_detail "`meas'earn1F" "L_" "_maleagerank`uup'`yr'" "year male agegp permrank`uup'"
+				bymyPCT "`meas'earn1F" "L_" "_maleagerank`uup'`yr'" "year male agegp permrank`uup'"	
+		
+				bymysum_detail "`meas'earn5F" "L_" "_maleagerank`uup'`yr'" "year male agegp permrank`uup'"
+				bymyPCT "`meas'earn5F" "L_" "_maleagerank`uup'`yr'" "year male agegp permrank`uup'"
+			}	
+				
 			* Calculate "kurtosis" moments within permrank/agegp 
 			if "`meas'" == "res"{	
 				gen permrankaux = int(permrank/2.5)
@@ -323,7 +381,7 @@ foreach yr of numlist $d1yrlist{
 				}
 				drop permrankaux 		
 			}
-			drop permrank 	
+			drop permrank permrankT025 permrankT01			
 			
 			} 	// END loop over res and arc
 			
@@ -349,6 +407,8 @@ foreach yr of numlist $d1yrlist{
 				 
 		if inlist(`yrp',${perm3yrlist}){
 		if inlist(`yr',${d5yrlist}){
+			
+			
 		*Stats per rank
 		use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_allrank`yr'.dta", clear
 		merge 1:1 year permrank using "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_allrank`yr'.dta", ///
@@ -357,7 +417,7 @@ foreach yr of numlist $d1yrlist{
 		erase "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_allrank`yr'.dta"
 		
 		save "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank`yr'.dta", replace
-		
+						
 		*Stats per rank within age gp
 		use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_agerank`yr'.dta", clear
 		merge 1:1 year age permrank using "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_agerank`yr'.dta", ///
@@ -384,6 +444,31 @@ foreach yr of numlist $d1yrlist{
 		erase "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_maleagerank`yr'.dta"
 		
 		save "$maindir${sep}out${sep}$outfolder/L_`vari'_maleagerank`yr'.dta", replace
+		
+		*Extra top 		
+			foreach tto in "all" "age" "male" "maleage"{
+				
+				local wmerge = ""
+				if "`tto'" == "age"{
+					local wmerge = "agegp"
+				}
+				else if "`tto'" == "male"{
+					local wmerge = "male"
+				}
+				else if "`tto'" == "maleage"{
+					local wmerge = "male agegp"
+				}
+				
+			foreach uup in T025 T01{
+			use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`tto'rank`uup'`yr'.dta", clear
+			merge 1:1 year `wmerge' permrank`uup' using "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`tto'rank`uup'`yr'.dta", ///
+				nogenerate
+			erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`tto'rank`uup'`yr'.dta"
+			erase "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`tto'rank`uup'`yr'.dta"
+		
+			save "$maindir${sep}out${sep}$outfolder/L_`vari'_`tto'rank`uup'`yr'.dta", replace
+			}
+			}
 				
 		}
 		}
@@ -392,6 +477,7 @@ foreach yr of numlist $d1yrlist{
 }
 
 // if inlist("`vari'","researn1F","arcearn1F"){
+	
 	clear 
 	foreach yr of numlist $d1yrlist{
 		append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"
@@ -400,7 +486,7 @@ foreach yr of numlist $d1yrlist{
 	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace comma
 		
 // }
-// else{
+// else{	
 	clear
 	foreach yr of numlist $d5yrlist{
 		local yrp = `yr' - 1
@@ -411,6 +497,7 @@ foreach yr of numlist $d1yrlist{
 	}
 	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank.csv", replace comma
 
+	
 	clear
 	foreach yr of numlist $d5yrlist{
 		local yrp = `yr' - 1
@@ -420,6 +507,7 @@ foreach yr of numlist $d1yrlist{
 		}
 	}
 	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank.csv", replace comma
+	
 	
 	clear
 	foreach yr of numlist $d5yrlist{
@@ -431,6 +519,7 @@ foreach yr of numlist $d1yrlist{
 	}
 	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_malerank.csv", replace comma
 
+	
 	clear
 	foreach yr of numlist $d5yrlist{
 		local yrp = `yr' - 1
@@ -442,6 +531,26 @@ foreach yr of numlist $d1yrlist{
 	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_maleagerank.csv", replace comma
 	
 	
+	clear	
+	foreach tto in "all" "age" "male" "maleage"{
+	foreach uup in T025 T01{
+		
+		clear 
+		foreach yr of numlist $d5yrlist{
+		local yrp = `yr' - 1
+		if inlist(`yrp',${perm3yrlist}){
+		
+		append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`tto'rank`uup'`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`tto'rank`uup'`yr'.dta"
+		
+		}
+		}
+		outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_`tto'rank`uup'.csv", replace comma
+		
+	}
+	}
+	
+		
 // }	// END if statement
 
 // Collect data across all years and heterogeneity groups. saves one database per group 
@@ -525,6 +634,31 @@ foreach yr of numlist $d5yrlist{
 			erase "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_maleagerank`yr'.dta"
 			
 			save "$maindir${sep}out${sep}$outfolder/L_`vari'_maleagerank`yr'.dta", replace
+			
+			*Extra top 		
+			foreach tto in "all" "age" "male" "maleage"{
+				
+				local wmerge = ""
+				if "`tto'" == "age"{
+					local wmerge = "agegp"
+				}
+				else if "`tto'" == "male"{
+					local wmerge = "male"
+				}
+				else if "`tto'" == "maleage"{
+					local wmerge = "male agegp"
+				}
+				
+			foreach uup in T025 T01{
+			use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`tto'rank`uup'`yr'.dta", clear
+			merge 1:1 year `wmerge' permrank`uup' using "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`tto'rank`uup'`yr'.dta", ///
+				nogenerate
+			erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`tto'rank`uup'`yr'.dta"
+			erase "$maindir${sep}out${sep}$outfolder/PC_L_`vari'_`tto'rank`uup'`yr'.dta"
+		
+			save "$maindir${sep}out${sep}$outfolder/L_`vari'_`tto'rank`uup'`yr'.dta", replace
+			}
+			}
 					
 		
 		}
@@ -578,6 +712,26 @@ foreach yr of numlist $d5yrlist{
 		}
 	}
 	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_maleagerank.csv", replace comma
+	
+	clear	
+	foreach tto in "all" "age" "male" "maleage"{
+	foreach uup in T025 T01{
+		
+		clear 
+		foreach yr of numlist $d5yrlist{
+		local yrp = `yr' - 1
+		if inlist(`yrp',${perm3yrlist}){
+		
+		append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`tto'rank`uup'`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`tto'rank`uup'`yr'.dta"
+		
+		}
+		}
+		outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_`tto'rank`uup'.csv", replace comma
+		
+	}
+	}
+	
 
 // Collect data across all years and heterogeneity groups. saves one database per group 	
 		foreach  vv in $hetgroup{

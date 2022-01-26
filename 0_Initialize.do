@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This code specify country-specific variables.  
-// This version Dec 04, 2020
+// This version Jan 25, 2020
 //	Halvorsen, Ozkan, Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -46,6 +46,15 @@ global yod_var="yod" 		// The variable name for year of death.
 global educ_var="educ" 		// The variable name for year of death.
 global labor_var="wage_inc" // The variable name for total annual labor earnings from all jobs during the year.  
 global year_var="year" 		// The variable name for year if the data is in long format
+
+
+scalar def educ_typ=2   /*Define the type of variable for education 1=string; 2=numerical*/
+
+global iso = "NOR" 		// Define the 3-letters code of the country. Use ISO codes. For instance 
+						// for Italy use ITA, for Spain use ESP, for Norway use NOR and so on
+						
+global minnumberobs = 1 // Define the minimum number of observations in a cell. If the min number of obs is not 
+						// satisfied, all moments calculated with that subsample are replaced by missing.
 
 
 // Define these variables for your dataset

@@ -1,7 +1,7 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the time series of Mobility
 // First  version January 06, 2019
-// This version Dec 05, 2020
+// This version January 19, 2022
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -29,9 +29,9 @@ do "$maindir${sep}do${sep}myprogs.do"
 timer clear 1
 timer on 1
 
-global numestates = "1 3 5 10 15"		// How many years ahead mobility
+global numestates = "1 3 5"		// How many years ahead mobility 3 5 10 15
 
-global mathetgroup = `""male agegp" male "'  // Mobility conditional on
+global mathetgroup = `" "" "male agegp" male "' // Mobility conditional on
 
 foreach varx in permearnalt researn{
 	if ("`varx'"=="researn"){
@@ -99,17 +99,23 @@ foreach varx in permearnalt researn{
 				
 			}
 			rename `varx'ranktp `varx'ranktp`subgp'
-			foreach het in $mathetgroup{ // For each heterogeneity group
-				if "`het'" == "male"{
+			foreach het in "all" "male" "agegp" "male_agegp"{ // For each heterogeneity group
+				if "`het'" == "all"{					
+					local hetsuf=""
+				}
+				else if "`het'" == "male"{					
 					local hetsuf="male"
 				}
-				else{
-					local hetsuf="male_agegp"
+				else if "`het'" == "agegp"{					
+					local hetsuf="agegp"
+				}				
+				else if "`het'" == "male_agegp"{
+					local hetsuf="male agegp"
 				}
 //				disp("`het'")
 //				disp("`hetsuf'")								
 				qui: bymysum_meanonly "`varx'ranktp`subgp'" ///
-				"L_`hetsuf'_" "_`yr'" "year `het' `varx'rankt"	
+				"L_`het'_" "_`yr'" "year `hetsuf' `varx'rankt"									
 			}
 		}
 	}
@@ -118,7 +124,6 @@ foreach varx in permearnalt researn{
 
 		
 // Collect data across years 
-
 foreach varx in permearnalt researn{
 	
 	if ("`varx'"=="researn") {
@@ -127,13 +132,21 @@ foreach varx in permearnalt researn{
 	if ("`varx'"=="permearnalt") {
 		local firstyr = $yrfirst + 2	
 	}
-	foreach het in $mathetgroup{ // For each heterogeneity group
-		if "`het'" == "male"{
+	foreach het in "all" "male" "agegp" "male_agegp"{ // For each heterogeneity group
+		local hetsuf = ""
+		if "`het'" == "all"{					
+			local hetsuf=""
+		}
+		else if "`het'" == "male"{					
 			local hetsuf="male"
 		}
-		else{
-			local hetsuf="male_agegp"
+		else if "`het'" == "agegp"{					
+			local hetsuf="agegp"
 		}
+		else if "`het'" == "male_agegp"{
+			local hetsuf="male agegp"
+		}
+				
 		foreach subgp in $numestates{ // Number of years that will be used for the jump		
 			clear
 			local yrmax = ${yrlast} - `subgp' 	// This should not be negative
@@ -145,53 +158,51 @@ foreach varx in permearnalt researn{
 			
 			forvalues yr = `firstyr'/`yrmax'{		
 
-				append using S_L_`hetsuf'_`varx'ranktp`subgp'_`yr'.dta
-				erase S_L_`hetsuf'_`varx'ranktp`subgp'_`yr'.dta
+				append using S_L_`het'_`varx'ranktp`subgp'_`yr'.dta
+				erase S_L_`het'_`varx'ranktp`subgp'_`yr'.dta
 
 				
 			}
 //			disp("`het'")
 //		    disp("`hetsuf'")
-			order year `het' `varx'rankt 
-			sort year `het' `varx'rankt	
-			save S_L_`hetsuf'_`varx'ranktp`subgp'.dta, replace	
+			order year `hetsuf' `varx'rankt 
+			sort year `hetsuf' `varx'rankt	
+			save S_L_`het'_`varx'ranktp`subgp'.dta, replace	
 		}	
 	}
-}
-	
+}	
 	
 // Collect data across jumps 
-
 foreach varx in permearnalt researn{
+	foreach het in "all" "male" "agegp" "male_agegp"{ // For each heterogeneity group
 	
-	if ("`varx'"=="researn") {
-		local firstyr = $yrfirst 
-	}		
-	if ("`varx'"=="permearnalt") {
-		local firstyr = $yrfirst + 2	
-	}
-	foreach het in $mathetgroup{ // For each heterogeneity group
-		if "`het'" == "male"{
+		if "`het'" == "all"{					
+			local hetsuf=""
+		}
+		else if "`het'" == "male"{					
 			local hetsuf="male"
 		}
-		else{
-			local hetsuf="male_agegp"
+		else if "`het'" == "agegp"{					
+			local hetsuf="agegp"
+		}
+		else if "`het'" == "male_agegp"{
+			local hetsuf="male agegp"
 		}
 		clear
 
 		foreach subgp in $numestates{ // Number of years that will be used for the jump		
 		
-			if(`subgp'==1){
-				use S_L_`hetsuf'_`varx'ranktp`subgp'.dta, clear
-				erase S_L_`hetsuf'_`varx'ranktp`subgp'.dta
+			if (`subgp'==1){
+				use S_L_`het'_`varx'ranktp`subgp'.dta, clear
+				erase S_L_`het'_`varx'ranktp`subgp'.dta
 			}
 			else{
-				merge 1:1 year `het' `varx'rankt ///
-				using S_L_`hetsuf'_`varx'ranktp`subgp'.dta, nogenerate
-				erase S_L_`hetsuf'_`varx'ranktp`subgp'.dta
+				merge 1:1 year `hetsuf' `varx'rankt ///
+					using S_L_`het'_`varx'ranktp`subgp'.dta, nogenerate
+				erase S_L_`het'_`varx'ranktp`subgp'.dta
 			}
 		}
-		outsheet using "L_`hetsuf'_`varx'_mobstat.csv", replace comma			
+		outsheet using "L_`het'_`varx'_mobstat.csv", replace comma			
 	}
 }
 	

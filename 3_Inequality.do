@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the time series of concetration and inequality
-// This version Dec 01, 2020
+// This version Jan 25, 2022
 // Serdar Ozkan and Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -10,10 +10,15 @@ set type double
  
 // You should change the below directory. 
 
-global maindir ="..."
+global maindir =".."
 
 // Do not make change from here on. Contact Ozkan/Salgado if changes are needed. 
 do "$maindir/do/0_Initialize.do"
+// cap noisily: ssc install gtools
+	// This code uses gcollapse below to speed up the calculation of teh autocorrelations/
+	// If not able to install gtools, please change gcollapse for collapse in line 295 and subsequent lines
+	// or contanct Ozkan/Salgado
+	
 
 // Create folder for output and log-file
 global outfolder=c(current_date)
@@ -34,7 +39,10 @@ timer clear 1
 timer on 1
 
 foreach yr of numlist $yrlist{
+	disp("")
+	disp("------------------------------")
 	disp("Working in year `yr'")
+	disp("------------------------------")
 // 	local yr = 2000			// For checking bugs
 	// Define some variables to calculate
 	local moreearn = ""
@@ -218,44 +226,7 @@ foreach yr of numlist $yrlist{
 } // END of loop over years
 
 
-*Concentrations measures as in Gomez 2018
-foreach yr of numlist $yrlist{
-	*local yr = 1995
-	if `yr' <= ${yrlast} - 1{
-	
-	disp("Working in year `yr'")
-	local yrp = `yr' + 1
-	
-	// Load data 
-	use  male yob yod educ labor`yr' labor`yrp' using ///
-		"$maindir${sep}dta${sep}master_sample.dta" if (labor`yr'~=. | labor`yrp'~=.) , clear   
-	
-	// Create year
-	gen year=`yr'
-	
-	// Create age and restrict to CS sample
-	gen age = `yr'-yob+1
-	qui: drop if age<${begin_age} - 1 | age>${end_age}			// This keep 24 to 55 yrs old individuals
-	
-	// Rename labor income to earn in t and earn in t+p
-	rename labor`yr' earn
-	rename labor`yrp' earnp1 
-		
-	// Calculate measures of concentration and mobility at the top using 
-	// the decomposition of Matthieu Gomez "Displacement and the Rise in Top Wealth Inequality"
-	// This case is with population change as in equation (22) of the paper
-	
-	bymyCNTgPop "earn" "L_" "`yr'" "1"	"${qpercent}" ""
-	
-	*For men and women
-	forvalues mm = 0/1{
-		bymyCNTgPop "earn" "L_" "`yr'" "1"	"${qpercent}" "`mm'"
-	}
-	
-	}	
-}	// END loop over years 
-
-*Moments of Residuals Earnings wit Education Controls
+// Calculate moments of Residuals Earnings with Education Controls
 foreach yr of numlist $yrlist{
 	
 	// Load data	
@@ -270,10 +241,220 @@ foreach yr of numlist $yrlist{
 	bymyPCT "researne" "L_" "_`yr'" "year"
 }	
 
+// Calculate autocorrelation moments
+// This is based on Luigi's codes
+
+*Reshape back the data. The reshape comnand is too slow
+foreach yr of numlist $yrlist{		
+	use personid male yob researn`yr' if researn`yr' != . using ///
+		"$maindir${sep}dta${sep}master_sample.dta" , clear 
+	rename researn`yr' researn
+	gen year = `yr'
+	if `yr' == $yrfirst{
+		save "$maindir${sep}dta${sep}temporal.dta", replace
+	}
+	else{
+		append using "$maindir${sep}dta${sep}temporal.dta"
+		save "$maindir${sep}dta${sep}temporal.dta", replace
+	}
+}
+erase "$maindir${sep}dta${sep}temporal.dta"
+gen age = year - yob + 1
+
+keep if age>=${begin_age} & age<= ${end_age}
+// reg logearn i.age i.year i.male	// Calculate residuals from gender/age/year dummies
+// predict u,res
+rename researn u
+xtset personid year
+
+gen u0u1=u*L1.u 
+gen u0u2=u*L2.u 
+gen u0u3=u*L3.u 
+gen u0u4=u*L4.u 
+gen u0u5=u*L5.u 
+gen u1=L1.u 
+gen u2=L2.u 
+gen u3=L3.u 
+gen u4=L4.u 
+gen u5=L5.u
+gen du=D.u 
+gen du0du1=du*L1.du 
+gen du0du2=du*L2.du 
+gen du0du3=du*L3.du 
+gen du0du4=du*L4.du 
+gen du0du5=du*L5.du 
+gen du1=L1.du 
+gen du2=L2.du 
+gen du3=L3.du 
+gen du4=L4.du 
+gen du5=L5.du 
+keep u0u* du0du* du u u1-u5 du1-du5 year year male age
+compress 
+save "$maindir${sep}dta${sep}temporal.dta", replace
+	// Save simple file 
+
+
+use "$maindir${sep}dta${sep}temporal.dta", clear
+collapse u0u* du0du* (sd) du u u1-u5 du1-du5,by(year)
+gen ac_researn_1=u0u1/(u*u1)
+gen ac_researn_2=u0u2/(u*u2)
+gen ac_researn_3=u0u3/(u*u3)
+gen ac_researn_4=u0u4/(u*u4)
+gen ac_researn_5=u0u5/(u*u5)
+gen ac_dresearn_1=du0du1/(du*du1)
+gen ac_dresearn_2=du0du2/(du*du2)
+gen ac_dresearn_3=du0du3/(du*du3)
+gen ac_dresearn_4=du0du4/(du*du4)
+gen ac_dresearn_5=du0du5/(du*du5)
+save temp_lev_year,replace
+
+
+use "$maindir${sep}dta${sep}temporal.dta", clear
+collapse u0u* du0du* (sd) du u u1-u5 du1-du5,by(year male)
+gen ac_researn_1=u0u1/(u*u1)
+gen ac_researn_2=u0u2/(u*u2)
+gen ac_researn_3=u0u3/(u*u3)
+gen ac_researn_4=u0u4/(u*u4)
+gen ac_researn_5=u0u5/(u*u5)
+gen ac_dresearn_1=du0du1/(du*du1)
+gen ac_dresearn_2=du0du2/(du*du2)
+gen ac_dresearn_3=du0du3/(du*du3)
+gen ac_dresearn_4=du0du4/(du*du4)
+gen ac_dresearn_5=du0du5/(du*du5)
+save temp_lev_gender,replace
+
+
+use "$maindir${sep}dta${sep}temporal.dta", clear
+collapse u0u* du0du* (sd) du u u1-u5 du1-du5,by(year age)
+gen ac_researn_1=u0u1/(u*u1)
+gen ac_researn_2=u0u2/(u*u2)
+gen ac_researn_3=u0u3/(u*u3)
+gen ac_researn_4=u0u4/(u*u4)
+gen ac_researn_5=u0u5/(u*u5)
+gen ac_dresearn_1=du0du1/(du*du1)
+gen ac_dresearn_2=du0du2/(du*du2)
+gen ac_dresearn_3=du0du3/(du*du3)
+gen ac_dresearn_4=du0du4/(du*du4)
+gen ac_dresearn_5=du0du5/(du*du5)
+save temp_lev_age,replace
+
+
+use "$maindir${sep}dta${sep}temporal.dta", clear
+collapse u0u* du0du* (sd) du u u1-u5 du1-du5,by(year male age)
+gen ac_researn_1=u0u1/(u*u1)
+gen ac_researn_2=u0u2/(u*u2)
+gen ac_researn_3=u0u3/(u*u3)
+gen ac_researn_4=u0u4/(u*u4)
+gen ac_researn_5=u0u5/(u*u5)
+gen ac_dresearn_1=du0du1/(du*du1)
+gen ac_dresearn_2=du0du2/(du*du2)
+gen ac_dresearn_3=du0du3/(du*du3)
+gen ac_dresearn_4=du0du4/(du*du4)
+gen ac_dresearn_5=du0du5/(du*du5)
+save temp_lev_age_gender,replace
+
+
+use "$maindir${sep}dta${sep}temporal.dta", clear
+replace age=2534 if age>=25 & age<=34
+replace age=3544 if age>=35 & age<=44
+replace age=4555 if age>=45 & age<=55
+collapse u0u* du0du* (sd) du u u1-u5 du1-du5,by(year age)
+gen ac_researn_1=u0u1/(u*u1)
+gen ac_researn_2=u0u2/(u*u2)
+gen ac_researn_3=u0u3/(u*u3)
+gen ac_researn_4=u0u4/(u*u4)
+gen ac_researn_5=u0u5/(u*u5)
+gen ac_dresearn_1=du0du1/(du*du1)
+gen ac_dresearn_2=du0du2/(du*du2)
+gen ac_dresearn_3=du0du3/(du*du3)
+gen ac_dresearn_4=du0du4/(du*du4)
+gen ac_dresearn_5=du0du5/(du*du5)
+save temp_lev_age1,replace
+
+
+use "$maindir${sep}dta${sep}temporal.dta", clear
+replace age=2534 if age>=25 & age<=34
+replace age=3544 if age>=35 & age<=44
+replace age=4555 if age>=45 & age<=55
+collapse u0u* du0du* (sd) du u u1-u5 du1-du5,by(year male age)
+gen ac_researn_1=u0u1/(u*u1)
+gen ac_researn_2=u0u2/(u*u2)
+gen ac_researn_3=u0u3/(u*u3)
+gen ac_researn_4=u0u4/(u*u4)
+gen ac_researn_5=u0u5/(u*u5)
+gen ac_dresearn_1=du0du1/(du*du1)
+gen ac_dresearn_2=du0du2/(du*du2)
+gen ac_dresearn_3=du0du3/(du*du3)
+gen ac_dresearn_4=du0du4/(du*du4)
+gen ac_dresearn_5=du0du5/(du*du5)
+save temp_lev_age_gender1,replace
+
+
+use "$maindir${sep}dta${sep}temporal.dta", clear
+replace age=2555 if age>=25 & age<=55
+collapse u0u* du0du* (sd) du u u1-u5 du1-du5,by(year age)
+gen ac_researn_1=u0u1/(u*u1)
+gen ac_researn_2=u0u2/(u*u2)
+gen ac_researn_3=u0u3/(u*u3)
+gen ac_researn_4=u0u4/(u*u4)
+gen ac_researn_5=u0u5/(u*u5)
+gen ac_dresearn_1=du0du1/(du*du1)
+gen ac_dresearn_2=du0du2/(du*du2)
+gen ac_dresearn_3=du0du3/(du*du3)
+gen ac_dresearn_4=du0du4/(du*du4)
+gen ac_dresearn_5=du0du5/(du*du5)
+save temp_lev_age2,replace
+
+
+use "$maindir${sep}dta${sep}temporal.dta", clear
+replace age=2555 if age>=25 & age<=55
+collapse u0u* du0du* (sd) du u u1-u5 du1-du5,by(year male age)
+gen ac_researn_1=u0u1/(u*u1)
+gen ac_researn_2=u0u2/(u*u2)
+gen ac_researn_3=u0u3/(u*u3)
+gen ac_researn_4=u0u4/(u*u4)
+gen ac_researn_5=u0u5/(u*u5)
+gen ac_dresearn_1=du0du1/(du*du1)
+gen ac_dresearn_2=du0du2/(du*du2)
+gen ac_dresearn_3=du0du3/(du*du3)
+gen ac_dresearn_4=du0du4/(du*du4)
+gen ac_dresearn_5=du0du5/(du*du5)
+save temp_lev_age_gender2,replace
+
+
+clear
+u temp_lev_year,clear
+append using temp_lev_gender
+append using temp_lev_age
+append using temp_lev_age_gender
+append using temp_lev_age1
+append using temp_lev_age_gender1
+append using temp_lev_age2
+append using temp_lev_age_gender2
+
+keep year age male ac_*
+g str3 country="${iso}"
+
+tostring age,replace
+replace age="25-55" if age=="."
+replace age="25-34" if age=="2534" 
+replace age="35-44" if age=="3544"
+replace age="45-55" if age=="4555"
+
+g str12 gender="All genders"
+replace gender="Male" if male==1
+replace gender="Female" if male==0
+drop male
+
+order country year gender age
+sort country gender age year
+export delimited using "$maindir${sep}out${sep}$outfolder${sep}autocorr.csv", replace
+erase "$maindir${sep}dta${sep}temporal.dta"
+// END of section for autocovariance.
+
 
 // Collect data across years 
 clear
-
 foreach vari in logearn researn {
 
 foreach yr of numlist $yrlist{
@@ -455,14 +636,14 @@ foreach yr of numlist $yrlist{
 	*Age and gender
 	clear
 	foreach yr of numlist $yrlist{
-		foreach mm in 1 2 3{
-		foreach aa in 0 1 {
+		foreach mm in 1 2 3{	// Age groups
+		foreach aa in 0 1 {		// Gender groups
 			append using "$maindir${sep}out${sep}$outfolder/L_male`aa'age`mm'earn_`yr'_con.dta"
 			erase "$maindir${sep}out${sep}$outfolder/L_male`aa'age`mm'earn_`yr'_con.dta"	
 			cap:gen agegp = `mm' 
 			cap:replace agegp = `mm'  if agegp == .
-			cap:gen male = `mm' 
-			cap:replace male = `mm'  if male == .
+			cap:gen male = `aa' 
+			cap:replace male = `aa'  if male == .
 		}
 		}
 	}	
@@ -491,8 +672,8 @@ foreach yr of numlist $yrlist{
 		cap: erase "$maindir${sep}out${sep}$outfolder/L_male`aa'educ`mm'earn_`yr'_con.dta"	
 		cap:gen educ = `mm' 
 		cap:replace educ = `mm'  if educ == .
-		cap:gen male = `mm' 
-		cap:replace male = `mm'  if male == .
+		cap:gen male = `aa' 
+		cap:replace male = `aa'  if male == .
 		}
 		}
 	}	
@@ -539,25 +720,6 @@ foreach yr of numlist $yrlist{
 	order year male agegp
 	outsheet using "$maindir${sep}out${sep}$outfolder/RI_maleagegp_earn_idex.csv", replace comma
 	
-// Collect data across years for the contration growth measures between t and t+1
-clear
-foreach yr of numlist $yrlist{
-	if `yr' <= ${yrlast} - 1{
-		append using "$maindir${sep}out${sep}$outfolder/L_earn_`yr'_gStPop1.dta"
-		erase "$maindir${sep}out${sep}$outfolder/L_earn_`yr'_gStPop1.dta"	
-	}
-} 
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_gStPop1.csv", replace comma
-clear
-foreach yr of numlist $yrlist{
-	if `yr' <= ${yrlast} - 1{
-		forvalues mm = 0/1{
-		append using "$maindir${sep}out${sep}$outfolder/L_earn_`yr'_gStPop1_male`mm'.dta"
-		erase "$maindir${sep}out${sep}$outfolder/L_earn_`yr'_gStPop1_male`mm'.dta"	
-		}
-	}
-} 
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_gStPop1_male.csv", replace comma
 	
 // Collect data from the researn
 foreach vari in researne{
