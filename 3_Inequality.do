@@ -14,11 +14,6 @@ global maindir =".."
 
 // Do not make change from here on. Contact Ozkan/Salgado if changes are needed. 
 do "$maindir/do/0_Initialize.do"
-// cap noisily: ssc install gtools
-	// This code uses gcollapse below to speed up the calculation of teh autocorrelations/
-	// If not able to install gtools, please change gcollapse for collapse in line 295 and subsequent lines
-	// or contanct Ozkan/Salgado
-	
 
 // Create folder for output and log-file
 global outfolder=c(current_date)
