@@ -437,7 +437,7 @@ sort country gender year age index
 merge using "$datafran${sep}Ineq_earnings_density_timeseries"
 drop _merge
 sort country gender year age index
-export delimited using "$datafran${sep}Density.csv", replace
+export delimited using "$datafran${sep}Density_${iso}.csv", replace
 
 erase "$datafran${sep}Dynamics_researn_1_density_timeseries.dta"
 erase "$datafran${sep}Dynamics_researn_5_density_timeseries.dta"
@@ -683,7 +683,7 @@ merge country age gender year using "$datafran${sep}Slope"
 drop if _merge==2
 drop _merge
 
-export delimited using "$datafran${sep}Stats.csv", replace
+export delimited using "$datafran${sep}Stats_${iso}.csv", replace
 	
 erase "$datafran${sep}Ineq_logearn_stats_timeseries.dta"
 erase "$datafran${sep}Ineq_researn_stats_timeseries.dta"	
@@ -811,7 +811,7 @@ ren  dage age
 ren  dpermrank permrank
 
 sort country gender year age permrank
-export delimited using "$datafran${sep}Rank.csv", replace
+export delimited using "$datafran${sep}Rank_${iso}.csv", replace
 
 erase "$datafran${sep}Dynamics_researn_1_rank_heterogeneity.dta"
 erase "$datafran${sep}Dynamics_researn_5_rank_heterogeneity.dta"
@@ -875,19 +875,19 @@ u $folder${sep}temp1,clear
 merge 1:1 country year gender age rankt using $folder${sep}temp5
 drop _merge
 drop nranktp*
-export delimited using "$datafran${sep}Mobility.csv", replace
+export delimited using "$datafran${sep}Mobility_${iso}.csv", replace
 erase $folder${sep}temp1.dta
 erase $folder${sep}temp5.dta
 
 clear
-insheet using "$datafran${sep}Mobility.csv"
+insheet using "$datafran${sep}Mobility_${iso}.csv"
 rename rankt pct_year_t_log_earnings
 rename meanranktp1 avg_pct_year_t_1_log_inc	
 rename meanranktp5 avg_pct_year_t_5_log_inc
-export delimited using "$datafran${sep}Mobility.csv", replace
+export delimited using "$datafran${sep}Mobility_${iso}.csv", replace
 
 clear
-insheet using "$datafran${sep}Rank.csv"
+insheet using "$datafran${sep}Rank_${iso}.csv"
 rename permrank rank_permanent_inc
 rename dnresearn1f 		nobs_res_1yr_log_chg_by_skill
 rename dmeanresearn1f 	mean_res_1yr_log_chg_by_skill
@@ -998,11 +998,11 @@ rename dp99arcearn5f 	p99_arcpct_5yr_chg_by_skill
 rename dp99_9arcearn5f 	p99_9_arcpct_5yr_chg_by_skill
 rename dp99_99arcearn5f p99_99_arcpct_5yr_chg_by_skill
 
-export delimited using "$datafran${sep}Rank.csv", replace
+export delimited using "$datafran${sep}Rank_${iso}.csv", replace
 
 
 clear
-insheet using "$datafran${sep}Stats.csv"
+insheet using "$datafran${sep}Stats_${iso}.csv"
 rename q1share share_first_quintile_inc
 rename q2share share_second_quintile_inc
 rename q3share share_third_quintile_inc
@@ -1212,18 +1212,18 @@ rename p99_99arcearn5f 	p99_99_arcpct_5yr_chg
 rename slopep_tp5 		Pareto_tail_index_5pct
 rename slopep_tp1  		Pareto_tail_index_1pct
 
-export delimited using "$datafran${sep}Stats.csv", replace
+export delimited using "$datafran${sep}Stats_${iso}.csv", replace
 
 
 clear
-insheet using "$datafran${sep}Density.csv"
+insheet using "$datafran${sep}Density_${iso}.csv"
 rename val_logearn midp_bin_log_inc_distr
 rename den_logearn dens_bin_log_inc_distr
 rename val_researn1f midp_bin_res_1yr_log_chg_distr
 rename den_researn1f dens_bin_res_1yr_log_chg_distr
 rename val_researn5f midp_bin_res_5yr_log_chg_distr
 rename den_researn5f dens_bin_res_5yr_log_chg_distr
-export delimited using "$datafran${sep}Density.csv", replace
+export delimited using "$datafran${sep}Density_${iso}.csv", replace
 
 
 *#########################
