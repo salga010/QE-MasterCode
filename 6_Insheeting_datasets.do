@@ -104,18 +104,18 @@ forvalues mm = 0/2{			/*0: Women; 1: Men; 2: All*/
 	drop i
 	order country age gender year 
 	
-	save $folder${sep}temp2_`mm'.dta, replace	
+	save "$folder${sep}temp2_`mm'.dta", replace	
 	
 }
 
 clear 
 forvalues mm = 0/2{	
-	append using $folder${sep}temp2_`mm'.dta
-	erase $folder${sep}temp2_`mm'.dta
+	append using "$folder${sep}temp2_`mm'.dta"
+	erase "$folder${sep}temp2_`mm'.dta"
 	
 }
 sort country age gender year
-save "$datafran${sep}Slope", replace
+save "$datafran${sep}Slope.dta", replace
 *export delimited using "$datafran${sep}Slope.csv", replace
 	
 	
@@ -126,7 +126,7 @@ g str3 country="${iso}"
 
 g str12 age="25-55"
 g str12 gender="All genders"
-save $folder${sep}temp1,replace
+save "$folder${sep}temp1.dta",replace
 *sleep 500
 
 forvalues j=1(1)3	{
@@ -140,7 +140,7 @@ forvalues j=1(1)3	{
 	replace age="35-44" if agegp==2
 	replace age="45-55" if agegp==3
 	drop agegp
-	save $folder${sep}temp2_`j',replace
+	save "$folder${sep}temp2_`j'.dta",replace
 	*sleep 500
 }
 
@@ -155,27 +155,27 @@ forvalues j=0(1)1	{
 	replace gender="Male" if male==1 
 	replace gender="Female" if male==0
 	drop male
-	save $folder${sep}temp3_`j',replace
+	save "$folder${sep}temp3_`j'.dta",replace
 	*sleep 500
 }
 
-u $folder${sep}temp1,clear
-append using $folder${sep}temp2_1
-append using $folder${sep}temp2_2
-append using $folder${sep}temp2_3
-append using $folder${sep}temp3_0
-append using $folder${sep}temp3_1
+u "$folder${sep}temp1.dta",clear
+append using "$folder${sep}temp2_1.dta"
+append using "$folder${sep}temp2_2.dta"
+append using "$folder${sep}temp2_3.dta"
+append using "$folder${sep}temp3_0.dta"
+append using "$folder${sep}temp3_1.dta"
 order country year gender age
 keep country year gender age *share gini
 sort country year gender age
 save "$datafran${sep}Ineq_earnings_stats_timeseries.dta", replace
 *export delimited using "$datafran${sep}Ineq_earnings_stats_timeseries.csv", replace
-erase $folder${sep}temp1.dta
-erase $folder${sep}temp2_1.dta
-erase $folder${sep}temp2_2.dta
-erase $folder${sep}temp2_3.dta
-erase $folder${sep}temp3_1.dta
-erase $folder${sep}temp3_0.dta
+erase "$folder${sep}temp1.dta"
+erase "$folder${sep}temp2_1.dta"
+erase "$folder${sep}temp2_2.dta"
+erase "$folder${sep}temp2_3.dta"
+erase "$folder${sep}temp3_1.dta"
+erase "$folder${sep}temp3_0.dta"
 
 
 ********************************************************************************
@@ -183,7 +183,7 @@ insheet using "$folder${sep}${ineqdata}${sep}L_logearn_hist.csv",clear
 reshape long val_logearn den_logearn,i(index) j(year)
 g str3 country="${iso}"
 g str20 gender="All genders"
-save $folder${sep}temp1,replace
+save "$folder${sep}temp1.dta",replace
 *sleep 500
 
 forvalues j=0(1)1	{
@@ -196,22 +196,22 @@ forvalues j=0(1)1	{
 	replace gender="Male" if male==1 
 	replace gender="Female" if male==0
 	drop male
-	save $folder${sep}temp2_`j',replace
+	save "$folder${sep}temp2_`j'.dta",replace
 	*sleep 500
 }
 
-u $folder${sep}temp1,clear
-append using $folder${sep}temp2_1
-append using $folder${sep}temp2_0
+u "$folder${sep}temp1.dta",clear
+append using "$folder${sep}temp2_1.dta"
+append using "$folder${sep}temp2_0.dta"
 g str12 age="25-55"
 order country year gender age index
 sort country gender year age index
 save "$datafran${sep}Ineq_earnings_density_timeseries", replace
 *export delimited using "$datafran${sep}Ineq_earnings_density_timeseries.csv", replace
 
-erase $folder${sep}temp1.dta
-erase $folder${sep}temp2_1.dta
-erase $folder${sep}temp2_0.dta
+erase "$folder${sep}temp1.dta"
+erase "$folder${sep}temp2_1.dta"
+erase "$folder${sep}temp2_0.dta"
 
 ********************************************************************************
 
@@ -236,7 +236,7 @@ foreach vv in permearn researn logearn {
 	
 	g str12 age="25-55"
 	g str12 gender="All genders"
-	save $folder${sep}temp1,replace
+	save "$folder${sep}temp1.dta",replace
 	*sleep 500
 	
 forvalues j=$begin_age(1)$end_age	{
@@ -261,7 +261,7 @@ forvalues j=$begin_age(1)$end_age	{
 	
 	g str12 gender="All genders"
 	g str2 age="`j'"
-	save $folder${sep}temp2_`j',replace
+	save "$folder${sep}temp2_`j'.dta",replace
 }	
 	
 forvalues j=0(1)1	{
@@ -285,7 +285,7 @@ forvalues j=0(1)1	{
 	replace gender="Female" if male==0
 	drop male
 	g str20 age="25-55"
-	save $folder${sep}temp3_`j',replace
+	save "$folder${sep}temp3_`j'.dta",replace
 }	
 
 forvalues j=0(1)1	{
@@ -315,20 +315,20 @@ forvalues j=0(1)1	{
 			replace gender="Male" if male==1
 			replace gender="Female" if male==0
 			drop male
-	save $folder${sep}temp5_`j'_`k',replace
+	save "$folder${sep}temp5_`j'_`k'.dta",replace
 		}
 	}
 
-u $folder${sep}temp1,clear
+u "$folder${sep}temp1.dta",clear
 forvalues j=$begin_age(1)$end_age	{
-	append using $folder${sep}temp2_`j'
+	append using "$folder${sep}temp2_`j'.dta"
 }	
 forvalues j=0(1)1	{
-	append using $folder${sep}temp3_`j'
+	append using "$folder${sep}temp3_`j'.dta"
 }	
 forvalues j=0(1)1	{
 	    forvalues k=25(1)55	{
-	append using $folder${sep}temp5_`j'_`k'
+	append using "$folder${sep}temp5_`j'_`k'.dta"
 		}
 	}
 order country year gender age
@@ -371,16 +371,16 @@ save,replace
 
 // END loop over variables
 	
-erase $folder${sep}temp1.dta
+erase "$folder${sep}temp1.dta"
 forvalues j=$begin_age(1)$end_age	{
-	erase $folder${sep}temp2_`j'.dta
+	erase "$folder${sep}temp2_`j'.dta"
 }	
 forvalues j=0(1)1	{
-	erase $folder${sep}temp3_`j'.dta
+	erase "$folder${sep}temp3_`j'.dta"
 }	
 forvalues j=0(1)1	{
 	    forvalues k=$begin_age(1)$end_age	{
-	erase $folder${sep}temp5_`j'_`k'.dta
+	erase "$folder${sep}temp5_`j'_`k'.dta"
 		}
 	}
 
@@ -398,7 +398,7 @@ foreach ff in 1 5{
 		g str3 country="${iso}"
 
 g str20 gender="All genders"
-save $folder${sep}temp1,replace
+save "$folder${sep}temp1.dta",replace
 *sleep 500
 
 forvalues j=0(1)1	{
@@ -411,23 +411,23 @@ forvalues j=0(1)1	{
 	replace gender="Male" if male==1 
 	replace gender="Female" if male==0
 	drop male
-	save $folder${sep}temp2_`j',replace
+	save "$folder${sep}temp2_`j'.dta",replace
 	*sleep 500
 }
 
-u $folder${sep}temp1,clear
-append using $folder${sep}temp2_1
-append using $folder${sep}temp2_0
+u "$folder${sep}temp1.dta",clear
+append using "$folder${sep}temp2_1.dta"
+append using "$folder${sep}temp2_0.dta"
 g str12 age="25-55"
 order country year gender age index
 sort country gender year age index
-save "$datafran${sep}Dynamics_`x'earn_`ff'_density_timeseries", replace
+save "$datafran${sep}Dynamics_`x'earn_`ff'_density_timeseries.dta", replace
 *export delimited using "$datafran${sep}Dynamics_`x'earn_`ff'_density_timeseries.csv", replace
 }
 
-erase $folder${sep}temp1.dta
-erase $folder${sep}temp2_1.dta
-erase $folder${sep}temp2_0.dta
+erase "$folder${sep}temp1.dta"
+erase "$folder${sep}temp2_1.dta"
+erase "$folder${sep}temp2_0.dta"
 }
 
 u "$datafran${sep}Dynamics_researn_1_density_timeseries", clear
@@ -467,7 +467,7 @@ foreach ff in 1 5 {
 	
 	g str12 age="25-55"
 	g str12 gender="All genders"
-	save $folder${sep}temp1,replace
+	save "$folder${sep}temp1.dta",replace
 	*sleep 500
 
 forvalues j=$begin_age(1)$end_age	{
@@ -492,7 +492,7 @@ forvalues j=$begin_age(1)$end_age	{
 
 	g str12 gender="All genders"
 	g str2 age="`j'"
-	save $folder${sep}temp2_`j',replace
+	save "$folder${sep}temp2_`j'.dta",replace
 }		
 	
 	
@@ -520,7 +520,7 @@ forvalues j=0(1)1	{
 	replace gender="Female" if male==0
 	drop male
 	g str20 age="25-55"
-	save $folder${sep}temp3_`j',replace
+	save "$folder${sep}temp3_`j'.dta",replace
 }	
 
 forvalues j=0(1)1	{
@@ -553,20 +553,20 @@ forvalues j=0(1)1	{
 			replace gender="Male" if male==1
 			replace gender="Female" if male==0
 			drop male
-	save $folder${sep}temp5_`j'_`k',replace
+			save "$folder${sep}temp5_`j'_`k'.dta",replace
 		}
 	}
 
-u $folder${sep}temp1,clear
+u "$folder${sep}temp1.dta",clear
 forvalues j=$begin_age(1)$end_age	{
-	append using $folder${sep}temp2_`j'
+	append using "$folder${sep}temp2_`j'.dta"
 }	
 forvalues j=0(1)1	{
-	append using $folder${sep}temp3_`j'
+	append using "$folder${sep}temp3_`j'.dta"
 }	
 forvalues j=0(1)1	{
 	    forvalues k=$begin_age(1)$end_age	{
-	append using $folder${sep}temp5_`j'_`k'
+	append using "$folder${sep}temp5_`j'_`k'.dta"
 		}
 	}
 order country year gender age
@@ -613,60 +613,60 @@ save,replace
 }	// END loop over jumps
 
 
-erase $folder${sep}temp1.dta
+erase "$folder${sep}temp1.dta"
 forvalues j=$begin_age(1)$end_age	{
-	erase $folder${sep}temp2_`j'.dta
+	erase "$folder${sep}temp2_`j'.dta"
 }	
 forvalues j=0(1)1	{
-	erase $folder${sep}temp3_`j'.dta
+	erase "$folder${sep}temp3_`j'.dta"
 }	
 forvalues j=0(1)1	{
 	    forvalues k=$begin_age(1)$end_age	{
-	erase $folder${sep}temp5_`j'_`k'.dta
+	erase "$folder${sep}temp5_`j'_`k'.dta"
 		}
 	}
 
 insheet using "$folder${sep}${ineqdata}${sep}autocorr.csv", clear
 sort country gender age year 
 drop if age=="2555"
-save "$folder${sep}${ineqdata}${sep}autocorr", replace
+save "$folder${sep}${ineqdata}${sep}autocorr.dta", replace
 
 	
-u "$datafran${sep}Ineq_earnings_stats_timeseries",clear
+u "$datafran${sep}Ineq_earnings_stats_timeseries.dta",clear
 sort country gender age year 
-merge country gender age year using "$datafran${sep}Ineq_logearn_stats_timeseries"
+merge country gender age year using "$datafran${sep}Ineq_logearn_stats_timeseries.dta"
 tab _merge
 drop _merge
 sort country gender age year 
-merge country gender age year using "$datafran${sep}Ineq_researn_stats_timeseries"
+merge country gender age year using "$datafran${sep}Ineq_researn_stats_timeseries.dta"
 tab _merge
 drop _merge
 sort country gender age year 
-merge country gender age year using "$datafran${sep}Ineq_permearn_stats_timeseries"
+merge country gender age year using "$datafran${sep}Ineq_permearn_stats_timeseries.dta"
 tab _merge
 drop _merge
 sort country gender age year 
-merge country gender age year using "$datafran${sep}Dynamics_researn_1_stats_timeseries"
+merge country gender age year using "$datafran${sep}Dynamics_researn_1_stats_timeseries.dta"
 tab _merge
 drop _merge
 sort country gender age year 
-merge country gender age year using "$datafran${sep}Dynamics_researn_5_stats_timeseries"
+merge country gender age year using "$datafran${sep}Dynamics_researn_5_stats_timeseries.dta"
 tab _merge
 drop _merge
 sort country gender age year 
-merge country gender age year using "$datafran${sep}Dynamics_arcearn_1_stats_timeseries"
+merge country gender age year using "$datafran${sep}Dynamics_arcearn_1_stats_timeseries.dta"
 tab _merge
 drop _merge
 sort country gender age year 
-merge country gender age year using "$datafran${sep}Dynamics_arcearn_5_stats_timeseries"
+merge country gender age year using "$datafran${sep}Dynamics_arcearn_5_stats_timeseries.dta"
 tab _merge
 drop _merge
 sort country gender age year 
-merge country gender age year using "$datafran${sep}Dynamics_arcearn_5_stats_timeseries"
+merge country gender age year using "$datafran${sep}Dynamics_arcearn_5_stats_timeseries.dta"
 tab _merge
 drop _merge
 sort country gender age year 
-merge country gender age year using "$folder${sep}${ineqdata}${sep}autocorr"
+merge country gender age year using "$folder${sep}${ineqdata}${sep}autocorr.dta"
 tab _merge
 drop _merge
 sort country gender age year 
@@ -679,7 +679,7 @@ replace npermearn=. if npermearn==0
 *drop min* max*
 
 sort country age gender year
-merge country age gender year using "$datafran${sep}Slope"
+merge country age gender year using "$datafran${sep}Slope.dta"
 drop if _merge==2
 drop _merge
 
@@ -722,7 +722,7 @@ foreach ff in 1 5{
 	
 	g str12 age="25-55"
 	g str12 gender="All genders"
-	save $folder${sep}temp1,replace
+	save "$folder${sep}temp1.dta",replace
 	*sleep 500
 	
 forvalues j=1(1)3	{
@@ -750,11 +750,11 @@ forvalues j=1(1)3	{
 	replace age="35-44" if agegp==2
 	replace age="45-55" if agegp==3
 	drop agegp
-	save $folder${sep}temp2_`j',replace
+	save "$folder${sep}temp2_`j'.dta",replace
 	*sleep 500
 }
 
-u $folder${sep}temp1,clear
+u "$folder${sep}temp1.dta",clear
 drop gender age country
 collapse *earn*f,by(permrank)
 	g str3 country="${iso}"
@@ -768,39 +768,39 @@ collapse *earn*f,by(permrank)
 	g str12 gender="All genders"
 	g str20 age="25-55" 
 	g year=9999
-	save $folder${sep}temp0,replace
+	save "$folder${sep}temp0.dta",replace
 
 
-u $folder${sep}temp0,clear
-append using $folder${sep}temp1
-append using $folder${sep}temp2_1
-append using $folder${sep}temp2_2
-append using $folder${sep}temp2_3
+u "$folder${sep}temp0.dta",clear
+append using "$folder${sep}temp1.dta"
+append using "$folder${sep}temp2_1.dta"
+append using "$folder${sep}temp2_2.dta"
+append using "$folder${sep}temp2_3.dta"
 order country year gender age
 sort country gender year age permrank 
 *sleep 1000
-save "$datafran${sep}Dynamics_`x'earn_`ff'_rank_heterogeneity", replace
+save "$datafran${sep}Dynamics_`x'earn_`ff'_rank_heterogeneity.dta", replace
 *export delimited using "$datafran${sep}Dynamics_`x'earn_`ff'_rank_heterogeneity.csv", replace
 
-erase $folder${sep}temp0.dta
-erase $folder${sep}temp1.dta
-erase $folder${sep}temp2_1.dta
-erase $folder${sep}temp2_2.dta
-erase $folder${sep}temp2_3.dta
+erase "$folder${sep}temp0.dta"
+erase "$folder${sep}temp1.dta"
+erase "$folder${sep}temp2_1.dta"
+erase "$folder${sep}temp2_2.dta"
+erase "$folder${sep}temp2_3.dta"
 
 }	// END loop arc res
 }	// END loop over 1 and 5
 
-u "$datafran${sep}Dynamics_researn_1_rank_heterogeneity", replace
-merge country gender year age permrank using "$datafran${sep}Dynamics_researn_5_rank_heterogeneity"
+u "$datafran${sep}Dynamics_researn_1_rank_heterogeneity.dta", replace
+merge country gender year age permrank using "$datafran${sep}Dynamics_researn_5_rank_heterogeneity.dta"
 tab _merge
 drop _merge
 sort country gender year age permrank
-merge country gender year age permrank using "$datafran${sep}Dynamics_arcearn_1_rank_heterogeneity"
+merge country gender year age permrank using "$datafran${sep}Dynamics_arcearn_1_rank_heterogeneity.dta"
 tab _merge
 drop _merge
 sort country gender year age permrank
-merge country gender year age permrank using "$datafran${sep}Dynamics_arcearn_5_rank_heterogeneity"
+merge country gender year age permrank using "$datafran${sep}Dynamics_arcearn_5_rank_heterogeneity.dta"
 tab _merge
 drop _merge
 ren * d*
@@ -833,7 +833,7 @@ rename (${wvari}rankt n${wvari}ranktp`jump' mean${wvari}ranktp`jump') (rankt nra
 g str3 country="${iso}"
 g str12 age="25-55"
 g str12 gender="All genders"
-save $folder${sep}temp`jump',replace
+save "$folder${sep}temp`jump'.dta",replace
 *sleep 500
 
 forvalues j=1(1)3	{
@@ -854,30 +854,30 @@ forvalues j=1(1)3	{
 	replace age="35-44" if agegp==2
 	replace age="45-55" if agegp==3
 	drop agegp
-	save $folder${sep}temp2_`j',replace
+	save "$folder${sep}temp2_`j'.dta",replace
 	*sleep 500
 }
 
-u $folder${sep}temp`jump',clear
-append using $folder${sep}temp2_1
-append using $folder${sep}temp2_2
-append using $folder${sep}temp2_3
+u "$folder${sep}temp`jump'.dta",clear
+append using "$folder${sep}temp2_1.dta"
+append using "$folder${sep}temp2_2.dta"
+append using "$folder${sep}temp2_3.dta"
 order country year gender age
 sort country year gender age rankt
 save, replace
-erase $folder${sep}temp2_1.dta
-erase $folder${sep}temp2_2.dta
-erase $folder${sep}temp2_3.dta
+erase "$folder${sep}temp2_1.dta"
+erase "$folder${sep}temp2_2.dta"
+erase "$folder${sep}temp2_3.dta"
 
 }	// Jumps 1 and 5
 
-u $folder${sep}temp1,clear
-merge 1:1 country year gender age rankt using $folder${sep}temp5
+u "$folder${sep}temp1.dta",clear
+merge 1:1 country year gender age rankt using "$folder${sep}temp5.dta"
 drop _merge
 drop nranktp*
 export delimited using "$datafran${sep}Mobility_${iso}.csv", replace
-erase $folder${sep}temp1.dta
-erase $folder${sep}temp5.dta
+erase "$folder${sep}temp1.dta"
+erase "$folder${sep}temp5.dta"
 
 clear
 insheet using "$datafran${sep}Mobility_${iso}.csv"
