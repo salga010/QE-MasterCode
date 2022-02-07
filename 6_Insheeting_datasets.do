@@ -437,6 +437,7 @@ sort country gender year age index
 merge using "$datafran${sep}Ineq_earnings_density_timeseries"
 drop _merge
 sort country gender year age index
+rename index bin
 export delimited using "$datafran${sep}Density_${iso}.csv", replace
 
 erase "$datafran${sep}Dynamics_researn_1_density_timeseries.dta"
