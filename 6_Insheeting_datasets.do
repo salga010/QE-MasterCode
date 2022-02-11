@@ -882,7 +882,7 @@ erase "$folder${sep}temp5.dta"
 
 clear
 insheet using "$datafran${sep}Mobility_${iso}.csv"
-rename rankt pct_year_t_log_earnings
+rename rankt pct_year_t_log_inc
 rename meanranktp1 avg_pct_year_t_1_log_inc	
 rename meanranktp5 avg_pct_year_t_5_log_inc
 export delimited using "$datafran${sep}Mobility_${iso}.csv", replace
