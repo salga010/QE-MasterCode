@@ -5,16 +5,14 @@ Serdar Ozkan (serdar.ozkan@toronto.ca)
 Sergio Salgado (ssalgado@wharton.upenn.edu)
 ----------------
 
-January 26, 2020
+January 26, 2022
 
-Updated codes and added file 7. Here is a list of major changes 
-	- Added two new global variables to 0_initialize.do. These define, the name of the country and the type of education variable Ava
-	- Added 6_Insheeting_datasets.do that takes the CSV results and creates a CVS file that will be uploaded in the website. Notice this file must satisfy the disclosure requirements for each team. 
-	- Erased 6_Core_Figs.do file. Renamed 6_Paper_Figs.do as the main file for plots, now called 7_Paper_Figs.do
-	- Fixed bug in 3_Inequality.do that saved incorrectly the gender as 1/3 indexes
-	- Erased the concretion measures calculated as in Gomez (2018) from 3_Inequality.do
-	- Added a new section in the inequality code that calculates the autocorrelation of the residual earnings
-
+Added two new global variables to 0_initialize.do. These define the name of the country, the type of education variable available in each country (either numeric or string), and the minimum number of observations required to calculate different moments.  
+Added a new file 6_Insheeting_datasets.do that takes the CSV results and creates a CVS file that will be uploaded to the website. Notice this file must satisfy the disclosure requirements for each team. This disclosure requirement is defined by the global minnumberobs (see 0_initialize.do).
+Erased 6_Core_Figs.do file. Renamed 6_Paper_Figs.do as the main file for plots, now called 7_Paper_Figs.do
+Fixed bug in 3_Inequality.do that saved incorrectly the gender as 1/3 indexes
+Erased the concentration measures calculated as in Gomez (2018) from 3_Inequality.do
+Added a new section in the inequality code that calculates the autocorrelation of residual earnings. These new results are important and will be added to the website.
 
 January 10, 2022
 
