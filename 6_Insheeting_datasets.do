@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the files that will be uploaded to the website
-// This version Feb 01, 2022
+// This version Feb 24, 2022
 // Created by Luigi Pistaferri
 // Updated by Sergio Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -430,12 +430,10 @@ erase "$folder${sep}temp2_1.dta"
 erase "$folder${sep}temp2_0.dta"
 }
 
-u "$datafran${sep}Dynamics_researn_1_density_timeseries", clear
-merge country gender year age index using "$datafran${sep}Dynamics_researn_5_density_timeseries" 
-drop _merge
+u "$datafran${sep}Dynamics_researn_1_density_timeseries.dta", clear
+merge  1:1 country gender year age index using "$datafran${sep}Dynamics_researn_5_density_timeseries.dta", nogenerate
 sort country gender year age index
-merge using "$datafran${sep}Ineq_earnings_density_timeseries"
-drop _merge
+merge 1:1 country gender year age index using "$datafran${sep}Ineq_earnings_density_timeseries.dta", nogenerate
 sort country gender year age index
 rename index bin
 export delimited using "$datafran${sep}Density_${iso}.csv", replace
@@ -604,12 +602,11 @@ preserve
 	save "$datafran${sep}Dynamics_`x'earn_`ff'_stats_timeseries_addition",replace
 restore
 
-u "$datafran${sep}Dynamics_`x'earn_`ff'_stats_timeseries", clear
+u "$datafran${sep}Dynamics_`x'earn_`ff'_stats_timeseries.dta", clear
 append using "$datafran${sep}Dynamics_`x'earn_`ff'_stats_timeseries_addition"
 erase "$datafran${sep}Dynamics_`x'earn_`ff'_stats_timeseries_addition.dta"
 sort country gender age year 
-save,replace
-
+save "$datafran${sep}Dynamics_`x'earn_`ff'_stats_timeseries.dta",replace
 }	// END loop over variables
 }	// END loop over jumps
 
@@ -635,39 +632,39 @@ save "$folder${sep}${ineqdata}${sep}autocorr.dta", replace
 	
 u "$datafran${sep}Ineq_earnings_stats_timeseries.dta",clear
 sort country gender age year 
-merge country gender age year using "$datafran${sep}Ineq_logearn_stats_timeseries.dta"
+merge 1:1 country gender age year using "$datafran${sep}Ineq_logearn_stats_timeseries.dta"
 tab _merge
 drop _merge
 sort country gender age year 
-merge country gender age year using "$datafran${sep}Ineq_researn_stats_timeseries.dta"
+merge 1:1  country gender age year using "$datafran${sep}Ineq_researn_stats_timeseries.dta"
 tab _merge
 drop _merge
 sort country gender age year 
-merge country gender age year using "$datafran${sep}Ineq_permearn_stats_timeseries.dta"
+merge  1:1 country gender age year using "$datafran${sep}Ineq_permearn_stats_timeseries.dta"
 tab _merge
 drop _merge
 sort country gender age year 
-merge country gender age year using "$datafran${sep}Dynamics_researn_1_stats_timeseries.dta"
+merge  1:1 country gender age year using "$datafran${sep}Dynamics_researn_1_stats_timeseries.dta"
+tab _merge
+drop _merge
+sort  country gender age year 
+merge  1:1 country gender age year using "$datafran${sep}Dynamics_researn_5_stats_timeseries.dta"
 tab _merge
 drop _merge
 sort country gender age year 
-merge country gender age year using "$datafran${sep}Dynamics_researn_5_stats_timeseries.dta"
+merge  1:1 country gender age year using "$datafran${sep}Dynamics_arcearn_1_stats_timeseries.dta"
 tab _merge
 drop _merge
 sort country gender age year 
-merge country gender age year using "$datafran${sep}Dynamics_arcearn_1_stats_timeseries.dta"
+merge  1:1 country gender age year using "$datafran${sep}Dynamics_arcearn_5_stats_timeseries.dta"
 tab _merge
 drop _merge
 sort country gender age year 
-merge country gender age year using "$datafran${sep}Dynamics_arcearn_5_stats_timeseries.dta"
+merge  1:1 country gender age year using "$datafran${sep}Dynamics_arcearn_5_stats_timeseries.dta"
 tab _merge
 drop _merge
 sort country gender age year 
-merge country gender age year using "$datafran${sep}Dynamics_arcearn_5_stats_timeseries.dta"
-tab _merge
-drop _merge
-sort country gender age year 
-merge country gender age year using "$folder${sep}${ineqdata}${sep}autocorr.dta"
+merge  1:1 country gender age year using "$folder${sep}${ineqdata}${sep}autocorr.dta"
 tab _merge
 drop _merge
 sort country gender age year 
@@ -680,7 +677,7 @@ replace npermearn=. if npermearn==0
 *drop min* max*
 
 sort country age gender year
-merge country age gender year using "$datafran${sep}Slope.dta"
+merge  1:1 country age gender year using "$datafran${sep}Slope.dta"
 drop if _merge==2
 drop _merge
 
@@ -793,15 +790,15 @@ erase "$folder${sep}temp2_3.dta"
 }	// END loop over 1 and 5
 
 u "$datafran${sep}Dynamics_researn_1_rank_heterogeneity.dta", replace
-merge country gender year age permrank using "$datafran${sep}Dynamics_researn_5_rank_heterogeneity.dta"
+merge 1:1 country gender year age permrank using "$datafran${sep}Dynamics_researn_5_rank_heterogeneity.dta"
 tab _merge
 drop _merge
 sort country gender year age permrank
-merge country gender year age permrank using "$datafran${sep}Dynamics_arcearn_1_rank_heterogeneity.dta"
+merge 1:1 country gender year age permrank using "$datafran${sep}Dynamics_arcearn_1_rank_heterogeneity.dta"
 tab _merge
 drop _merge
 sort country gender year age permrank
-merge country gender year age permrank using "$datafran${sep}Dynamics_arcearn_5_rank_heterogeneity.dta"
+merge 1:1 country gender year age permrank using "$datafran${sep}Dynamics_arcearn_5_rank_heterogeneity.dta"
 tab _merge
 drop _merge
 ren * d*
@@ -812,6 +809,11 @@ ren  dage age
 ren  dpermrank permrank
 
 sort country gender year age permrank
+replace permrank = 10*permrank
+gen double permrank_d=permrank/10
+drop permrank
+ren permrank_d permrank
+order country year gender age permrank
 export delimited using "$datafran${sep}Rank_${iso}.csv", replace
 
 erase "$datafran${sep}Dynamics_researn_1_rank_heterogeneity.dta"
@@ -865,7 +867,7 @@ append using "$folder${sep}temp2_2.dta"
 append using "$folder${sep}temp2_3.dta"
 order country year gender age
 sort country year gender age rankt
-save, replace
+save "$folder${sep}temp`jump'.dta", replace
 erase "$folder${sep}temp2_1.dta"
 erase "$folder${sep}temp2_2.dta"
 erase "$folder${sep}temp2_3.dta"
@@ -876,17 +878,21 @@ u "$folder${sep}temp1.dta",clear
 merge 1:1 country year gender age rankt using "$folder${sep}temp5.dta"
 drop _merge
 drop nranktp*
-export delimited using "$datafran${sep}Mobility_${iso}.csv", replace
+rename rankt pct_year_t_log_earnings
+replace pct_year_t_log_earnings = 10*pct_year_t_log_earnings
+gen double pct_year_t_log_earnings_d=pct_year_t_log_earnings/10
+drop pct_year_t_log_earnings
+ren pct_year_t_log_earnings_d pct_year_t_log_earnings
+rename meanranktp1 avg_pct_year_t_1_log_inc	
+rename meanranktp5 avg_pct_year_t_5_log_inc
+order country year gender age pct_year_t_log_earnings
+export delimited using "$datafran${sep}Mobility_${iso}.csv", replace 
 erase "$folder${sep}temp1.dta"
 erase "$folder${sep}temp5.dta"
 
-clear
-insheet using "$datafran${sep}Mobility_${iso}.csv"
-rename rankt pct_year_t_log_inc
-rename meanranktp1 avg_pct_year_t_1_log_inc	
-rename meanranktp5 avg_pct_year_t_5_log_inc
-export delimited using "$datafran${sep}Mobility_${iso}.csv", replace
 
+
+// RENAMES OF VARIABLES
 clear
 insheet using "$datafran${sep}Rank_${iso}.csv"
 rename permrank rank_permanent_inc
@@ -999,6 +1005,12 @@ rename dp99arcearn5f 	p99_arcpct_5yr_chg_by_skill
 rename dp99_9arcearn5f 	p99_9_arcpct_5yr_chg_by_skill
 rename dp99_99arcearn5f p99_99_arcpct_5yr_chg_by_skill
 
+sort country gender year age rank_permanent_inc
+replace rank_permanent_inc = 10*rank_permanent_inc
+gen double permrank_d=rank_permanent_inc/10
+drop rank_permanent_inc
+ren permrank_d rank_permanent_inc
+order country year gender age rank_permanent_inc
 export delimited using "$datafran${sep}Rank_${iso}.csv", replace
 
 
