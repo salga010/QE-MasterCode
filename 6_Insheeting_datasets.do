@@ -4,7 +4,7 @@
 // Created by Luigi Pistaferri
 // Updated by Sergio Salgado
 //
-// Note: Youi might be getting the following error
+// Note: You might be getting the following error
 //
 // file xxx.dta cannot be modified or erased; likely cause is read-only directory or file
 //
