@@ -20,7 +20,7 @@ set matsize 800
 cap log close
 
 // Definitions 
-global maindir ="/Users/ssalgado/Dropbox/NORWAY_QE/STATA"		// Define main directory
+global maindir =""		// Define main directory
 do "$maindir/do/0_Initialize.do"	
 global folder="${maindir}${sep}out"
 
