@@ -1,11 +1,13 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This code specify country-specific variables.  
-// This version Jan 25, 2020
+// This version March 13, 2020
 //	Halvorsen, Ozkan, Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 // PLEASE DO NOT CHANGE VALUES FRM LINE 7 TO 20. IF NEEDS TO BE CHANGED, CONTACT Ozkan/Salgado
 
+
+clear all 
 set more off
 set matsize 500
 set linesize 255
@@ -13,12 +15,15 @@ version 13  // This program uses Stata version 13.
 
 global begin_age = 25 		// Starting age
 global end_age = 55			// Ending age
-global base_price = 2018	// The base year nominal values are converted to real. 
+global base_price = 2018	// The base year nominal values are converted to real. All countries use the same base year
 global winsor=99.999999		// The values above this percentile are going to be set to this percentile. 
 global noise=0.0			// Noise added to income. See line 112 in 1_Gen_Base_Sample.do
 
 
 // PLEASE MAKE THE APPROPRIATE CHANGES BELOW. 
+
+// Define what is the main directory where the data and do files are saved 
+global maindir =""
 
 global unix=1  // Please change this to 1 if you run stata on Unix or Mac
 
@@ -34,6 +39,13 @@ else{
 // set the below global to 1. Otherwise, the code will convert all missing earnings
 // observations to zero.
 global miss_earn=0 
+
+// What codes you want to run?
+global gen_base = 1 		// Turn to 1 to run 1_Gen_Base_Sample.do. Any number otherwise
+global desc_stats = 1 		// Turn to 1 to run 2_DescriptiveStats.do. Any number otherwise
+global ineq_stats = 1 		// Turn to 1 to run 3_Inequality.do. Any number otherwise
+global vol_stats = 1 		// Turn to 1 to run 4_Volatility.do. Any number otherwise
+global mob_stats = 1 		// Turn to 1 to run 5_Mobility.do. Any number otherwise
 
 //Please change the below to the name of the actual data set
 global datafile="$maindir${sep}dta${sep}data_long" 
@@ -99,7 +111,6 @@ matrix exrate = /*  Nominal average exchange rate from FRED between ${yrfirst}  
 */ (7.101,7.055,6.335,6.459,7.086,7.552,7.807,8.813,8.996,7.984, /*
 */	7.080,6.740,6.441,6.409,5.856,5.637,6.291,6.045,5.602,5.818, /*
 */	5.877,6.297)'
-
 
 // Define years for recession bars/ These will be used to generate a variable called rece used in the plots
 global receyears = "1993,1993,1995,2002,2003,2004,2009,2010,2015"
@@ -252,3 +263,21 @@ forvalues yr = `tempyrb'(1)`tempyre'{
 	global perm3yrlist = "${perm3yrlist}`tmp'"
 }	
 
+
+// What codes are going to be run 
+do "$maindir${sep}do${sep}myprogs.do"			// Run programs
+if $gen_base == 1{
+	do "$maindir/do/1_Gen_Base_Sample.do"		// Create the sample
+}
+if $desc_stats == 1{
+	do "$maindir/do/2_DescriptiveStats.do"		// Descriptive Stats
+}
+if $ineq_stats == 1{
+	do "$maindir/do/3_Inequality.do"			// Inequality
+}
+if $vol_stats == 1{
+	do "$maindir/do/4_Volatility.do"			// Volatility
+}
+if $mob_stats == 1{
+	do "$maindir/do/5_Mobility.do"				// Mobility
+}

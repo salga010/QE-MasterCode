@@ -1,18 +1,11 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the time series of Volatility and Higher Order Moments
 // First  version January  06, 2019
-// This version   January  20, 2022
+// This version   March  13, 2023
 // Serdar Ozkan and Sergio Salgado
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-clear all
-set more off
-// You should change the below directory. 
-
-global maindir ="..."
-
-// Do not make change from here on. Contact Ozkan/Salgado if changes are needed. 
-do "$maindir/do/0_Initialize.do"
+// PLEASE DO NOT MAKE ANY CHANGES IN THE CODE
+// IF YOU EXPERIENCE PROBLEMS, PLEASE CONTACT OZKAN OR SALGADO ON THE GRID SLACK CHANNEL
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 // Create folder for output and log-file
 global outfolder=c(current_date)
@@ -23,7 +16,6 @@ capture noisily log using "$maindir${sep}log${sep}$outfolder.log", replace
 
 // Cd to the output file, create the program for moments, and load base sample.
 cd "$maindir${sep}out${sep}$outfolder"
-do "$maindir${sep}do${sep}myprogs.do"		
 
 // Defines the number of points in the Kernel Density Estimator
 global kpoints =  400
@@ -37,7 +29,7 @@ timer on 1
 
 foreach yr of numlist $d1yrlist{
 	disp("---------------------------------")
-	disp("Working in year `yr'")
+	disp("Volatility: Working in year `yr'")
 	disp("---------------------------------")
 
 	local yrp = `yr' - 1		// Past year
@@ -45,23 +37,23 @@ foreach yr of numlist $d1yrlist{
 	if inlist(`yrp',${perm3yrlist}){
 		// If permanent income CAN be calculated (H Sample)
 		if inlist(`yr',${d5yrlist}){				// Has 5yr change (LX Sample)
-			use  male yob educ researn1F`yr' researn5F`yr' arcearn1F`yr' arcearn5F`yr' permearn`yrp' ///
+			use  male yob educ logearn1F`yr' logearn5F`yr' researn1F`yr' researn5F`yr' arcearn1F`yr' arcearn5F`yr' permearn`yrp' ///
 			using "$maindir${sep}dta${sep}master_sample.dta", clear   
 		}
 		else{
-			use  male yob educ researn1F`yr'  arcearn1F`yr' permearn`yrp' ///
+			use  male yob educ logearn1F`yr' researn1F`yr' arcearn1F`yr' permearn`yrp' ///
 			using "$maindir${sep}dta${sep}master_sample.dta", clear   
 		}
 	}
 	else{
 		// If permanent income CANNOT be calculated (LX sample)
 		if inlist(`yr',${d5yrlist}){  // Has 5yr change (LX Sample)
-			use  male yob educ researn1F`yr' researn5F`yr' arcearn1F`yr' arcearn5F`yr'  ///
+			use  male yob educ logearn1F`yr' logearn5F`yr' researn1F`yr' researn5F`yr' arcearn1F`yr' arcearn5F`yr'  ///
 			using "$maindir${sep}dta${sep}master_sample.dta", clear   
 			
 		}
 		else{
-			use  male yob educ researn1F`yr' arcearn1F`yr' ///
+			use  male yob educ logearn1F`yr' researn1F`yr' arcearn1F`yr' ///
 			using "$maindir${sep}dta${sep}master_sample.dta", clear   
 		}
 	}
@@ -80,52 +72,41 @@ foreach yr of numlist $d1yrlist{
 		replace agegp = 2 if age<= 44 & agegp == .
 		replace agegp = 3 if age > 44 & agegp == .
 	}
-			
-	// Moments of 1 year changes
+				
 	// Calculate cross sectional moments for year `yr'
-	bymysum_detail "researn1F" "L_" "_`yr'" "year"
+	foreach meas in log res arc{
+		// Moments of 1 year changes		
+		// Cross sectional
+		bymysum_detail "`meas'earn1F" "L_" "_`yr'" "year"
 	
-	bymyPCT "researn1F" "L_" "_`yr'" "year"
-	
-	bymysum_detail "arcearn1F" "L_" "_`yr'" "year"
-	
-	bymyPCT "arcearn1F" "L_" "_`yr'" "year"
-	
-	// Calculate cross sectional moments for year `yr' within heterogeneity groups
-	foreach  vv in $hetgroup{ 
-		local suf=subinstr("`vv'"," ","",.)
+		bymyPCT "`meas'earn1F" "L_" "_`yr'" "year"
 		
-		bymysum_detail "researn1F" "L_" "_`suf'`yr'" "year `vv'"
-	
-		bymyPCT "researn1F" "L_" "_`suf'`yr'" "year `vv'"	
-		
-		bymysum_detail "arcearn1F" "L_" "_`suf'`yr'" "year `vv'"
-	
-		bymyPCT "arcearn1F" "L_" "_`suf'`yr'" "year `vv'"
-	}
-
-	// Moments of 5 year changes
-	if inlist(`yr',${d5yrlist}){
-		bymysum_detail "researn5F" "L_" "_`yr'" "year"
-	
-		bymyPCT "researn5F" "L_" "_`yr'" "year"
-		
-		bymysum_detail "arcearn5F" "L_" "_`yr'" "year"
-	
-		bymyPCT "arcearn5F" "L_" "_`yr'" "year"
-		
+		// Calculate cross sectional moments for year `yr' within heterogeneity groups
 		foreach  vv in $hetgroup{ 
 			local suf=subinstr("`vv'"," ","",.)
-		
-			bymysum_detail "researn5F" "L_" "_`suf'`yr'" "year `vv'"
-	
-			bymyPCT "researn5F" "L_" "_`suf'`yr'" "year `vv'"	
 			
-			bymysum_detail "arcearn5F" "L_" "_`suf'`yr'" "year `vv'"
-	
-			bymyPCT "arcearn5F" "L_" "_`suf'`yr'" "year `vv'"
+			bymysum_detail "`meas'earn1F" "L_" "_`suf'`yr'" "year `vv'"
+		
+			bymyPCT "`meas'earn1F" "L_" "_`suf'`yr'" "year `vv'"	
+			
 		}
-	}
+
+		// Moments of 5 year changes
+		if inlist(`yr',${d5yrlist}){
+			
+			bymysum_detail "`meas'earn5F" "L_" "_`yr'" "year"
+		
+			bymyPCT "`meas'earn5F" "L_" "_`yr'" "year"
+									
+			foreach  vv in $hetgroup{ 
+				local suf=subinstr("`vv'"," ","",.)
+			
+				bymysum_detail "`meas'earn5F" "L_" "_`suf'`yr'" "year `vv'"
+		
+				bymyPCT "`meas'earn5F" "L_" "_`suf'`yr'" "year `vv'"	
+			}
+		}
+	}	// type of change
 	
 	// Calculate Empirical Density of one year and five years changes 
 	// Notice we are doing this for years that can be divided by kyear
@@ -138,8 +119,7 @@ foreach yr of numlist $d1yrlist{
 			bymyKDNmale "researn5F" "L_" "${kpoints}" "`yr'"
 		}
 	}
-	
-	
+		
 	// Calculate "kurtosis" moments for one- and five-years changes
 	kurpercentiles "researn1F" "PK" "`yr'"
 	if inlist(`yr',${d5yrlist}){
@@ -171,7 +151,7 @@ foreach yr of numlist $d1yrlist{
 			// Individuals must have perm income, 1yr change and 5 yr change to be in the H sample
 			// Notice here we will consider growth rate with income above min tresh in t but above 1/3*min tresh in t+1
 			// See 1_Gen_Base_Sample.do for more details; 
-			foreach meas in arc res{			
+			foreach meas in log arc res{			
 			// Notice, we start with the arc percent since researn is a subset of arc
 			drop if `meas'earn1F == . | `meas'earn5F == .	| permearn == . 
 				
@@ -391,7 +371,7 @@ foreach yr of numlist $d1yrlist{
  
 // Collect data across years  for the 1-year change measure
 clear
-foreach vari in researn1F arcearn1F{
+foreach vari in researn1F logearn1F arcearn1F{
 
 foreach yr of numlist $d1yrlist{
 	local yrp = `yr' - 1
@@ -583,7 +563,7 @@ foreach yr of numlist $d1yrlist{
 
 
 // Collect moments for the 5-years change measure
-foreach vari in researn5F arcearn5F{
+foreach vari in logearn5F researn5F arcearn5F{
 
 foreach yr of numlist $d5yrlist{
 

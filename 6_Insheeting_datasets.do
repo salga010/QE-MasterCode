@@ -1,6 +1,6 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the files that will be uploaded to the website
-// This version March 24, 2022
+// This version March 13, 2022
 // Created by Luigi Pistaferri
 // Updated by Sergio Salgado
 //
@@ -20,18 +20,29 @@ set matsize 800
 cap log close
 
 // Definitions 
-global maindir =""		// Define main directory
-do "$maindir/do/0_Initialize.do"	
+global maindir ="..."		// Define main directory; Same as in 0_initialize.do
 global folder="${maindir}${sep}out"
 
-// Please, write her ethe location of the output files
-global ineqdata = "25 Jan 2022 Inequality"				// Data on Inequality 
-global voladata = "25 Jan 2022 Volatility"				// Data on Volatility
-global mobidata = "25 Jan 2022 Mobility"				// Data on Mobility
+scalar def educ_typ=2   /*Define the type of variable for education 1=string; 2=numerical*/
+global iso = "NOR" 		// Define the 3-letters code of the country. Use ISO codes. For instance 
+						// for Italy use ITA, for Spain use ESP, for Norway use NOR and so on						
+global minnumberobs = 1 // Define the minimum number of observations in a cell. If the min number of obs is not 
+						// satisfied, all moments calculated with that subsample are replaced by missing.
+					
+// Define these variables for your dataset --> same as in 0_Initialize
+global yrfirst = 1993 		// First year in the dataset 
+global yrlast =  2013 		// Last year in the dataset
 
 // Please, specify where the final csv files are going to be saved 
-global datafran="${folder}${sep}20 Jan 2022 Upload"			// Define were data will be saved
+global datafran="${folder}${sep}24 Mar 2023 Upload"			// Define were data will be saved
 capture noisily mkdir "${datafran}"							// Create the folder	
+
+// Please, write here xthe location of the output files
+// global ineqdata = "0_upload_results/25 Jan 2022 Inequality"				// Data on Inequality 
+global ineqdata = "0_upload_results/24 Mar 2023 Inequality"				// Data on Inequality 
+global mobidata = "0_upload_results/25 Jan 2022 Mobility"				// Data on Mobility
+global voladata = "0_upload_results/28 Apr 2022 Volatility"				// Data on Volatility
+
 
 ****************TAIL INDEX
 forvalues mm = 0/2{			/*0: Women; 1: Men; 2: All*/
@@ -258,25 +269,35 @@ erase "$folder${sep}temp2_0.dta"
 
 ********************************************************************************
 
-foreach vv in permearn researn logearn {
+foreach vv in permearn researn logearn earn out_share{
 	global varx = "`vv'"
+	
 	insheet using "$folder${sep}${ineqdata}${sep}L_${varx}_sumstat.csv",clear	
 	g str3 country="${iso}"
 	
-	*Adjust for min number of observations
-	qui: desc mean${varx}-p99_99${varx}, varlist
-	local tvlist = r(varlist)
-	foreach vvg of local tvlist {
-		qui: replace `vvg' = . if n${varx} < $minnumberobs							
+	if "`vv'" != "out_share"{
+		*Adjust for min number of observations
+		qui: desc mean${varx}-p99_99${varx}, varlist
+		local tvlist = r(varlist)
+		foreach vvg of local tvlist {
+			qui: replace `vvg' = . if n${varx} < $minnumberobs							
 		}
-	
-	gen p9010${varx} = p90${varx} - p10${varx}
-	gen p9050${varx} = p90${varx} - p50${varx}
-	gen p5010${varx} = p50${varx} - p10${varx}
-	gen ksk${varx} = (p9050${varx} - p5010${varx})/p9010${varx}
-	gen cku${varx} = (p97_5${varx} - p2_5${varx})/(p75${varx} - p25${varx})
-	drop min${varx} max${varx}
-	
+		
+		gen p9010${varx} = p90${varx} - p10${varx}
+		gen p9050${varx} = p90${varx} - p50${varx}
+		gen p5010${varx} = p50${varx} - p10${varx}
+		gen ksk${varx} = (p9050${varx} - p5010${varx})/p9010${varx}
+		gen cku${varx} = (p97_5${varx} - p2_5${varx})/(p75${varx} - p25${varx})
+		drop min${varx} max${varx}
+	}
+	else {
+		*Adjust for min number of observations
+		qui: desc mean${varx}, varlist
+		local tvlist = r(varlist)
+		foreach vvg of local tvlist {
+			qui: replace `vvg' = . if n${varx} < $minnumberobs							
+		}				
+	}
 	g str12 age="25-55"
 	g str12 gender="All genders"
 	save "$folder${sep}temp1.dta",replace
@@ -288,20 +309,28 @@ forvalues j=$begin_age(1)$end_age	{
 	
 	drop age
 	g str3 country="${iso}"	
-	qui: desc mean${varx}-p99_99${varx}, varlist
-	local tvlist = r(varlist)
-	foreach vvg of local tvlist{
-		qui: replace `vvg' = . if n${varx} < $minnumberobs
+	if "`vv'" != "out_share"{
+		qui: desc mean${varx}-p99_99${varx}, varlist
+		local tvlist = r(varlist)
+		foreach vvg of local tvlist{
+			qui: replace `vvg' = . if n${varx} < $minnumberobs
+		}
+			
+		gen p9010${varx} = p90${varx} - p10${varx}
+		gen p9050${varx} = p90${varx} - p50${varx}
+		gen p5010${varx} = p50${varx} - p10${varx}
+		gen ksk${varx} = (p9050${varx} - p5010${varx})/p9010${varx}
+		gen cku${varx} = (p97_5${varx} - p2_5${varx})/(p75${varx} - p25${varx})
+		drop min${varx} max${varx}
 	}
-	
-	
-	gen p9010${varx} = p90${varx} - p10${varx}
-	gen p9050${varx} = p90${varx} - p50${varx}
-	gen p5010${varx} = p50${varx} - p10${varx}
-	gen ksk${varx} = (p9050${varx} - p5010${varx})/p9010${varx}
-	gen cku${varx} = (p97_5${varx} - p2_5${varx})/(p75${varx} - p25${varx})
-	drop min${varx} max${varx}
-	
+	else{
+		*Adjust for min number of observations
+		qui: desc mean${varx}, varlist
+		local tvlist = r(varlist)
+		foreach vvg of local tvlist {
+			qui: replace `vvg' = . if n${varx} < $minnumberobs							
+		}
+	}
 	g str12 gender="All genders"
 	g str2 age="`j'"
 	save "$folder${sep}temp2_`j'.dta",replace
@@ -311,18 +340,28 @@ forvalues j=0(1)1	{
 	insheet using "$folder${sep}${ineqdata}${sep}L_${varx}_male_sumstat.csv",clear
 	keep if male==`j'
 	g str3 country="${iso}"
-	qui: desc mean${varx}-p99_99${varx}, varlist
-	local tvlist = r(varlist)
-	foreach vvg of local tvlist{
-		qui: replace `vvg' = . if n${varx} < $minnumberobs
-	}
-	gen p9010${varx} = p90${varx} - p10${varx}
-	gen p9050${varx} = p90${varx} - p50${varx}
-	gen p5010${varx} = p50${varx} - p10${varx}
-	gen ksk${varx} = (p9050${varx} - p5010${varx})/p9010${varx}
-	gen cku${varx} = (p97_5${varx} - p2_5${varx})/(p75${varx} - p25${varx})
-	drop min${varx} max${varx}
 	
+	if "`vv'" != "out_share"{
+		qui: desc mean${varx}-p99_99${varx}, varlist
+		local tvlist = r(varlist)
+		foreach vvg of local tvlist{
+			qui: replace `vvg' = . if n${varx} < $minnumberobs
+		}
+		gen p9010${varx} = p90${varx} - p10${varx}
+		gen p9050${varx} = p90${varx} - p50${varx}
+		gen p5010${varx} = p50${varx} - p10${varx}
+		gen ksk${varx} = (p9050${varx} - p5010${varx})/p9010${varx}
+		gen cku${varx} = (p97_5${varx} - p2_5${varx})/(p75${varx} - p25${varx})
+		drop min${varx} max${varx}
+	}
+	else {
+		*Adjust for min number of observations
+		qui: desc mean${varx}, varlist
+		local tvlist = r(varlist)
+		foreach vvg of local tvlist {
+			qui: replace `vvg' = . if n${varx} < $minnumberobs							
+		}				
+	}
 	g str20 gender="" 
 	replace gender="Male" if male==1 
 	replace gender="Female" if male==0
@@ -338,20 +377,29 @@ forvalues j=0(1)1	{
 			keep if age==`k'
 			drop age
 			g str3 country="${iso}"
-			
-			qui: desc mean${varx}-p99_99${varx}, varlist
-			local tvlist = r(varlist)
-			foreach vvg of local tvlist{
-				qui: replace `vvg' = . if n${varx} < $minnumberobs
+			if "`vv'" != "out_share"{
+					
+				qui: desc mean${varx}-p99_99${varx}, varlist
+				local tvlist = r(varlist)
+				foreach vvg of local tvlist{
+					qui: replace `vvg' = . if n${varx} < $minnumberobs
+				}
+				
+				gen p9010${varx} = p90${varx} - p10${varx}
+				gen p9050${varx} = p90${varx} - p50${varx}
+				gen p5010${varx} = p50${varx} - p10${varx}
+				gen ksk${varx} = (p9050${varx} - p5010${varx})/p9010${varx}
+				gen cku${varx} = (p97_5${varx} - p2_5${varx})/(p75${varx} - p25${varx})
+				drop min${varx} max${varx}
 			}
-			
-			gen p9010${varx} = p90${varx} - p10${varx}
-			gen p9050${varx} = p90${varx} - p50${varx}
-			gen p5010${varx} = p50${varx} - p10${varx}
-			gen ksk${varx} = (p9050${varx} - p5010${varx})/p9010${varx}
-			gen cku${varx} = (p97_5${varx} - p2_5${varx})/(p75${varx} - p25${varx})
-			drop min${varx} max${varx}
-			
+			else{
+				*Adjust for min number of observations
+				qui: desc mean${varx}, varlist
+				local tvlist = r(varlist)
+				foreach vvg of local tvlist {
+					qui: replace `vvg' = . if n${varx} < $minnumberobs							
+				}	
+			}
 			
 			g str20 age="`k'"
 			g str20 gender="" 
@@ -387,14 +435,18 @@ preserve
 	gen groupage=1 if age>=25 & age<=34
 	replace groupage=2 if age>=35 & age<=44
 	replace groupage=3 if age>=45 & age<=55
-	collapse (sum) n${varx} (mean) mean${varx}-p99_99${varx},by(groupage gender country year)
-	
-	gen p9010${varx} = p90${varx} - p10${varx}
-	gen p9050${varx} = p90${varx} - p50${varx}
-	gen p5010${varx} = p50${varx} - p10${varx}
-	gen ksk${varx} = (p9050${varx} - p5010${varx})/p9010${varx}
-	gen cku${varx} = (p97_5${varx} - p2_5${varx})/(p75${varx} - p25${varx})	
-
+	if "`vv'" != "out_share"{
+		collapse (sum) n${varx} (mean) mean${varx}-p99_99${varx},by(groupage gender country year)
+		
+		gen p9010${varx} = p90${varx} - p10${varx}
+		gen p9050${varx} = p90${varx} - p50${varx}
+		gen p5010${varx} = p50${varx} - p10${varx}
+		gen ksk${varx} = (p9050${varx} - p5010${varx})/p9010${varx}
+		gen cku${varx} = (p97_5${varx} - p2_5${varx})/(p75${varx} - p25${varx})	
+	}
+	else{
+		collapse (sum) n${varx} (mean) mean${varx},by(groupage gender country year)			
+	}
 	
 	ren groupage age
 	tostring age,replace
@@ -426,8 +478,6 @@ forvalues j=0(1)1	{
 	erase "$folder${sep}temp5_`j'_`k'.dta"
 		}
 	}
-
-
 
 
 ********************************************************************************
@@ -682,10 +732,23 @@ sort country gender age year
 merge 1:1  country gender age year using "$datafran${sep}Ineq_researn_stats_timeseries.dta"
 tab _merge
 drop _merge
+
+// ---
+
 sort country gender age year 
 merge  1:1 country gender age year using "$datafran${sep}Ineq_permearn_stats_timeseries.dta"
 tab _merge
 drop _merge
+
+merge  1:1 country gender age year using "$datafran${sep}Ineq_out_share_stats_timeseries.dta"
+tab _merge
+drop _merge
+
+// ---
+merge  1:1 country gender age year using "$datafran${sep}Ineq_earn_stats_timeseries.dta"
+tab _merge
+drop _merge
+
 sort country gender age year 
 merge  1:1 country gender age year using "$datafran${sep}Dynamics_researn_1_stats_timeseries.dta"
 tab _merge
@@ -729,6 +792,8 @@ export delimited using "$datafran${sep}Stats_${iso}.csv", replace
 erase "$datafran${sep}Ineq_logearn_stats_timeseries.dta"
 erase "$datafran${sep}Ineq_researn_stats_timeseries.dta"	
 erase "$datafran${sep}Ineq_permearn_stats_timeseries.dta"
+erase "$datafran${sep}Ineq_earn_stats_timeseries.dta"  
+erase "$datafran${sep}Ineq_out_share_stats_timeseries.dta"  
 erase "$datafran${sep}Dynamics_arcearn_5_stats_timeseries.dta"
 erase "$datafran${sep}Dynamics_arcearn_1_stats_timeseries.dta"
 erase "$datafran${sep}Dynamics_researn_5_stats_timeseries.dta"
@@ -1168,8 +1233,31 @@ gen double permrank_d=rank_permanent_inc/10
 drop rank_permanent_inc
 ren permrank_d rank_permanent_inc
 order country year gender age rank_permanent_inc
-export delimited using "$datafran${sep}Rank_${iso}.csv", replace
 
+// preserve
+// 	keep if gender=="All genders"
+// 	keep if age=="25-55"
+// 	collapse (sum) nobs_res_1yr_log_chg_by_skill (mean) mean_res_1yr_log_chg_by_skill-crows_arcpct_5yr_chg_by_skill,by(country rank_permanent_inc age gender)
+// 	gen year=9999
+// 	order country year gender age rank_permanent_inc
+// 	save "$folder${sep}Rank999",replace           
+// restore
+
+preserve
+	keep if gender=="All genders"|gender=="Male"|gender=="Female"
+	keep if age=="25-55"|age=="25-34"|age=="35-44"|age=="45-55"
+	collapse (sum) nobs_res_1yr_log_chg_by_skill (mean) mean_res_1yr_log_chg_by_skill-crows_arcpct_5yr_chg_by_skill,by(country rank_permanent_inc age gender)
+	gen year=9999
+	order country year gender age rank_permanent_inc
+	save "$folder${sep}Rank999_AGE",replace           
+restore
+
+// append using "$folder${sep}Rank999"
+// erase "$folder${sep}Rank999.dta"
+
+append using "$folder${sep}Rank999_AGE"
+erase "$folder${sep}Rank999_AGE.dta"
+export delimited using "$datafran${sep}Rank_${iso}.csv", replace
 
 clear
 insheet using "$datafran${sep}Stats_${iso}.csv"
@@ -1381,6 +1469,37 @@ rename p99_9arcearn5f 	p99_9_arcpct_5yr_chg
 rename p99_99arcearn5f 	p99_99_arcpct_5yr_chg
 rename slopep_tp5 		Pareto_tail_index_5pct
 rename slopep_tp1  		Pareto_tail_index_1pct
+
+// New earn 
+rename nearn nobs_earn_inc
+rename meanearn mean_earn_inc
+rename sdearn std_earn_inc
+rename p9010earn p9010_earn_inc
+rename p9050earn p9050_earn_inc
+rename p5010earn p5010_earn_inc
+rename kskearn kelley_earn_inc
+rename ckuearn crows_earn_inc
+rename p1earn p1_earn_inc
+rename p2_5earn p2_5_earn_inc
+rename p5earn p5_earn_inc
+rename p10earn p10_earn_inc
+rename p12_5earn p12_5_earn_inc
+rename p25earn p25_earn_inc
+rename p37_5earn p37_5_earn_inc
+rename p50earn p50_earn_inc
+rename p62_5earn p62_5_earn_inc
+rename p75earn p75_earn_inc
+rename p87_5earn p87_5_earn_inc
+rename p90earn p90_earn_inc
+rename p95earn p95_earn_inc
+rename p97_5earn p97_5_earn_inc
+rename p99earn p99_earn_inc
+rename p99_9earn p99_9_earn_inc
+rename p99_99earn p99_99_earn_inc
+
+// out_share
+drop nout_share
+rename meanout_share share_below_mininc
 
 export delimited using "$datafran${sep}Stats_${iso}.csv", replace
 

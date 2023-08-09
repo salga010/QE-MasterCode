@@ -1,25 +1,18 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the base sample 
-// This version Dec 01, 2020
+// This version March 13, 2023
 // Serdar Ozkan and Sergio Salgado
+// PLEASE DO NOT MAKE ANY CHANGES IN THE CODE
+// IF YOU EXPERIENCE PROBLEMS, PLEASE CONTACT OZKAN OR SALGADO ON SLACK
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-clear all
-set more off
-
-// PLEASE MAKE THE APPROPRIATE CHANGES BELOW. 
-// You should change the below directory. 
-global maindir =".."
-
-do "$maindir/do/0_Initialize.do"
 
 global logname=c(current_date)
 global logname="$logname BaseSample"
 capture log close
 capture noisily log using "$maindir${sep}log${sep}$logname.log", replace
-
 cd "$maindir${sep}dta${sep}"
 *	
+
 if($wide==1){
 	use $personid_var $male_var $yob_var $yod_var $educ_var ${labor_var}* using ${datafile}
 	order  ${labor}*, alphabetic
@@ -286,20 +279,17 @@ foreach k in 1 5{
 	
 		local yrnext=`yr'+`k'
 			
-		use personid male yob researn`yr' researnc`yrnext' labor`yrnext' labor`yr' using "researn.dta", clear
+		use personid male yob researn`yr' researnc`yrnext' logearn`yrnext' logearn`yr' using "researn.dta", clear
 		
 		gen age = `yr'-yob+1
-		
-		bys male age: egen avelabor`yrnext' = mean(labor`yrnext')
-		bys male age: egen avelabor`yr' = mean(labor`yr')
-		
-		gen researn`k'F`yr'= researnc`yrnext'-researn`yr'		// Growth with earnings above mininc in t and 1/3*mininc in t+k
-		gen arcearn`k'F`yr'= (labor`yrnext'/avelabor`yrnext' - labor`yr'/avelabor`yr')/(0.5*(labor`yrnext'/avelabor`yrnext' + labor`yr'/avelabor`yr'))
-		
+						
+		gen researn`k'F`yr'= researnc`yrnext'-researn`yr'		// Growth with earnings above mininc in t and 1/3*mininc in t+k		
 		label var researn`k'F`yr'  "Residual earnings growth between `yrnext' and `yr'"
-		label var arcearn`k'F`yr'  "Arc-percent earnings growth between `yrnext' and `yr'"
-
-		keep personid researn`k'F`yr' arcearn`k'F`yr'
+		
+		gen logearn`k'F`yr' = logearn`yrnext' - logearn`yr'		
+		label var logearn`k'F`yr'  "Log earnings growth between `yrnext' and `yr'"
+		
+		keep personid researn`k'F`yr' logearn`k'F`yr'
 		save researn`k'F`yr'.dta, replace
 		
 	}
@@ -323,6 +313,54 @@ foreach k in 1 5{
 	
 }
 // END calculate growth rates
+
+// Calculate growth of (residual) earnings (Section 2.e and 2.f)
+clear
+foreach k in 1 5{
+
+	// Given the jump k, calculate the growth rate for each worker in each year
+
+	local lastyr=$yrlast-`k'
+	forvalues yr = $yrfirst/`lastyr'{
+	
+		local yrnext=`yr'+`k'
+			
+		use personid male yob labor`yrnext' labor`yr' using "base_sample.dta", clear
+		
+		gen age = `yr'-yob+1
+		
+		bys male age: egen avelabor`yrnext' = mean(labor`yrnext')
+		bys male age: egen avelabor`yr' = mean(labor`yr')
+				
+		gen arcearn`k'F`yr'= (labor`yrnext'/avelabor`yrnext' - labor`yr'/avelabor`yr')/(0.5*(labor`yrnext'/avelabor`yrnext' + labor`yr'/avelabor`yr'))
+				
+		label var arcearn`k'F`yr'  "Arc-percent earnings growth between `yrnext' and `yr'"
+
+		keep personid arcearn`k'F`yr'
+		save arcearn`k'F`yr'.dta, replace
+		
+	}
+	
+	// Merge data across all years
+	forvalues yr = $yrfirst/`lastyr'{
+	
+		if (`yr' == $yrfirst){
+		use arcearn`k'F`yr'.dta, clear
+		erase arcearn`k'F`yr'.dta
+		}
+		else{
+			merge 1:1 personid using arcearn`k'F`yr'.dta, nogen
+			erase arcearn`k'F`yr'.dta
+		}
+		sort personid
+	}
+	
+	compress 
+	save "arcearn`k'F.dta", replace 
+	
+}
+// END calculate growth rates
+
 
 // Calculate permanent income
 clear
@@ -480,10 +518,18 @@ merge 1:1 personid using "permearn.dta", nogen
 merge 1:1 personid using "permearnalt.dta", nogen 			
 merge 1:1 personid using "researn.dta", nogen 
 merge 1:1 personid using "researn1F.dta", nogen 
+merge 1:1 personid using "arcearn1F.dta", nogen 
+
 merge 1:1 personid using "researn5F.dta", nogen 
+merge 1:1 personid using "arcearn5F.dta", nogen 
 compress
-order  personid male yob yod educ labor* logearn* permearn* researn* 
+order  personid male yob yod educ labor* logearn* permearn* researn* researn*
 save "$maindir${sep}dta${sep}master_sample.dta", replace 
+
+disp("---------------------------------------------")
+disp("#################Done with 1_Gen_Sample.do####")
+disp("---------------------------------------------")
+sleep 5000
 
 capture log close
 

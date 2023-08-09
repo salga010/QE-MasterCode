@@ -1,17 +1,11 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the time series of Mobility
 // First  version January 06, 2019
-// This version January 19, 2022
+// This version March 23, 2022
 // Serdar Ozkan and Sergio Salgado
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-clear all
-set more off
-// You should change the below directory. 
-global maindir ="..."
-
-// Do not make changes from here on. Contact Ozkan/Salgado if changes are needed. 
-do "$maindir/do/0_Initialize.do"
+// PLEASE DO NOT MAKE ANY CHANGES IN THE CODE
+// IF YOU EXPERIENCE PROBLEMS, PLEASE CONTACT OZKAN OR SALGADO ON THE GRID SLACK CHANNEL
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 // Create folder for output and log-file
 global outfolder=c(current_date)
@@ -23,7 +17,6 @@ capture noisily log using "$maindir${sep}log${sep}$outfolder.log", replace
 
 // Cd to the output file, create the program for moments, and load base sample.
 cd "$maindir${sep}out${sep}$outfolder"
-do "$maindir${sep}do${sep}myprogs.do"		
 
 // Loop over the years
 timer clear 1
@@ -51,7 +44,7 @@ foreach varx in permearnalt researn{
 		forvalues yr = `firstyr'/`yrmax'{		
 			*local yr = `firstyr'
 			disp("-------------------------------------")
-			disp("Working in year `yr' of jump `subgp'")
+			disp("Mobility: Working in year `yr' of jump `subgp'")
 			disp("-------------------------------------")
 		
 			*Define which variables are we loading 

@@ -1,16 +1,10 @@
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the descriptive statistics 
-// This version July 17, 2020
+// This version March 13, 2022
 // Serdar Ozkan and Sergio Salgado
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-clear all
-set more off
-// You should change the below directory. 
-global maindir ="..."
-
-// Do not make change from here on. Contact Ozkan/Salgado if changes are needed. 
-do "$maindir/do/0_Initialize.do"
+// PLEASE DO NOT MAKE ANY CHANGES IN THE CODE
+// IF YOU EXPERIENCE PROBLEMS, PLEASE CONTACT OZKAN OR SALGADO ON THE GRID SLACK CHANNEL
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 // Create folder for output and log-file
 global outfolder=c(current_date)
@@ -21,7 +15,6 @@ capture noisily log using "$maindir${sep}log${sep}$outfolder.log", replace
 
 // Cd to the output file, create the program for moments, and load base sample.
 cd "$maindir${sep}out${sep}$outfolder"
-do "$maindir${sep}do${sep}myprogs.do"		
 
 timer clear 1
 timer on 1

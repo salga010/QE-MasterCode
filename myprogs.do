@@ -3,7 +3,7 @@ capture program drop bymySho bymyTranMat bymyKDN bymyKDNmale bymyCNT bymyPCT bym
 
 /*
 	Programs do file for different statistics 
-	Last update: July,06,2020
+	Last update: April,22,2022
 	
 */
 
@@ -729,16 +729,16 @@ program bymyCNT
 	sum `varM' if `varM' <= `p20',  meanonly
 	local q1share = 100*r(sum)/`tot'
 	
-	sum `varM' if `varM' >= `p20' & `varM' <= `p40',  meanonly
+	sum `varM' if `varM' > `p20' & `varM' <= `p40',  meanonly
 	local q2share = 100*r(sum)/`tot'
 	
-	sum `varM' if `varM' >= `p40' & `varM' <= `p60',  meanonly
+	sum `varM' if `varM' > `p40' & `varM' <= `p60',  meanonly
 	local q3share = 100*r(sum)/`tot'
 	
-	sum `varM' if `varM' >= `p60' & `varM' <= `p80',  meanonly
+	sum `varM' if `varM' > `p60' & `varM' <= `p80',  meanonly
 	local q4share = 100*r(sum)/`tot'
 	
-	sum `varM' if `varM' >= `p80',  meanonly
+	sum `varM' if `varM' > `p80',  meanonly
 	local q5share = 100*r(sum)/`tot'
 	
 	*Bottom and top 50%

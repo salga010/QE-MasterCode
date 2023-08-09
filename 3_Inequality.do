@@ -1,19 +1,10 @@
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This program generates the time series of concetration and inequality
-// This version Jan 25, 2022
+// This version Mar 24, 2023
 // Serdar Ozkan and Sergio Salgado
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-clear all
-set more off
-set type double
- 
-// You should change the below directory. 
-
-global maindir =".."
-
-// Do not make change from here on. Contact Ozkan/Salgado if changes are needed. 
-do "$maindir/do/0_Initialize.do"
+// PLEASE DO NOT MAKE ANY CHANGES IN THE CODE
+// IF YOU EXPERIENCE PROBLEMS, PLEASE CONTACT OZKAN OR SALGADO ON THE GRID SLACK CHANNEL
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 // Create folder for output and log-file
 global outfolder=c(current_date)
@@ -24,8 +15,7 @@ capture noisily log using "$maindir${sep}log${sep}$outfolder.log", replace
 
 // Cd to the output file, create the program for moments, and load base sample.
 cd "$maindir${sep}out${sep}$outfolder"
-do "$maindir${sep}do${sep}myprogs.do"		
-
+	
 // Defines the number of points in the Kernel Density Estimator
 global kpoints =  400
 
@@ -36,7 +26,7 @@ timer on 1
 foreach yr of numlist $yrlist{
 	disp("")
 	disp("------------------------------")
-	disp("Working in year `yr'")
+	disp("Inquality: Working in year `yr'")
 	disp("------------------------------")
 // 	local yr = 2000			// For checking bugs
 	// Define some variables to calculate
@@ -76,18 +66,48 @@ foreach yr of numlist $yrlist{
 	qui: drop if agealt<${begin_age} | agealt>${end_age}
 	
 	// Drop if log earnings does not exist
-	qui: drop if logearn==.
+	drop if logearn==.
 	
 	// Gen earnings adjusted by the real min income
 	gen earn = labor`yr' if labor`yr'>=rmininc[`yr'-${yrfirst}+1,1]
+	
+	// Share of 0s 
+	gen out_share = labor`yr'< rmininc[`yr'-${yrfirst}+1,1]
+	
+	// Gen labor withour adjustment
+	rename labor`yr' labor		// notice the only difference between earn and labor is the low income workers
 	
 	// Age group 
 	gen agegp = . 
 	replace agegp = 1 if age <= 34 & agegp == .
 	replace agegp = 2 if age <= 44 & agegp == .
 	replace agegp = 3 if age <= 55 & agegp == .
-
+			
+	// A0. Mean of earnings and share of below threshold
+	foreach llbvar in earn{
+		
+		bymysum "`llbvar'" "L_" "_`yr'" "year"
+		
+		bymyPCT "`llbvar'" "L_" "_`yr'" "year"
+				
+		foreach  vv in $hetgroup "male agealt"{ 
+			local suf=subinstr("`vv'"," ","",.)			
+			bymysum "`llbvar'" "L_" "_`suf'`yr'" "year `vv'"				
+			bymyPCT "`llbvar'" "L_" "_`suf'`yr'" "year `vv'"				
+		}
+	}	
 	
+	foreach llbvar in out_share{
+		
+		bymysum_meanonly "`llbvar'" "L_" "_`yr'" "year"
+				
+		foreach  vv in $hetgroup "male agealt"{ 
+			local suf=subinstr("`vv'"," ","",.)			
+			bymysum_meanonly "`llbvar'" "L_" "_`suf'`yr'" "year `vv'"				
+		}
+	}	
+	drop labor* out_share
+		
 	// A1. Moments of log earnings
 	// Calculate cross sectional moments for year `yr'
 	
@@ -447,10 +467,47 @@ export delimited using "$maindir${sep}out${sep}$outfolder${sep}autocorr.csv", re
 erase "$maindir${sep}dta${sep}temporal.dta"
 // END of section for autocovariance.
 
+// Collect data on earnings and labor
+
+clear
+foreach vari in out_share{
+
+foreach yr of numlist $yrlist{
+	use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta", clear	
+	erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`yr'.dta"	
+	save "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta", replace
+}
+clear 
+foreach yr of numlist $yrlist{	
+	append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"
+	erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"	
+}
+outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace comma
+
+// Collect data across all years and heterogeneity groups. saves one output file per group 
+foreach  vv in $hetgroup "male agealt"{
+
+	clear 
+	local suf=subinstr("`vv'"," ","",.)
+	foreach yr of numlist $yrlist{		
+		use "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`suf'`yr'.dta", clear			
+		erase "$maindir${sep}out${sep}$outfolder/S_L_`vari'_`suf'`yr'.dta"				
+		save "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta", replace
+	}	
+	clear 
+	foreach yr of numlist $yrlist{
+		append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta"
+		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta"
+	}	
+	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'_sumstat.csv", replace comma 		
+} 	// END loop over heterogeneity group
+}	// END loop over variables 
+
+
 
 // Collect data across years 
 clear
-foreach vari in logearn researn {
+foreach vari in logearn researn earn {
 
 foreach yr of numlist $yrlist{
 
