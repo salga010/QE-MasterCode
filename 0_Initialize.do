@@ -1,7 +1,7 @@
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // This code specify country-specific variables.  
-// This version March 13, 2020
-//	Halvorsen, Ozkan, Salgado
+// This version Aug 20, 2023
+//	Ozkan, Salgado
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 // PLEASE DO NOT CHANGE VALUES FRM LINE 7 TO 20. IF NEEDS TO BE CHANGED, CONTACT Ozkan/Salgado
@@ -62,7 +62,7 @@ global year_var="year" 		// The variable name for year if the data is in long fo
 
 scalar def educ_typ=2   /*Define the type of variable for education 1=string; 2=numerical*/
 
-global iso = "NOR" 		// Define the 3-letters code of the country. Use ISO codes. For instance 
+global iso = "" 		// Define the 3-letters code of the country. Use ISO codes. For instance 
 						// for Italy use ITA, for Spain use ESP, for Norway use NOR and so on
 						
 global minnumberobs = 1 // Define the minimum number of observations in a cell. If the min number of obs is not 
@@ -106,7 +106,11 @@ matrix cpimat = /*  CPI between ${yrfirst}  and ${yrlast}
 
 matrix cpimat = cpimat/${cpi2018}
 
-global exrate2018 = 6.297		// Set the value the exchange rate from LC to 1US$ in 2018 (e.g. 1US$ = $(exrate2018) LC)
+use "$maindir${sep}do${sep}exratewdi.dta", clear
+sum exrate if year == 2018 & iso3 == "${iso}", meanonly
+global exrate2018 = r(mean)		// Set the value the exchange rate from LC to 1US$ in 2018 (e.g. 1US$ = $(exrate2018) LC)
+clear 
+
 matrix exrate = /*  Nominal average exchange rate from FRED between ${yrfirst}  and ${yrlast} (LC per dollar)
 */ (7.101,7.055,6.335,6.459,7.086,7.552,7.807,8.813,8.996,7.984, /*
 */	7.080,6.740,6.441,6.409,5.856,5.637,6.291,6.045,5.602,5.818, /*
