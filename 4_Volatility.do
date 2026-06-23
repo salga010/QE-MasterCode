@@ -463,7 +463,7 @@ foreach yr of numlist $d1yrlist{
 		append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"
 		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"	
 	}
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace comma
+	export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace
 		
 // }
 // else{	
@@ -475,7 +475,7 @@ foreach yr of numlist $d1yrlist{
 		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank`yr'.dta"
 		}
 	}
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank.csv", replace comma
+	export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank.csv", replace
 
 	
 	clear
@@ -486,7 +486,7 @@ foreach yr of numlist $d1yrlist{
 		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank`yr'.dta"
 		}
 	}
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank.csv", replace comma
+	export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank.csv", replace
 	
 	
 	clear
@@ -497,7 +497,7 @@ foreach yr of numlist $d1yrlist{
 		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_malerank`yr'.dta"
 		}
 	}
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_malerank.csv", replace comma
+	export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_malerank.csv", replace
 
 	
 	clear
@@ -508,7 +508,7 @@ foreach yr of numlist $d1yrlist{
 		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_maleagerank`yr'.dta"
 		}
 	}
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_maleagerank.csv", replace comma
+	export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_maleagerank.csv", replace
 	
 	
 	clear	
@@ -525,7 +525,7 @@ foreach yr of numlist $d1yrlist{
 		
 		}
 		}
-		outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_`tto'rank`uup'.csv", replace comma
+		export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_`tto'rank`uup'.csv", replace
 		
 	}
 	}
@@ -556,7 +556,7 @@ foreach yr of numlist $d1yrlist{
 			erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta"
 		}
 		
-		outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'_sumstat.csv", replace comma 		
+		export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'_sumstat.csv", replace
 	} 	// END loop over heterogeneity group
 // }	// END if statement
 }	// END loop over variables 
@@ -650,7 +650,7 @@ foreach yr of numlist $d5yrlist{
 		append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"
 		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"	
 	}
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace comma
+	export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace
 
 	
 		clear
@@ -661,7 +661,7 @@ foreach yr of numlist $d5yrlist{
 			erase "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank`yr'.dta"
 			}
 		}
-			outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank.csv", replace comma
+			export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_allrank.csv", replace
 
 		clear
 		foreach yr of numlist $d5yrlist{
@@ -671,7 +671,7 @@ foreach yr of numlist $d5yrlist{
 			erase "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank`yr'.dta"
 			}
 		}
-		outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank.csv", replace comma
+		export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_agerank.csv", replace
 		
 		clear
 		foreach yr of numlist $d5yrlist{
@@ -681,7 +681,7 @@ foreach yr of numlist $d5yrlist{
 			erase "$maindir${sep}out${sep}$outfolder/L_`vari'_malerank`yr'.dta"
 			}
 		}
-		outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_malerank.csv", replace comma
+		export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_malerank.csv", replace
 		
 	clear
 	foreach yr of numlist $d5yrlist{
@@ -691,7 +691,7 @@ foreach yr of numlist $d5yrlist{
 		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_maleagerank`yr'.dta"
 		}
 	}
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_maleagerank.csv", replace comma
+	export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_maleagerank.csv", replace
 	
 	clear	
 	foreach tto in "all" "age" "male" "maleage"{
@@ -707,7 +707,7 @@ foreach yr of numlist $d5yrlist{
 		
 		}
 		}
-		outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_`tto'rank`uup'.csv", replace comma
+		export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_`tto'rank`uup'.csv", replace
 		
 	}
 	}
@@ -735,7 +735,7 @@ foreach yr of numlist $d5yrlist{
 				erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta"
 			}
 			
-			outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'_sumstat.csv", replace comma 		
+			export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'_sumstat.csv", replace
 		} 	// END loop over heterogeneity group
 }	// END loop over variables 
 
@@ -761,7 +761,7 @@ foreach k in 1 5{
 				
 			}
 		} 
-		outsheet using "$maindir${sep}out${sep}$outfolder/L_researn`k'F_hist.csv", replace comma
+		export delimited using "$maindir${sep}out${sep}$outfolder/L_researn`k'F_hist.csv", replace
 		
 		
 		foreach yr of numlist $d1yrlist{
@@ -777,7 +777,7 @@ foreach k in 1 5{
 				local j=`j'+1
 			}
 		} 
-		outsheet using "$maindir${sep}out${sep}$outfolder/L_researn`k'F_hist_male.csv", replace comma
+		export delimited using "$maindir${sep}out${sep}$outfolder/L_researn`k'F_hist_male.csv", replace
 		
 		
 	}
@@ -795,7 +795,7 @@ foreach k in 1 5{
 				local i=`i'+1
 			}
 		} 
-		outsheet using "$maindir${sep}out${sep}$outfolder/L_researn`k'F_hist.csv", replace comma
+		export delimited using "$maindir${sep}out${sep}$outfolder/L_researn`k'F_hist.csv", replace
 		
 		
 		foreach yr of numlist $d5yrlist{
@@ -811,7 +811,7 @@ foreach k in 1 5{
 				local j=`j'+1
 			}
 		} 
-		outsheet using "$maindir${sep}out${sep}$outfolder/L_researn`k'F_hist_male.csv", replace comma
+		export delimited using "$maindir${sep}out${sep}$outfolder/L_researn`k'F_hist_male.csv", replace
 	}
 }
 
@@ -822,7 +822,7 @@ foreach k in 1 5{
 		append using "$maindir${sep}out${sep}$outfolder/PK_researn1F_`yr'.dta"
 		erase "$maindir${sep}out${sep}$outfolder/PK_researn1F_`yr'.dta"
 	}
-		outsheet using "$maindir${sep}out${sep}$outfolder/PK_researn1F.csv", replace comma
+		export delimited using "$maindir${sep}out${sep}$outfolder/PK_researn1F.csv", replace
 	clear 	
 	foreach yr of numlist $d1yrlist{
 		foreach aa in 1 2 3{
@@ -834,7 +834,7 @@ foreach k in 1 5{
 	}	
 		order year agegp
 		sort year agegp
-		outsheet using "$maindir${sep}out${sep}$outfolder/PK_researn1F_age.csv", replace comma
+		export delimited using "$maindir${sep}out${sep}$outfolder/PK_researn1F_age.csv", replace
 		
 	clear 	
 	foreach yr of numlist $d1yrlist{
@@ -853,7 +853,7 @@ foreach k in 1 5{
 	}	// END loop over years
 	order year permrank
 	sort year permrank
-	outsheet using "$maindir${sep}out${sep}$outfolder/PK_researn1F_permrank.csv", replace comma
+	export delimited using "$maindir${sep}out${sep}$outfolder/PK_researn1F_permrank.csv", replace
 	
 	clear 	
 	foreach yr of numlist $d1yrlist{
@@ -875,7 +875,7 @@ foreach k in 1 5{
 	}	// END loop over years
 	order year permrank agegp
 	sort year permrank agegp
-	outsheet using "$maindir${sep}out${sep}$outfolder/PK_researn1F_permrank_age.csv", replace comma
+	export delimited using "$maindir${sep}out${sep}$outfolder/PK_researn1F_permrank_age.csv", replace
 	
 	
 	// Five year changes	
@@ -884,7 +884,7 @@ foreach k in 1 5{
 		append using "$maindir${sep}out${sep}$outfolder/PK_researn5F_`yr'.dta"
 		erase "$maindir${sep}out${sep}$outfolder/PK_researn5F_`yr'.dta"
 	}
-		outsheet using "$maindir${sep}out${sep}$outfolder/PK_researn5F.csv", replace comma
+		export delimited using "$maindir${sep}out${sep}$outfolder/PK_researn5F.csv", replace
 		
 	clear 	
 	foreach yr of numlist $d5yrlist{
@@ -898,7 +898,7 @@ foreach k in 1 5{
 	
 	order year agegp
 	sort year agegp
-	outsheet using "$maindir${sep}out${sep}$outfolder/PK_researn5F_age.csv", replace comma
+	export delimited using "$maindir${sep}out${sep}$outfolder/PK_researn5F_age.csv", replace
 	
 	clear 	
 	foreach yr of numlist $d1yrlist{
@@ -916,7 +916,7 @@ foreach k in 1 5{
 	}	// END loop over years
 	order year permrank
 	sort year permrank
-	outsheet using "$maindir${sep}out${sep}$outfolder/PK_researn5F_permrank.csv", replace comma
+	export delimited using "$maindir${sep}out${sep}$outfolder/PK_researn5F_permrank.csv", replace
 	
 	clear 	
 	foreach yr of numlist $d1yrlist{
@@ -938,7 +938,7 @@ foreach k in 1 5{
 	}	// END loop over years
 	order year permrank agegp
 	sort year permrank agegp
-	outsheet using "$maindir${sep}out${sep}$outfolder/PK_researn5F_permrank_age.csv", replace comma
+	export delimited using "$maindir${sep}out${sep}$outfolder/PK_researn5F_permrank_age.csv", replace
 	
 timer off 1
 timer list 1

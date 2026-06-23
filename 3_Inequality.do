@@ -482,7 +482,7 @@ foreach yr of numlist $yrlist{
 	append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"
 	erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"	
 }
-outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace comma
+export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace
 
 // Collect data across all years and heterogeneity groups. saves one output file per group 
 foreach  vv in $hetgroup "male agealt"{
@@ -499,7 +499,7 @@ foreach  vv in $hetgroup "male agealt"{
 		append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta"
 		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta"
 	}	
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'_sumstat.csv", replace comma 		
+	export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'_sumstat.csv", replace
 } 	// END loop over heterogeneity group
 }	// END loop over variables 
 
@@ -527,7 +527,7 @@ foreach yr of numlist $yrlist{
 
 }
 
-outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace comma
+export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace
 
 // Collect data across all years and heterogeneity groups. saves one output file per group 
 foreach  vv in $hetgroup "male agealt"{
@@ -551,7 +551,7 @@ foreach  vv in $hetgroup "male agealt"{
 		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta"
 	}
 	
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'_sumstat.csv", replace comma 		
+	export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'_sumstat.csv", replace
 } 	// END loop over heterogeneity group
 
 
@@ -580,7 +580,7 @@ foreach yr of numlist $perm3yrlist{
 
 }
 
-outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace comma
+export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace
 
 // Collect data across all years and heterogeneity groups. saves one output file per group 
 foreach  vv in $hetgroup "male agealt"{
@@ -604,7 +604,7 @@ foreach  vv in $hetgroup "male agealt"{
 		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'`yr'.dta"
 	}
 	
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'_sumstat.csv", replace comma 		
+	export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_`suf'_sumstat.csv", replace
 } 	// END loop over heterogeneity group
 
 }	// END loop over variables 
@@ -628,7 +628,7 @@ foreach yr of numlist $yrlist{
 	}
 	
 } 
-outsheet using "$maindir${sep}out${sep}$outfolder/L_logearn_hist.csv", replace comma
+export delimited using "$maindir${sep}out${sep}$outfolder/L_logearn_hist.csv", replace
 
 
 //Collect data for empirical density (male)
@@ -648,7 +648,7 @@ foreach yr of numlist $yrlist{
 	}
 	
 } 
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_logearn_hist_male.csv", replace comma
+	export delimited using "$maindir${sep}out${sep}$outfolder/L_logearn_hist_male.csv", replace
 
 
 // Collect data across years for the concentration measures 
@@ -657,7 +657,7 @@ foreach yr of numlist $yrlist{
 	append using "$maindir${sep}out${sep}$outfolder/L_earn_`yr'_con.dta"
 	erase "$maindir${sep}out${sep}$outfolder/L_earn_`yr'_con.dta"	
 } 
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con.csv", replace comma
+	export delimited using "$maindir${sep}out${sep}$outfolder/L_earn_con.csv", replace
 
 // Collect data across years for the concentration measures for heterogeneoty groups
 	*Men and Women 
@@ -671,7 +671,7 @@ foreach yr of numlist $yrlist{
 		}
 	} 
 		order male
-		outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con_male.csv", replace comma
+		export delimited using "$maindir${sep}out${sep}$outfolder/L_earn_con_male.csv", replace
 
 	*Age	
 	clear
@@ -684,7 +684,7 @@ foreach yr of numlist $yrlist{
 		}
 	}	
 		order agegp
-		outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con_age.csv", replace comma
+		export delimited using "$maindir${sep}out${sep}$outfolder/L_earn_con_age.csv", replace
 	*Age and gender
 	clear
 	foreach yr of numlist $yrlist{
@@ -700,7 +700,7 @@ foreach yr of numlist $yrlist{
 		}
 	}	
 		order male agegp
-		outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con_male_age.csv", replace comma
+		export delimited using "$maindir${sep}out${sep}$outfolder/L_earn_con_male_age.csv", replace
 	
 	*Educ	
 	clear
@@ -713,7 +713,7 @@ foreach yr of numlist $yrlist{
 		}
 	}	
 		order educ
-		outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con_educ.csv", replace comma
+		export delimited using "$maindir${sep}out${sep}$outfolder/L_earn_con_educ.csv", replace
 		
 	*Education and Gender
 	clear
@@ -730,7 +730,7 @@ foreach yr of numlist $yrlist{
 		}
 	}	
 		order male educ
-		outsheet using "$maindir${sep}out${sep}$outfolder/L_earn_con_male_educ.csv", replace comma
+		export delimited using "$maindir${sep}out${sep}$outfolder/L_earn_con_male_educ.csv", replace
 
 // Collects the data on ratios 
 	// Over all
@@ -739,7 +739,7 @@ foreach yr of numlist $yrlist{
 			append using "$maindir${sep}out${sep}$outfolder/RI_earn_`yr'_idex.dta"
 			erase "$maindir${sep}out${sep}$outfolder/RI_earn_`yr'_idex.dta"	
 	} 	
-			outsheet using "$maindir${sep}out${sep}$outfolder/RI_earn_idex.csv", replace comma
+			export delimited using "$maindir${sep}out${sep}$outfolder/RI_earn_idex.csv", replace
 	
 	// By gender
 	clear
@@ -752,7 +752,7 @@ foreach yr of numlist $yrlist{
 		cap: replace male = `mm' if male == .
 	}
 		order year male
-	outsheet using "$maindir${sep}out${sep}$outfolder/RI_male_earn_idex.csv", replace comma
+	export delimited using "$maindir${sep}out${sep}$outfolder/RI_male_earn_idex.csv", replace
 	
 	// By gender age
 	clear
@@ -770,7 +770,7 @@ foreach yr of numlist $yrlist{
 	}
 	
 	order year male agegp
-	outsheet using "$maindir${sep}out${sep}$outfolder/RI_maleagegp_earn_idex.csv", replace comma
+	export delimited using "$maindir${sep}out${sep}$outfolder/RI_maleagegp_earn_idex.csv", replace
 	
 	
 // Collect data from the researn
@@ -787,7 +787,7 @@ foreach vari in researne{
 		append using "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"
 		erase "$maindir${sep}out${sep}$outfolder/L_`vari'_`yr'.dta"	
 	}
-	outsheet using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace comma
+	export delimited using "$maindir${sep}out${sep}$outfolder/L_`vari'_sumstat.csv", replace
 }
 	
 	
