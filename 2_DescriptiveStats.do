@@ -102,7 +102,7 @@ forvalues yr = `fsrtyr'/`lastyr'{
 	append using "numobs`yr'.dta"
 	erase "numobs`yr'.dta"	
 }
-outsheet using "$maindir${sep}out${sep}$outfolder/`spl'_cross_tabulation.csv", replace comma
+export delimited using "$maindir${sep}out${sep}$outfolder/`spl'_cross_tabulation.csv", replace
 
 
 // Collects descriptive statistics across years
@@ -129,23 +129,23 @@ forvalues yr = `fsrtyr'/`lastyr'{
 	append using "L_labor_`yr'.dta"
 	erase "L_labor_`yr'.dta"
 }
-outsheet using "$maindir${sep}out${sep}$outfolder/L_`spl'_labor_yr_sum_stats.csv", replace comma
+export delimited using "$maindir${sep}out${sep}$outfolder/L_`spl'_labor_yr_sum_stats.csv", replace
 
 clear 
 forvalues yr = `fsrtyr'/`lastyr'{
 	append using "L_labor_male`yr'.dta"
 	erase "L_labor_male`yr'.dta"
 }
-outsheet using "$maindir${sep}out${sep}$outfolder/L_`spl'_labor_yrgender_sum_stats.csv", replace comma
+export delimited using "$maindir${sep}out${sep}$outfolder/L_`spl'_labor_yrgender_sum_stats.csv", replace
 	
 } // END of loop over samples 
 
 *Save the age education dummies for residual log earnings
 use "$maindir${sep}dta${sep}age_educ_dums.dta", clear
-outsheet using "$maindir${sep}out${sep}$outfolder/age_educ_dums.csv", replace comma
+export delimited using "$maindir${sep}out${sep}$outfolder/age_educ_dums.csv", replace
 
 *Save the age education dummies for residual log earnings
 use "$maindir${sep}dta${sep}age_dums.dta", clear
-outsheet using "$maindir${sep}out${sep}$outfolder/age_dums.csv", replace comma
+export delimited using "$maindir${sep}out${sep}$outfolder/age_dums.csv", replace
 
 // END OF THE CODE 

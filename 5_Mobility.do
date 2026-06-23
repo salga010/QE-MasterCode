@@ -195,7 +195,7 @@ foreach varx in permearnalt researn{
 				erase S_L_`het'_`varx'ranktp`subgp'.dta
 			}
 		}
-		outsheet using "L_`het'_`varx'_mobstat.csv", replace comma			
+		export delimited using "L_`het'_`varx'_mobstat.csv", replace
 	}
 }
 	

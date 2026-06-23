@@ -1246,7 +1246,10 @@ order country year gender age rank_permanent_inc
 preserve
 	keep if gender=="All genders"|gender=="Male"|gender=="Female"
 	keep if age=="25-55"|age=="25-34"|age=="35-44"|age=="45-55"
-	collapse (sum) nobs_res_1yr_log_chg_by_skill (mean) mean_res_1yr_log_chg_by_skill-crows_arcpct_5yr_chg_by_skill,by(country rank_permanent_inc age gender)
+	collapse ///
+		(sum) nobs_* ///
+		(mean) mean_* std_* skew_* kurt_* p* kelley_* crows_*, ///
+		by(country rank_permanent_inc age gender)
 	gen year=9999
 	order country year gender age rank_permanent_inc
 	save "$folder${sep}Rank999_AGE",replace           
